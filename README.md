@@ -1,2 +1,21 @@
 # z80Passion2025
 ideas for the Agon Light 2
+
+ZeeEighty - an adventure in lisp, emacs, and the z80.
+Specifically, the Agon Light 2 from Olimex.
+
+- Lisp from Nothing by Holm might be a way to start.
+- Is there a small emacs in c which launches an elisp interpreter?
+- Small-C - would it work as a bootstrap compiler?
+- agon-utilities
+
+### when I started
+
+I had four main ideas for sidecar passion projects for Spring25 cohort.
+
+- Piro360 - my old chestnut
+- Analyzing a sailboat data set [Sailing Boats Database](https://www.kaggle.com/datasets/opendatasource/sailing-boats)
+- WhitherThen - an app already written
+- ZeeEighty - an adventure in lisp, emacs, and the z80
+
+Obviously, there was a leading contender for this timeframe.
