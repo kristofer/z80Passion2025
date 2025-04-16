@@ -9,6 +9,8 @@ Specifically, the Agon Light 2 from Olimex.
 - Small-C - would it work as a bootstrap compiler?
 - agon-utilities
 
+Messing about in the Project board.
+
 ### when I started
 
 I had four main ideas for sidecar passion projects for Spring25 cohort.
