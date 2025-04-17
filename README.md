@@ -8,12 +8,18 @@ Specifically, the Agon Light 2 from Olimex.
 - Is there a small emacs in c which launches an elisp interpreter?
 - Small-C - would it work as a bootstrap compiler?
 - agon-utilities
-
+- mebbe a small lisp in z80 asm
+  - there are some small Lisps like `jart/sectorlisp` in x86 asm and C
+  - there is also a `xorvoid/sectorc`, a very small C in x86 asm
+  - also a `cesarblum/sectorforth` in x86 asm
+  - Nils Holm has a bootstrapping lisp system in `Lisp from Nothing`
+  
 Messing about in the Project board.
 
 ## Useful Links
 
 [agon-utilities](https://github.com/lennart-benschop/agon-utilities)
+[sectorlisp](https://github.com/jart/sectorlisp)
 
 ### when I started
 

@@ -1,0 +1,37 @@
+#!/bin/sh
+
+# LISCMP compile-and-go script
+# Nils M Holm, 2020
+# In the public domain
+# (or distributed under the CC0)
+
+### WARNING:
+### This script WILL OVERWRITE the files
+### "run.lisp", "run.c", and "run"!
+
+SCM=s9
+
+rm -f run
+cp lisrun.c run.c
+cp lisp.lisp run.lisp
+if [ "$1" = "-" ]; then
+	cat >>run.lisp
+else
+	cat $1 >>run.lisp
+fi
+echo "*STOP" >>run.lisp
+echo COMPILE
+if [ -f liscmp ]; then
+	./liscmp <run.lisp | dd conv=lcase 2>/dev/null >>run.c
+elif [ -f stage2 ]; then
+	./stage2 <run.lisp | dd conv=lcase 2>/dev/null >>run.c
+else
+	${SCM} liscmp.scm <run.lisp >>run.c
+fi
+cc -O1 -o run run.c
+if [ $? = 0 ]; then
+	echo RUN
+	./run $2
+else
+	tail -3 run.c
+fi

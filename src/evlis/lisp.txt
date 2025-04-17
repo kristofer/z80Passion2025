@@ -1,0 +1,318 @@
+
+
+	A LISCMP MICRO MANUAL
+
+	Nils M Holm, 2020
+
+
+	SYMBOLIC EXPRESSIONS (S-EXPRESSIONS)
+
+	An ATOM or SYMBOL is any combination   A B C D E F G H I J K L
+	of the characters to the right.        N O P Q R S T U V W X Y Z
+	                                       0 1 2 3 4 5 6 7 8 9 0 - *
+
+	An S-EXPRESSION is either an atom or a list.
+
+	A LIST is a set of S-Expressions that  (FOO BAR)
+	is enclosed in parentheses. The empty  (FOO (BAR) BAZ)
+	list () is also written NIL. Lists     (LAMBDA (X) (LIST X))
+	can contain lists.                     ()
+
+
+	COMMENTS
+
+	A comment may be placed anywhere      ; These are comments.
+	(even inside of a form, but not       ; Any characters are
+	inside of an atom) by inserting a     ; allowed here.
+	semicolon (;). Comments extend to     ; Comments are ignored 
+	the end of the current line.          ; by the LISP system.
+
+
+	UNREADABLE FORMS
+
+	A form that contains characters other than those listed in the
+	previous sections are UNREADABLE, i.e. the LISP system will
+	report an error when encountering them.
+
+	Unreadable forms are sometimes output by the system to
+	represent data that have no unambiguous textual representation.
+
+
+	EXPRESSIONS
+
+	An EXPRESSION is an S-expression with a meaning.
+
+	X ==> Y     denotes that X evaluates to Y;
+	            Y is the Value of X.
+
+	*UNDEFINED  denotes an undefined value.
+
+	There are four kinds of expressions:  - Variables
+	                                      - Lambda Functions
+	                                      - Function Application
+	                                      - Special Forms
+
+
+	VARIABLES
+
+	A VARIABLE is a symbol that is bound    VARIABLE  ==>  VALUE
+	to an S-expression. Variables evaluate
+	to the S-expression to which they are
+	bound. The S-expression to which a
+	variable is bound is called the VALUE
+	of the variable.
+
+	References to unbound symbols           UNBOUND  ==>  *UNDEFINED
+	(symbols that are not bound to
+	any value) are undefined:
+
+	A CONSTANT is a variable that is        CONSTANT  ==>  CONSTANT
+	bound to its own name:
+
+	Variables are created by the SETQ special form or by function
+	application.
+
+
+	OBJECTS
+
+	An OBJECT is a QUOTED S-expression.    (QUOTE FOO)  ==>  FOO
+	An S-expression is quoted by placing   (QUOTE (FOO BAR))
+	it at the place of the "x" in the        ==>  (FOO BAR)
+	expression (QUOTE x).                  (QUOTE (QUOTE X))
+	                                         ==>  (QUOTE X)
+	Quotation an be abbreviated with an
+	apostrophy:                           'FOO      ==>  FOO
+	                'x  =  (QUOTE x)      '(1 2 3)  ==>  (1 2 3)
+
+	The objects T and NIL do not have      NIL  ==>  T
+	to be quoted. NIL represents both      T    ==>  T
+	logical falsity and the empty list.
+	T denotes truth, but any value
+	except for NIL is regarded to be
+	"true".
+
+
+	ELEMENTARY FUNCTIONS
+
+	The expression (F X) means "F applied to X" and (F X Y) means
+	"F applied to X and Y", i.e. they are applications of functions
+	to values. Here are some elementary functions:
+
+	(ATOM X)     Return T, if X is an atom, else return NIL.
+	             Examples: (ATOM 'X)    ==>  T
+	                       (ATOM T)     ==>  T
+	                       (ATOM NIL)   ==>  T
+	                       (ATOM '(A))  ==>  NIL
+
+	(CONS X Y)   Create a new list from the S-expression X and the
+	             list Y. Examples:
+	                       (CONS 'A '(B C))  ==>  (A B C)
+	                       (CONS '(A) '(B))  ==>  ((A) B)
+	                       (CONS 'A NIL)     ==>  (A)
+
+	(CAR X)      Return the head / first element / car part of a
+	             list X. Examples:
+	                       (CAR '(A B C))  ==>  A
+	                       (CAR '(A))      ==>  A
+	                       (CAR NIL)       ==>  NIL
+	                       (CAR 'A)        ==>  *UNDEFINED
+
+	(CDR X)      Return the tail / rest / cdr part of a list X.
+	                      Examples:
+	                       (CDR '(A B C))  ==>  (B C)
+	                       (CDR '(A))      ==>  NIL
+	                       (CDR NIL)       ==>  NIL
+	                       (CDR 'A)        ==>  *UNDEFINED
+
+	(EQ X Y)     Return T, if X and Y are the same object, else
+	             return NIL. Examples:
+	                       (EQ 'FOO 'FOO)  ==>  T
+	                       (EQ 'FOO 'BAR)  ==>  NIL
+	                       (EQ T T)        ==>  T
+	                       (EQ NIL NIL)    ==>  T
+	                       (EQ 'A '(A))    ==>  NIL
+	                       (EQ '(A) '(B))  ==>  NIL
+	                       (EQ '(A) '(A))  ==>  *UNDEFINED
+
+
+	LAMBDA FUNCTIONS
+
+	A LAMBDA FUNCTION is a function of     (LAMBDA () (QUOTE FOO))
+	zero or multiple variables that        (LAMBDA (X) (CONS X X))
+	computes a value. It has the general   (LAMBDA (X Y) Y)
+	form:
+	        (LAMBDA <variables> <body>)
+
+	where <variables> is a list of symbols and the <body> is at
+	least one expression. The value of the last expression is the
+	value of the function. For example,
+
+	        (LAMBDA (X Y) (CAR X) (CDR Y))
+
+	is a function of the variables X and Y that first computes
+	(CAR X) (and discards its value) and then computes (CDR Y)
+	and returns its value.
+
+	        (LAMBDA () (QUOTE FOO))
+
+	is a function of no variables that always returns FOO.
+
+
+	FUNCTION APPLICATION
+
+	An S-expression of the form            (CONS 'FOO 'BAR)
+	(FUN ARG-1 ... ARG-N)                  ((LAMBDA (X) X) 'FOO)
+	is a FUNCTION APPLICATION. It          (F '1 '2 '3)
+	applies the function FUN to the
+	ARGUMENTS ARG-1 ... ARG-N and
+	evaluates to a value. Each argument
+	is an expression.
+
+	The following steps are involved in an application:
+
+	(1) the function part (FUN) is evaluated
+	    (hence functions can be named by SETQ; see below)
+	(2) each argument (ARG) in the application is evaluated
+	(3) each argument is bound to the corresponding variable
+	    (variables are paired with arguments by position)
+	(4) the body of the function is evaluated
+	(5) the variables are unbound from the arguments
+	(6) the value of the body is returned
+
+	For example:
+  
+	((LAMBDA (X Y) (CONS X Y))         ; evaluate arguments:
+	 (QUOTE 1)                         ; (QUOTE 1)   ==> 1
+	 (QUOTE (2)))                      ; (QUOTE (2)) ==> (2)
+	
+	((LAMBDA (X Y) (CONS X Y)) 1 (2))  ; bind X to 1
+	                                   ; and  Y to (2)
+
+	(CONS X Y)  =  (CONS 1 (2))        ; evaluate the body
+
+	==>  (1 2)                         ; return the result
+
+
+	SPECIAL FORMS
+
+	(QUOTE <object>)        Returns the given object.
+
+	(LAMBDA <vars> <body>)  Returns a function with the given
+	                        given variables and expressions
+	                        (<body>).
+
+	(PROGN <expr> ...)      Evaluates the given expressions in
+	                        sequence and returns the value of
+	                        the last one. Example:
+	                        (PROGN (PRINT 'HELLO-)
+	                               (PRINT 'WORLD)
+	                               NIL)
+
+	(SETQ <var> <expr>)     Binds the given variable to the value
+	                        of the given expression. Example:
+	                        (SETQ DOUBLE
+	                          (LAMBDA (X)
+	                            (CONS X (CONS X NIL))))
+
+	(COND (<p1> <body1>)   Evaluate expression <p1> (predicate 1).
+	      ...              When its value is not NIL, evaluate the
+	      (<pN> <bodyN>))  expressions in <body1> and return its
+	                       value, else proceed with the next
+	                       predicate.
+	                       (<p1> <body>) is called a CLAUSE.
+	                       When no clause has a true (non-NIL)
+	                       predicate, return NIL.
+	                       When a clause has the form (<p>),
+	                       return the value of the predicate, if
+	                       it is not NIL. Example:
+	                       (LAMBDA (X)
+	                         (COND ((ATOM X)
+	                                 'AN-ATOM)
+	                               ((ATOM (CDR X))
+	                                 'A-SINGLETON)
+	                               (T 'A-LIST)))
+
+	(LABEL ((<v1> <a1>)    Evaluate <a1> and bind it to <v1>. With
+	        ...            that binding in effect, evaluate the next
+	        (<vN> <aN>))   argument <a> and bind it to the
+	  <body>)              corresponding variable <v>, etc. When all
+	                       bindings are processed, evaluate <body>,
+	                       unbind all variables, and return the
+	                       value of <body>. Example:
+	                       (LABEL ((A (QUOTE (2)))
+	                               (B (CONS (QUOTE 1) A))
+	                               (F (LAMBDA (X) (CONS X NIL))))
+	                         (F B))
+
+
+	LEXPRs
+
+	An LEXPR is a lambda function          (LAMBDA X X)
+	that binds its antire list of
+	actual arguments to a single           ((LAMBDA X X) '1 '2 '3)
+	variable. It has an atom in the          ==>  (1 2 3)
+	place of a list of variables.
+
+
+	DOTTED PAIRS
+
+	Connecting two atoms with CONS        (CONS 'A 'B)  ==>  (A . B)
+	gives a DOTTED PAIR.
+
+	A list is a special case of the        (A . NIL)        ==  (A)
+	dotted pair, where the cdr part        (A . (B . NIL))  ==  (A B)
+	of the last pair has a value of NIL.
+
+	A DOTTET LIST has a non-NIL atom     (A . (B . C))  ==  (A B . C)
+	in the cdr part of the last pair.
+
+
+	INTERNAL FUNCTIONS
+
+	These funcions are used internally to implement the LISP system.
+	Do not use them in non-system programs. Instead of *RPLACA and
+	*RPLACD use RPLACA and RPLACD. Instead of *READC and *WRITEC use
+	READC and WRITEC or READ and PRINT.
+
+	(*CAR X)              Return car of X, regardless of type of X
+	(*CDR X)              Return cdr of X, regardless of type of X
+	(*RPLACA X Y)         Replace car part of X with Y
+	(*RPLACD X Y)         Replace cdr part of X with Y
+
+	(*NEXT X)             Return address of next cell in pool
+	(*LIMIT)              Return first address outside of cell pool
+
+	(*SETATOM X T/NIL)    Set/clear atom tag of cell
+	(*SETMARK X T/NIL)    Set/clear mark tag of cell
+	(*SETTRAV X T/NIL)    Set/clear trav tag of cell
+	(*ATOMP X)            Return atom tag of X (T/NIL)
+	(*MARKP X)            Return mark tag of X (T/NIL)
+	(*TRAVP X)            Return trav tag of X (T/NIL)
+
+	(*READC)              Read char from input, return as atom name
+	(*WRITEC X)           Write first char of atom or atom name
+
+	(*DUMP X)             Write cell pool image to file
+	(*LOAD X)             Load cell pool image from file
+
+	(*HALT X)             Print atom X, then terminate program
+
+	An ATOM NAME is the name part of an atom. It can be extracted
+	from an atom using *CAR. An atom name N can be turned into an
+	atom using (CONS N NIL).
+
+
+	MORE FUNCTIONS
+
+	For definitions derived functions of the LISP system, see the
+	LISP system source code in the file LISP.LISP. These functions
+	are available:
+
+	APPEND        LIST      PEEKC    RPLACA   
+	CAAR...CDDDR  MAKESYM   PRINT    RPLACD   
+	EQUAL         MAPCAR    READ     RREDUCE  
+	EXPLODE       MAPCAR2   READC    SAMENAMEP
+	HALT          MEMBER    RECONC   SYMBOLIC 
+	IMPLODE       NCONC     REDUCE   TERPRI   
+	INTERN        NREVERSE  REVERSE  WRITEC   
+

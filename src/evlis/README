@@ -1,0 +1,96 @@
+
+
+	SOME EVALUATORS OF LISP
+
+	FROM THE BOOK "LISP FROM NOTHING"
+
+	By Nils M Holm, 2020
+
+	In the public domain or distributed under the Creative
+	Commons Zero license (CC0), where the concept of the
+	public domain does not apply. See the file CC0 for a
+	copy of the CC0.
+
+	LISCMP is a self-hosting compiler that compiles a very
+	minimal LISP language to portable C. The basic language
+	consists of these functions and special forms:
+
+	ATOM CAR CDR COND CONS EQ LABEL LAMBDA PROGN QUOTE SETQ
+
+	There is more, but the other forms are mostly used to
+	bootstrap the rest of the system. For all LISP functions
+	available in LISP programs, see the file LISP.LISP.
+
+	LIS1EV, EVAL0 EVAL1, and LISINT0 are very simple interpreters.
+
+	LISINT is an interpreter implementing most of the language
+	compiled by LISCMP. LISINT/M adds macros.
+
+	All implementations do very little error checking and will
+	just abort with a nondescript error when anything unusual
+	happens. They are intended to be studied rather than used.
+
+
+	BOOTSTRAPPING
+
+	You can bootstrap LISCMP from the SCHEME version of the
+	compiler by just running make. Obviously this step needs an
+	existing SCHEME interpreter. Specify one at the beginning
+	of the Makefile.
+
+	If you have no SCHEME interpreter, just run
+
+	cc -o stage0 boot.c
+	make stage.lisp stage1 stage2
+
+	After that you can recompile the compiler using the command
+
+	echo '*stop' | sh lcg liscmp.lisp && mv run liscmp
+
+	This will put a new LISCMP executable in the file "liscmp".
+	LISCMP will print some noise in the above command; you can
+	safely ignore it. See the "lcg" script for details.
+
+	To compile LISINT and LISINT/M, run
+
+	echo '*stop' | sh lcg lisint.lisp && mv run lisint
+	echo '*stop' | sh lcg lisintm.lisp && mv run lisintm
+
+
+	COMPILING AND INTERPRETING PROGRAMS
+
+	The "lcg" shell script will read a LISP program from the
+	given file (or stdin, if no file is given), compile it,
+	and run it. As a side effect it will place the compiled
+	binary in the file "run". It will also silently overwrite
+	the files "run.lisp" and "run.c".
+
+	LISINT will prompt with GO, wait for an expression, print
+	STOP, evaluate the expression, print its normal form, and
+	print GO again. See the LISP 1 Programmer's manual or my
+	latest book (LISP From Nothing) to understand why.
+
+
+	DOCUMENTATION
+
+	The basic language accepted by LISCMP and LISINT is described
+	in the file LISP.TXT. The full language is much more complete.
+	See the file LISP.LISP for the source code of all functions
+	available in LISCMP and LISINT programs.
+
+
+	EXAMPLE PROGRAMS
+
+	lisp.lisp      The LISP system source code
+	liscmp.lisp    The LISCMP compiler
+	lisint.lisp    The LISINT interpreter
+	lisintm.lisp   LISINT with macros
+	lisint0.lisp   LISINT without TCO and initial environment
+	lis1ev.lisp    LISP 1 evaluator
+	eval0.cl       Metacircular LISP evaluator, CL version
+	eval0.scm      Metacircular LISP evaluator, SCHEME version
+	eval1.lisp     LISP evaluator with lexical scope
+	ltak.lisp      A list-based TAK function
+	gc.lisp        Garbage collection algorithm (DSW)
+	macros.lisp    Some LISINT/M examples
+
