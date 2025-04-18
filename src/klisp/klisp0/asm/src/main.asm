@@ -1,5 +1,5 @@
 ;
-; KLISP phase 0
+; KLISP phase 0-2
 ;
 ; Author: Kristofer Younger
 ;
