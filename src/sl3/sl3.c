@@ -388,6 +388,7 @@
  
  /*** Initialization ***/
  void init_sl3() {
+  printf(stderr, "Initializing...\n");
    nil = mksym("nil");
    all_symbols = cons(nil, nil);
    top_env  = cons(cons(nil, nil), nil);
@@ -422,6 +423,14 @@
  int main() {
    init_sl3();
    setinput(stdin);
+   /* read in the file "corelisp.lisp" */
+    // ifp = fopen("corelisp.lisp", "r");
+    // if(ifp == NULL) {
+    //   fprintf(stderr, "error: cannot open corelisp.lisp\n");
+    //   exit(1);
+    // }
+    printf(stderr, "main loop\n");
+
    for(;;) {
      writeobj(stdout, eval(readobj(), top_env));
      printf("\n");
