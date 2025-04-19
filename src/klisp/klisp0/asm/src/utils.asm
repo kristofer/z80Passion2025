@@ -22,6 +22,39 @@ print_string:
     pop af
     ret
 
+; PRINT_REGISTER: Print a register value
+; Input: HL = register value
+; Output: None
+print_register:
+    push af
+    push bc
+    push de
+    push hl
+    
+    ; Convert to ASCII hex and store in buffer
+    ld de, hex_buffer
+    
+    ld a, l
+    call .to_hex
+    ld a, h
+    ; Middle byte
+    call .to_hex
+    
+    ld a, uhl
+    call .to_hex
+    ; Add null terminator
+    xor a
+    ld (de), a
+    
+    ; Print the hex string
+    ld hl, hex_buffer
+    call print_string
+    
+    pop hl
+    pop de
+    pop bc
+    pop af
+    ret
 ; PRINT_HEX_ADDR: Print a 24-bit address in hexadecimal
 ; Input: HL = address to print
 ; Output: None
@@ -34,14 +67,19 @@ print_hex_addr:
     ; Convert to ASCII hex and store in buffer
     ld de, hex_buffer
     
+    ld bc,3
+    add hl, bc
+
     ; High byte
-    ld a, h
+    ld a, (hl)
     call .to_hex
-    
+    dec hl
     ; Middle byte
-    ld a, l
+    ld a, (hl)
     call .to_hex
-    
+    dec (hl)
+    ld a, (hl)
+    call .to_hex
     ; Add null terminator
     xor a
     ld (de), a

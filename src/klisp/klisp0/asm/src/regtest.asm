@@ -19,6 +19,9 @@
 NIL_ADDR:         equ     $050000   ; Address of NIL (special value)
 T_ADDR:           equ     $050004   ; Address of T (boolean true)
 SYMTAB_START:     equ     $05D000   ; Start of symbol table
+ONE:              equ     $000001
+   ; Address of 1 (integer)
+
 
 ; Atom flags and types
 ATOM_FLAG:        equ     $008000     ; High bit indicates atom
@@ -82,6 +85,8 @@ start:
 ; Test initialization
 ; ------------------------------
 init_test:
+
+
     ; Initialize NIL as a special atom
     ld hl, NIL_ADDR
     ld bc, ATOM_FLAG | SYM_FLAG | 'N'
