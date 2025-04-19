@@ -24,6 +24,8 @@ Messing about in the Project board.
 - [the agon ez80asm assember](https://github.com/AgonConsole8/agon-ez80asm)
 - [the Emulator](https://github.com/tomm/fab-agon-emulator)
 - [Agon Light Assembly examples](https://github.com/schur/Agon-Light-Assembly)
+- [Agon Software (awesome list)](https://github.com/sabotrax/agon-software)
+
 
 ### when I started
 
