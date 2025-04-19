@@ -25,14 +25,14 @@
 ; ------------------------------
 
 ; Memory layout constants
-NIL_ADDR:         equ     $050000   ; Address of NIL (special value)
-T_ADDR:           equ     $050004   ; Address of T (boolean true)
-HEAP_START:       equ     $051000   ; Start of the LISP heap
-STACK_START:      equ     $05F000   ; Start of evaluation stack
-ENV_START:        equ     $05E000   ; Start of environment space
-SYMTAB_START:     equ     $05D000   ; Start of symbol table
-INPUT_BUFFER:     equ     $05C000   ; Input buffer (1K)
-OUTPUT_BUFFER:    equ     $05B000   ; Output buffer (1K)
+NIL_ADDR:         equ     $060000   ; Address of NIL (special value)
+T_ADDR:           equ     $060004   ; Address of T (boolean true)
+HEAP_START:       equ     $061000   ; Start of the LISP heap
+STACK_START:      equ     $06F000   ; Start of evaluation stack
+ENV_START:        equ     $06E000   ; Start of environment space
+SYMTAB_START:     equ     $06D000   ; Start of symbol table
+INPUT_BUFFER:     equ     $06C000   ; Input buffer (1K)
+OUTPUT_BUFFER:    equ     $06B000   ; Output buffer (1K)
 
 ; Maximum buffer sizes
 INPUT_BUFFER_SIZE:  equ   1024
@@ -269,39 +269,6 @@ eq:
     ld hl, T_ADDR            ; Return T if equal
     ret
 
-;; COMP_SYMBOL: Compare two null-terminated strings
-; Input: HL = pointer to first string, BC = pointer to second string
-; Output: HL = T_ADDR if equal, NIL_ADDR if not equal
-comp_symbol:
-    push de
-    
-.loop:
-    ld a, (hl)          ; Get character from first string
-    ld d, a             ; Save in D
-    ld a, (bc)          ; Get character from second string
-    
-    cp d                ; Compare characters
-    jr nz, .not_equal   ; If not equal, return false
-    
-    ; Check if we reached the end (both strings null terminated)
-    or a                ; Test if character is 0
-    jr z, .equal        ; If zero, we're done and strings match
-    
-    ; Move to next character in both strings
-    inc hl
-    inc bc
-    jr .loop
-    
-.not_equal:
-    ld hl, NIL_ADDR     ; Return NIL (false)
-    pop de
-    ret
-    
-.equal:
-    ld hl, T_ADDR       ; Return T (true)
-    pop de
-    ret
-
 ; INTERN_SYMBOL: Look up or create a symbol
 ; Input: HL = pointer to null-terminated name
 ; Output: HL = address of symbol
@@ -316,29 +283,50 @@ intern_symbol:
     ld de, SYMTAB_START
     
 .check_loop:
+    ; Check if we've reached the end of the symbol table
     ld bc, (symtab_ptr)
     or a                      ; Clear carry
+    push hl                   ; Save name pointer
     sbc hl, bc
-    add hl, bc                ; Restore HL
-    jr z, .end_check          ; If at end of symtab, symbol doesn't exist
+    jr z, .symbol_not_found   ; If at end of symtab, symbol doesn't exist
+    pop hl                    ; Restore name pointer
     
-    ; Compare symbol name
-    push hl                   ; Save symtab pointer
-    ld bc, (hl)               ; BC = current symtab entry
-    pop hl                    ; HL = string to find
-    
-    ; TODO: Compare the strings
-    ; If match found, return the symbol address
-    call comp_symbol
-    ld bc, NIL_ADDR
-    call eq
-    jr z, .strings_not_equal
-
-    ld hl, (de)             ; Next symtab entry
+    ; Get current symbol from table
+    push hl                   ; Save name pointer
+    ld a, (de)
+    ld l, a
     inc de
+    ld a, (de)
+    ld h, a
+    dec de
+
+    ; Compare name with this symbol
+    ld bc, hl                 ; BC = symbol from table
+    pop hl                    ; HL = name to find
+    
+    push de                   ; Save table position
+    push hl                   ; Save name pointer
+    call comp_symbol          ; Compare strings - returns T_ADDR if equal
+    
+    ; Check result of comparison
+    ld bc, T_ADDR
+    or a                      ; Clear carry
+    sbc hl, bc
+    pop hl                    ; Restore name pointer
+    pop de                    ; Restore table position
+    
+    jr z, .symbol_found       ; If equal, return this symbol
+    
+    ; Not a match, move to next entry
+    inc de
+    inc de
+    inc de                    ; Each entry is 3 bytes (24-bit address)
     jr .check_loop
     
-.end_check:
+.symbol_not_found:
+    ; Need to release the extra stack item we pushed
+    pop hl                    ; Clear extra stack item
+    
     ; Symbol not found, create a new one
     pop hl                    ; Restore name pointer
     
@@ -373,7 +361,24 @@ intern_symbol:
     add hl, bc
     ld (symtab_ptr), hl
     
-    pop hl                    ; Restore symbol address
+    pop hl                    ; Restore symbol address - this is our return value
+    pop de
+    pop bc
+    ret
+    
+.symbol_found:
+    ; We found the symbol, return its address
+    pop hl                    ; Clear name pointer from stack
+    
+    ; Get the symbol address (already in DE)
+    ld a, (de)
+    ld l, a
+    inc de
+    ld a, (de)
+    ld h, a
+    inc de
+    ; (third byte handling if needed for 24-bit addressing)
+    
     pop de
     pop bc
     ret

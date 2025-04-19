@@ -1,0 +1,776 @@
+PC     Output      Line
+040000             0001 ; Symbol Table Test for KLISP
+040000             0002 ; Tests the intern_symbol functionality
+040000             0003 ;
+040000             0004 ; Author: Kristofer Younger
+040000             0005 ;
+040000             0006 ; Created: Fri 18 Apr 2025
+040000             0007 
+040000             0008 .assume adl=1
+040000             0009 .org $040000
+040000 5B C3 53 00 0010     jp.lil start
+       04          
+040005             0011 
+040005             0012 ; MOS header
+040005             0013 .align 64
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF FF 
+       FF FF FF 
+040040 4D 4F 53 00 0014 .db "MOS",0,1
+       01          
+040045             0015 
+040045             0016 ; ------------------------------
+040045             0017 ; Constants and memory layout (from main.asm)
+040045             0018 ; ------------------------------
+040045             0019 NIL_ADDR:         equ     $050000   ; Address of NIL (special value)
+040045             0020 T_ADDR:           equ     $050004   ; Address of T (boolean true)
+040045             0021 SYMTAB_START:     equ     $05D000   ; Start of symbol table
+040045             0022 
+040045             0023 ; Atom flags and types
+040045             0024 ATOM_FLAG:        equ     $008000     ; High bit indicates atom
+040045             0025 SYM_FLAG:         equ     $004000     ; Symbol atom
+040045             0026 
+040045             0027 ; ------------------------------
+040045             0028 ; Global variables
+040045             0029 ; ------------------------------
+040045             0030 heap_ptr:
+040045 00 10 05    0031     .dw24 $051000                     ; HEAP_START
+040048 00          0032     .db 0
+040049             0033 
+040049             0034 symtab_ptr:
+040049 00 D0 05    0035     .dw24 SYMTAB_START                ; Current symbol table pointer
+04004C 00          0036     .db 0
+04004D             0037 
+04004D             0038 ; Special symbols
+04004D             0039 t_symbol:
+04004D 04 00 05    0040     .dw24 T_ADDR         ; T symbol address
+040050             0041 nil_symbol:
+040050 00 00 05    0042     .dw24 NIL_ADDR       ; NIL symbol address
+040053             0043 
+040053             0044 ; ------------------------------
+040053             0045 ; Program entry point
+040053             0046 ; ------------------------------
+040053             0047 start:
+040053             0048     ; Set up stack
+040053 5B 31 00 F0 0049     ld.l sp, $05F000                  ; STACK_START
+       05          
+040058             0050 
+040058             0051     ; Initialize basic environment
+040058 CD 65 00 04 0052     call init_test
+04005C             0053 
+04005C             0054     ; Run tests
+04005C CD 8C 00 04 0055     call symbol_table_tests
+040060             0056 
+040060             0057     ; Exit the program
+040060 21 00 00 00 0058     ld hl, 0
+040064 C9          0059     ret
+040065             0060 
+040065             0061 ; ------------------------------
+040065             0062 ; Test initialization
+040065             0063 ; ------------------------------
+040065             0064 init_test:
+040065             0065     ; Initialize NIL as a special atom
+040065 21 00 00 05 0066     ld hl, NIL_ADDR
+040069 01 4E C0 00 0067     ld bc, ATOM_FLAG | SYM_FLAG | 'N'
+04006D ED 0F       0068     ld (hl), bc                     ; CAR = ATOM_FLAG | SYM_FLAG | 'N'
+04006F 23          0069     inc hl
+040070 23          0070     inc hl
+040071 23          0071     inc hl
+040072 01 00 00 00 0072     ld bc, 0
+040076 ED 0F       0073     ld (hl), bc                     ; CDR = 0
+040078             0074 
+040078             0075     ; Initialize T as a special atom
+040078 21 04 00 05 0076     ld hl, T_ADDR
+04007C 01 54 C0 00 0077     ld bc, ATOM_FLAG | SYM_FLAG | 'T'
+040080 ED 0F       0078     ld (hl), bc                     ; CAR = ATOM_FLAG | SYM_FLAG | 'T'
+040082 23          0079     inc hl
+040083 23          0080     inc hl
+040084 23          0081     inc hl
+040085 01 00 00 00 0082     ld bc, 0
+040089 ED 0F       0083     ld (hl), bc                     ; CDR = 0
+04008B             0084 
+04008B C9          0085     ret
+04008C             0086 
+04008C             0087 ; ------------------------------
+04008C             0088 ; Symbol table tests
+04008C             0089 ; ------------------------------
+04008C             0090 symbol_table_tests:
+04008C             0091     ; Display test header
+04008C 21 93 02 04 0092     ld hl, test_header
+040090 CD F9 01 04 0093     call print_string
+040094             0094 
+040094             0095     ; Test 1: Basic symbol creation
+040094 CD A1 00 04 0096     call test_1_basic_creation
+040098             0097 
+040098             0098     ; Test 2: Symbol retrieval
+040098 CD E8 00 04 0099     call test_2_symbol_retrieval
+04009C             0100 
+04009C             0101     ; Test 3: Multiple symbols
+04009C CD 40 01 04 0102     call test_3_multiple_symbols
+0400A0             0103 
+0400A0 C9          0104     ret
+0400A1             0105 
+0400A1             0106 ; ------------------------------
+0400A1             0107 ; Test 1: Basic symbol creation
+0400A1             0108 ; ------------------------------
+0400A1             0109 test_1_basic_creation:
+0400A1 21 B0 02 04 0110     ld hl, test1_header
+0400A5 CD F9 01 04 0111     call print_string
+0400A9             0112 
+0400A9             0113     ; Create a new symbol "HELLO"
+0400A9 21 7B 02 04 0114     ld hl, sym_hello
+0400AD CD 9A 04 04 0115     call intern_symbol
+0400B1             0116 
+0400B1             0117     ; Save the symbol address
+0400B1 22 6B 02 04 0118     ld (test1_sym_addr), hl
+0400B5             0119 
+0400B5             0120     ; Check if the symbol was created (not NIL)
+0400B5 01 00 00 05 0121     ld bc, NIL_ADDR
+0400B9 B7          0122     or a                      ; Clear carry
+0400BA ED 42       0123     sbc hl, bc
+0400BC             0124 
+0400BC 28 21       0125     jr z, .test1_failed
+0400BE             0126 
+0400BE             0127     ; Print success message
+0400BE 21 D0 02 04 0128     ld hl, test1_success
+0400C2 CD F9 01 04 0129     call print_string
+0400C6             0130 
+0400C6             0131     ; Print the symbol address
+0400C6 21 20 03 04 0132     ld hl, test1_addr_msg
+0400CA CD F9 01 04 0133     call print_string
+0400CE             0134 
+0400CE 2A 6B 02 04 0135     ld hl, (test1_sym_addr)
+0400D2 CD 08 02 04 0136     call print_hex_addr
+0400D6             0137 
+0400D6 21 97 04 04 0138     ld hl, newline
+0400DA CD F9 01 04 0139     call print_string
+0400DE             0140 
+0400DE C9          0141     ret
+0400DF             0142 
+0400DF             0143 .test1_failed:
+0400DF 21 FE 02 04 0144     ld hl, test1_failed_msg
+0400E3 CD F9 01 04 0145     call print_string
+0400E7 C9          0146     ret
+0400E8             0147 
+0400E8             0148 ; ------------------------------
+0400E8             0149 ; Test 2: Symbol retrieval
+0400E8             0150 ; ------------------------------
+0400E8             0151 test_2_symbol_retrieval:
+0400E8 21 34 03 04 0152     ld hl, test2_header
+0400EC CD F9 01 04 0153     call print_string
+0400F0             0154 
+0400F0             0155     ; Try to get the symbol "HELLO" again
+0400F0 21 7B 02 04 0156     ld hl, sym_hello
+0400F4 CD 9A 04 04 0157     call intern_symbol
+0400F8             0158 
+0400F8             0159     ; Save the retrieved address
+0400F8 22 6F 02 04 0160     ld (test2_sym_addr), hl
+0400FC             0161 
+0400FC             0162     ; Compare with the address from test 1
+0400FC ED 4B 6B 02 0163     ld bc, (test1_sym_addr)
+       04          
+040101 B7          0164     or a                      ; Clear carry
+040102 ED 42       0165     sbc hl, bc
+040104             0166 
+040104 20 09       0167     jr nz, .test2_failed
+040106             0168 
+040106             0169     ; Print success message
+040106 21 4F 03 04 0170     ld hl, test2_success
+04010A CD F9 01 04 0171     call print_string
+04010E             0172 
+04010E C9          0173     ret
+04010F             0174 
+04010F             0175 .test2_failed:
+04010F 21 88 03 04 0176     ld hl, test2_failed_msg
+040113 CD F9 01 04 0177     call print_string
+040117             0178 
+040117             0179     ; Print expected vs actual
+040117 21 B8 03 04 0180     ld hl, test2_expected
+04011B CD F9 01 04 0181     call print_string
+04011F             0182 
+04011F 2A 6B 02 04 0183     ld hl, (test1_sym_addr)
+040123 CD 08 02 04 0184     call print_hex_addr
+040127             0185 
+040127 21 C6 03 04 0186     ld hl, test2_actual
+04012B CD F9 01 04 0187     call print_string
+04012F             0188 
+04012F 2A 6F 02 04 0189     ld hl, (test2_sym_addr)
+040133 CD 08 02 04 0190     call print_hex_addr
+040137             0191 
+040137 21 97 04 04 0192     ld hl, newline
+04013B CD F9 01 04 0193     call print_string
+04013F             0194 
+04013F C9          0195     ret
+040140             0196 
+040140             0197 ; ------------------------------
+040140             0198 ; Test 3: Multiple symbols
+040140             0199 ; ------------------------------
+040140             0200 test_3_multiple_symbols:
+040140 21 CF 03 04 0201     ld hl, test3_header
+040144 CD F9 01 04 0202     call print_string
+040148             0203 
+040148             0204     ; Create two more symbols
+040148 21 81 02 04 0205     ld hl, sym_world
+04014C CD 9A 04 04 0206     call intern_symbol
+040150 22 73 02 04 0207     ld (test3_sym1_addr), hl
+040154             0208 
+040154 21 87 02 04 0209     ld hl, sym_lisp
+040158 CD 9A 04 04 0210     call intern_symbol
+04015C 22 77 02 04 0211     ld (test3_sym2_addr), hl
+040160             0212 
+040160             0213     ; Retrieve all three symbols and verify they're distinct
+040160 21 7B 02 04 0214     ld hl, sym_hello
+040164 CD 9A 04 04 0215     call intern_symbol
+040168 ED 4B 6B 02 0216     ld bc, (test1_sym_addr)
+       04          
+04016D B7          0217     or a                      ; Clear carry
+04016E ED 42       0218     sbc hl, bc
+040170             0219 
+040170 20 58       0220     jr nz, .test3_failed
+040172             0221 
+040172 21 81 02 04 0222     ld hl, sym_world
+040176 CD 9A 04 04 0223     call intern_symbol
+04017A ED 4B 73 02 0224     ld bc, (test3_sym1_addr)
+       04          
+04017F B7          0225     or a                      ; Clear carry
+040180 ED 42       0226     sbc hl, bc
+040182             0227 
+040182 20 46       0228     jr nz, .test3_failed
+040184             0229 
+040184 21 87 02 04 0230     ld hl, sym_lisp
+040188 CD 9A 04 04 0231     call intern_symbol
+04018C ED 4B 77 02 0232     ld bc, (test3_sym2_addr)
+       04          
+040191 B7          0233     or a                      ; Clear carry
+040192 ED 42       0234     sbc hl, bc
+040194             0235 
+040194 20 34       0236     jr nz, .test3_failed
+040196             0237 
+040196             0238     ; Success! All symbols were correctly retrieved
+040196 21 EA 03 04 0239     ld hl, test3_success
+04019A CD F9 01 04 0240     call print_string
+04019E             0241 
+04019E             0242     ; Display the symbol table info
+04019E 21 5A 04 04 0243     ld hl, test3_symtab_info
+0401A2 CD F9 01 04 0244     call print_string
+0401A6             0245 
+0401A6 2A 49 00 04 0246     ld hl, (symtab_ptr)
+0401AA 01 00 D0 05 0247     ld bc, SYMTAB_START
+0401AE B7          0248     or a                      ; Clear carry
+0401AF ED 42       0249     sbc hl, bc
+0401B1 E5          0250     push hl                   ; Save byte count
+0401B2             0251 
+0401B2             0252     ; Divide by 3 to get entry count
+0401B2 11 03 00 00 0253     ld de, 3
+0401B6 CD 4C 02 04 0254     call div16
+0401BA             0255 
+0401BA 7D          0256     ld a, l                   ; Get entry count (should be 3)
+0401BB C6 30       0257     add '0'                   ; Convert to ASCII
+0401BD 32 91 02 04 0258     ld (test3_count), a
+0401C1             0259 
+0401C1 21 78 04 04 0260     ld hl, test3_count_msg
+0401C5 CD F9 01 04 0261     call print_string
+0401C9             0262 
+0401C9 C9          0263     ret
+0401CA             0264 
+0401CA             0265 .test3_failed:
+0401CA 21 28 04 04 0266     ld hl, test3_failed_msg
+0401CE CD F9 01 04 0267     call print_string
+0401D2 C9          0268     ret
+0401D3             0269 
+0401D3             0270 ; ------------------------------
+0401D3             0271 ; COMP_SYMBOL: Compare two null-terminated strings
+0401D3             0272 ; Purpose: Compares two null-terminated strings character by character.
+0401D3             0273 ; Input: HL = pointer to the first string, BC = pointer to the second string
+0401D3             0274 ; Output: HL = T_ADDR if the strings are equal, NIL_ADDR if they are not equal
+0401D3             0275 ; ------------------------------
+0401D3             0276 comp_symbol:
+0401D3 D5          0277     push de
+0401D4             0278 
+0401D4             0279 .loop:
+0401D4 CD 08 02 04 0280     call print_hex_addr
+0401D8 7E          0281     ld a, (hl)          ; Get character from first string
+0401D9 57          0282     ld d, a             ; Save in D
+0401DA 0A          0283     ld a, (bc)          ; Get character from second string
+0401DB             0284 
+0401DB E5          0285     push hl
+0401DC C5          0286     push bc
+0401DD E1          0287     pop hl
+0401DE CD 08 02 04 0288     call print_hex_addr
+0401E2 E1          0289     pop hl
+0401E3             0290 
+0401E3             0291 
+0401E3 BA          0292     cp d                ; Compare characters
+0401E4 20 07       0293     jr nz, .not_equal   ; If not equal, return false
+0401E6             0294 
+0401E6             0295     ; Check if we reached the end (both strings null terminated)
+0401E6 B7          0296     or a                ; Test if character is 0
+0401E7 28 0A       0297     jr z, .equal        ; If zero, we're done and strings match
+0401E9             0298 
+0401E9             0299     ; Move to next character in both strings
+0401E9 23          0300     inc hl
+0401EA 03          0301     inc bc
+0401EB 18 E7       0302     jr .loop
+0401ED             0303 
+0401ED             0304 .not_equal:
+0401ED 21 00 00 05 0305     ld hl, NIL_ADDR     ; Return NIL (false)
+0401F1 D1          0306     pop de
+0401F2 C9          0307     ret
+0401F3             0308 
+0401F3             0309 .equal:
+0401F3 21 04 00 05 0310     ld hl, T_ADDR       ; Return T (true)
+0401F7 D1          0311     pop de
+0401F8 C9          0312     ret
+0401F9             0313 
+0401F9             0314 ; ------------------------------
+0401F9             0315 ; Utility functions
+0401F9             0316 ; ------------------------------
+0401F9             0317 
+0401F9             0318 ; PRINT_STRING: Print a null-terminated string
+0401F9             0319 ; Input: HL = pointer to string
+0401F9             0320 ; Output: None
+0401F9             0321 print_string:
+0401F9 F5          0322     push af
+0401FA C5          0323     push bc
+0401FB E5          0324     push hl
+0401FC             0325 
+0401FC 01 00 00 00 0326     ld bc, 0
+040200 3E 00       0327     ld a, 0
+040202 5B DF       0328     rst.lil $18
+040204             0329 
+040204 E1          0330     pop hl
+040205 C1          0331     pop bc
+040206 F1          0332     pop af
+040207 C9          0333     ret
+040208             0334 
+040208             0335 ; PRINT_HEX_ADDR: Print a 24-bit address in hexadecimal
+040208             0336 ; Input: HL = address to print
+040208             0337 ; Output: None
+040208             0338 print_hex_addr:
+040208 F5          0339     push af
+040209 C5          0340     push bc
+04020A D5          0341     push de
+04020B E5          0342     push hl
+04020C             0343 
+04020C             0344     ; Convert to ASCII hex and store in buffer
+04020C 11 8C 02 04 0345     ld de, hex_buffer
+040210             0346 
+040210             0347     ; High byte
+040210 7C          0348     ld a, h
+040211 CD 29 02 04 0349     call .to_hex
+040215             0350 
+040215             0351     ; Middle byte
+040215 7D          0352     ld a, l
+040216 CD 29 02 04 0353     call .to_hex
+04021A             0354 
+04021A             0355     ; Add null terminator
+04021A AF          0356     xor a
+04021B 12          0357     ld (de), a
+04021C             0358 
+04021C             0359     ; Print the hex string
+04021C 21 8C 02 04 0360     ld hl, hex_buffer
+040220 CD F9 01 04 0361     call print_string
+040224             0362 
+040224 E1          0363     pop hl
+040225 D1          0364     pop de
+040226 C1          0365     pop bc
+040227 F1          0366     pop af
+040228 C9          0367     ret
+040229             0368 
+040229             0369 .to_hex:
+040229 F5          0370     push af
+04022A CB 3F       0371     srl a
+04022C CB 3F       0372     srl a
+04022E CB 3F       0373     srl a
+040230 CB 3F       0374     srl a
+040232 CD 42 02 04 0375     call .nibble
+040236 12          0376     ld (de), a
+040237 13          0377     inc de
+040238             0378 
+040238 F1          0379     pop af
+040239 E6 0F       0380     and $0F
+04023B CD 42 02 04 0381     call .nibble
+04023F 12          0382     ld (de), a
+040240 13          0383     inc de
+040241 C9          0384     ret
+040242             0385 
+040242             0386 .nibble:
+040242 FE 0A       0387     cp 10
+040244 38 03       0388     jr c, .digit
+040246 C6 37       0389     add 'A' - 10
+040248 C9          0390     ret
+040249             0391 .digit:
+040249 C6 30       0392     add '0'
+04024B C9          0393     ret
+04024C             0394 
+04024C             0395 ; DIV16: 16-bit division
+04024C             0396 ; Input: HL = numerator, DE = denominator
+04024C             0397 ; Output: HL = HL / DE, BC = HL % DE
+04024C             0398 div16:
+04024C 01 00 00 00 0399     ld bc, 0            ; Remainder
+040250 3E 10       0400     ld a, 16            ; 16 bits
+040252             0401 
+040252             0402 .loop_div:
+040252             0403     ; Shift HL left, MSB into carry
+040252 29          0404     add hl, hl
+040253             0405 
+040253             0406     ; Shift carry into BC
+040253 CB 11       0407     rl c
+040255 CB 10       0408     rl b
+040257             0409 
+040257             0410     ; Compare BC with DE
+040257 E5          0411     push hl
+040258 60          0412     ld h, b
+040259 69          0413     ld l, c
+04025A B7          0414     or a               ; Clear carry
+04025B ED 52       0415     sbc hl, de
+04025D 38 07       0416     jr c, .no_sub
+04025F             0417 
+04025F             0418     ; BC >= DE, keep result and set bit 0 of HL
+04025F 44          0419     ld b, h
+040260 4D          0420     ld c, l
+040261 E1          0421     pop hl
+040262 CB C5       0422     set 0, l
+040264 18 01       0423     jr .next
+040266             0424 
+040266             0425 .no_sub:
+040266 E1          0426     pop hl
+040267             0427 
+040267             0428 .next:
+040267 3D          0429     dec a
+040268 20 E8       0430     jr nz, .loop_div
+04026A             0431 
+04026A C9          0432     ret
+04026B             0433 
+04026B             0434 ; ------------------------------
+04026B             0435 ; Data section
+04026B             0436 ; ------------------------------
+04026B             0437 
+04026B             0438 ; Test variables
+04026B 00 00 00 00 0439 test1_sym_addr:    .dw 0, 0     ; 24-bit address storage
+04026F 00 00 00 00 0440 test2_sym_addr:    .dw 0, 0
+040273 00 00 00 00 0441 test3_sym1_addr:   .dw 0, 0
+040277 00 00 00 00 0442 test3_sym2_addr:   .dw 0, 0
+04027B             0443 
+04027B             0444 ; Test symbols
+04027B 48 45 4C 4C 0445 sym_hello:         .db "HELLO", 0
+       4F 00       
+040281 57 4F 52 4C 0446 sym_world:         .db "WORLD", 0
+       44 00       
+040287 4C 49 53 50 0447 sym_lisp:          .db "LISP", 0
+       00          
+04028C             0448 
+04028C             0449 ; Output buffer
+04028C             0450 hex_buffer:        .ds 5        ; Room for 4 hex digits + null terminator
+       FF FF FF FF 
+       FF 
+040291 30 00       0451 test3_count:       .db "0", 0
+040293             0452 
+040293             0453 ; Test messages
+040293 4B 4C 49 53 0454 test_header:       .db "KLISP Symbol Table Tests", 13, 10, 13, 10, 0
+       50 20 53 79 
+       6D 62 6F 6C 
+       20 54 61 62 
+       6C 65 20 54 
+       65 73 74 73 
+       0D 0A 0D 0A 
+       00          
+0402B0             0455 
+0402B0 54 65 73 74 0456 test1_header:      .db "Test 1: Basic Symbol Creation", 13, 10, 0
+       20 31 3A 20 
+       42 61 73 69 
+       63 20 53 79 
+       6D 62 6F 6C 
+       20 43 72 65 
+       61 74 69 6F 
+       6E 0D 0A 00 
+0402D0 20 20 50 41 0457 test1_success:     .db "  PASS: Successfully created symbol 'HELLO'", 13, 10, 0
+       53 53 3A 20 
+       53 75 63 63 
+       65 73 73 66 
+       75 6C 6C 79 
+       20 63 72 65 
+       61 74 65 64 
+       20 73 79 6D 
+       62 6F 6C 20 
+       27 48 45 4C 
+       4C 4F 27 0D 
+       0A 00       
+0402FE 20 20 46 41 0458 test1_failed_msg:  .db "  FAIL: Could not create symbol", 13, 10, 0
+       49 4C 3A 20 
+       43 6F 75 6C 
+       64 20 6E 6F 
+       74 20 63 72 
+       65 61 74 65 
+       20 73 79 6D 
+       62 6F 6C 0D 
+       0A 00       
+040320 20 20 53 79 0459 test1_addr_msg:    .db "  Symbol address: $", 0
+       6D 62 6F 6C 
+       20 61 64 64 
+       72 65 73 73 
+       3A 20 24 00 
+040334             0460 
+040334 54 65 73 74 0461 test2_header:      .db "Test 2: Symbol Retrieval", 13, 10, 0
+       20 32 3A 20 
+       53 79 6D 62 
+       6F 6C 20 52 
+       65 74 72 69 
+       65 76 61 6C 
+       0D 0A 00    
+04034F 20 20 50 41 0462 test2_success:     .db "  PASS: Successfully retrieved the same symbol address", 13, 10, 0
+       53 53 3A 20 
+       53 75 63 63 
+       65 73 73 66 
+       75 6C 6C 79 
+       20 72 65 74 
+       72 69 65 76 
+       65 64 20 74 
+       68 65 20 73 
+       61 6D 65 20 
+       73 79 6D 62 
+       6F 6C 20 61 
+       64 64 72 65 
+       73 73 0D 0A 
+       00          
+040388 20 20 46 41 0463 test2_failed_msg:  .db "  FAIL: Got different address for same symbol", 13, 10, 0
+       49 4C 3A 20 
+       47 6F 74 20 
+       64 69 66 66 
+       65 72 65 6E 
+       74 20 61 64 
+       64 72 65 73 
+       73 20 66 6F 
+       72 20 73 61 
+       6D 65 20 73 
+       79 6D 62 6F 
+       6C 0D 0A 00 
+0403B8 20 20 45 78 0464 test2_expected:    .db "  Expected: $", 0
+       70 65 63 74 
+       65 64 3A 20 
+       24 00       
+0403C6 2C 20 47 6F 0465 test2_actual:      .db ", Got: $", 0
+       74 3A 20 24 
+       00          
+0403CF             0466 
+0403CF 54 65 73 74 0467 test3_header:      .db "Test 3: Multiple Symbols", 13, 10, 0
+       20 33 3A 20 
+       4D 75 6C 74 
+       69 70 6C 65 
+       20 53 79 6D 
+       62 6F 6C 73 
+       0D 0A 00    
+0403EA 20 20 50 41 0468 test3_success:     .db "  PASS: Successfully created and retrieved multiple symbols", 13, 10, 0
+       53 53 3A 20 
+       53 75 63 63 
+       65 73 73 66 
+       75 6C 6C 79 
+       20 63 72 65 
+       61 74 65 64 
+       20 61 6E 64 
+       20 72 65 74 
+       72 69 65 76 
+       65 64 20 6D 
+       75 6C 74 69 
+       70 6C 65 20 
+       73 79 6D 62 
+       6F 6C 73 0D 
+       0A 00       
+040428 20 20 46 41 0469 test3_failed_msg:  .db "  FAIL: Symbol retrieval did not match creation", 13, 10, 0
+       49 4C 3A 20 
+       53 79 6D 62 
+       6F 6C 20 72 
+       65 74 72 69 
+       65 76 61 6C 
+       20 64 69 64 
+       20 6E 6F 74 
+       20 6D 61 74 
+       63 68 20 63 
+       72 65 61 74 
+       69 6F 6E 0D 
+       0A 00       
+04045A 20 20 53 79 0470 test3_symtab_info: .db "  Symbol table information:", 13, 10, 0
+       6D 62 6F 6C 
+       20 74 61 62 
+       6C 65 20 69 
+       6E 66 6F 72 
+       6D 61 74 69 
+       6F 6E 3A 0D 
+       0A 00       
+040478 20 20 4E 75 0471 test3_count_msg:   .db "  Number of symbols in table: ", 0
+       6D 62 65 72 
+       20 6F 66 20 
+       73 79 6D 62 
+       6F 6C 73 20 
+       69 6E 20 74 
+       61 62 6C 65 
+       3A 20 00    
+040497             0472 
+040497 0D 0A 00    0473 newline:           .db 13, 10, 0
+04049A             0474 
+04049A             0475 ; ------------------------------
+04049A             0476 ; Include the INTERN_SYMBOL function from main code
+04049A             0477 ; ------------------------------
+04049A             0478 
+04049A             0479 ; INTERN_SYMBOL: Look up or create a symbol
+04049A             0480 ; Input: HL = pointer to null-terminated name
+04049A             0481 ; Output: HL = address of symbol
+04049A             0482 intern_symbol:
+04049A C5          0483     push bc
+04049B D5          0484     push de
+04049C             0485 
+04049C             0486     ; Save the name pointer
+04049C E5          0487     push hl
+04049D             0488 
+04049D             0489     ; First check if this symbol already exists in the symbol table
+04049D 11 00 D0 05 0490     ld de, SYMTAB_START
+0404A1             0491 
+0404A1             0492 .check_loop:
+0404A1             0493     ; Check if we've reached the end of the symbol table
+0404A1 ED 4B 49 00 0494     ld bc, (symtab_ptr)
+       04          
+0404A6 B7          0495     or a                      ; Clear carry
+0404A7 E5          0496     push hl                   ; Save name pointer
+0404A8 ED 42       0497     sbc hl, bc
+0404AA 28 22       0498     jr z, .symbol_not_found   ; If at end of symtab, symbol doesn't exist
+0404AC E1          0499     pop hl                    ; Restore name pointer
+0404AD             0500 
+0404AD             0501     ; Get current symbol from table
+0404AD E5          0502     push hl                   ; Save name pointer
+0404AE             0503 
+0404AE             0504     ; Get symbol address from table (LD HL, (DE) not supported)
+0404AE             0505     ;push (DE)
+0404AE             0506     ;pop HL                 ; HL = symbol from table
+0404AE 1A          0507     ld a, (de)
+0404AF 6F          0508     ld l, a
+0404B0 13          0509     inc de
+0404B1 1A          0510     ld a, (de)
+0404B2 67          0511     ld h, a
+0404B3 1B          0512     dec de                   ; Restore DE
+0404B4             0513 
+0404B4             0514     ; Compare name with this symbol
+0404B4 5B ED 07    0515     ld.lil bc, (hl)                 ; BC = symbol from table
+0404B7 E1          0516     pop hl                    ; HL = name to find
+0404B8             0517 
+0404B8 D5          0518     push de                   ; Save table position
+0404B9 E5          0519     push hl                   ; Save name pointer
+0404BA CD D3 01 04 0520     call comp_symbol          ; Compare strings - returns T_ADDR if equal
+0404BE             0521 
+0404BE             0522     ; Check result of comparison
+0404BE 01 04 00 05 0523     ld bc, T_ADDR
+0404C2 B7          0524     or a                      ; Clear carry
+0404C3 ED 42       0525     sbc hl, bc
+0404C5 E1          0526     pop hl                    ; Restore name pointer
+0404C6 D1          0527     pop de                    ; Restore table position
+0404C7             0528 
+0404C7 28 3E       0529     jr z, .symbol_found       ; If equal, return this symbol
+0404C9             0530 
+0404C9             0531     ; Not a match, move to next entry
+0404C9 13          0532     inc de
+0404CA 13          0533     inc de
+0404CB 13          0534     inc de                    ; Each entry is 3 bytes (24-bit address)
+0404CC 18 D3       0535     jr .check_loop
+0404CE             0536 
+0404CE             0537 .symbol_not_found:
+0404CE             0538     ; Need to release the extra stack item we pushed
+0404CE E1          0539     pop hl                    ; Clear extra stack item
+0404CF             0540 
+0404CF             0541     ; Symbol not found, create a new one
+0404CF E1          0542     pop hl                    ; Restore name pointer
+0404D0             0543 
+0404D0             0544     ; Get hash/value from name (simplified - just use first char for now)
+0404D0 7E          0545     ld a, (hl)
+0404D1 01 00 C0 00 0546     ld bc, ATOM_FLAG | SYM_FLAG
+0404D5 B1          0547     or c                      ; Combine with flag
+0404D6 4F          0548     ld c, a
+0404D7             0549 
+0404D7             0550     ; Create the atom
+0404D7 C5          0551     push bc                   ; Save atom value
+0404D8 E5          0552     push hl                   ; Save name pointer
+0404D9             0553 
+0404D9 01 00 00 00 0554     ld bc, 0                  ; CDR = 0
+0404DD 11 00 00 00 0555     ld de, 0
+0404E1 CD 10 05 04 0556     call cons                 ; Create new cell
+0404E5             0557 
+0404E5 DD E1       0558     pop ix                    ; Get name pointer to IX
+0404E7 C1          0559     pop bc                    ; Restore atom value
+0404E8             0560 
+0404E8             0561     ; Store the atom value in the CAR
+0404E8 E5          0562     push hl                   ; Save cell address
+0404E9 11 03 00 00 0563     ld de, 3                  ; CAR offset
+0404ED 19          0564     add hl, de
+0404EE ED 0F       0565     ld (hl), bc               ; Set CAR value
+0404F0 E1          0566     pop hl                    ; Restore cell address
+0404F1             0567 
+0404F1             0568     ; Add to symbol table
+0404F1 E5          0569     push hl                   ; Save symbol address
+0404F2 ED 07       0570     ld bc, (hl)
+0404F4 2A 49 00 04 0571     ld hl, (symtab_ptr)
+0404F8 ED 0F       0572     ld (hl), bc               ; Store symbol address in symtab
+0404FA             0573 
+0404FA             0574     ; Update symtab pointer
+0404FA 01 03 00 00 0575     ld bc, 3                  ; Each entry is 3 bytes
+0404FE 09          0576     add hl, bc
+0404FF 22 49 00 04 0577     ld (symtab_ptr), hl
+040503             0578 
+040503 E1          0579     pop hl                    ; Restore symbol address - this is our return value
+040504 D1          0580     pop de
+040505 C1          0581     pop bc
+040506 C9          0582     ret
+040507             0583 
+040507             0584 .symbol_found:
+040507             0585     ; We found the symbol, return its address
+040507 E1          0586     pop hl                    ; Clear name pointer from stack
+040508             0587 
+040508             0588     ; Get the symbol address (already in DE pointing to symtab entry)
+040508 1A          0589     ld a, (de)
+040509 6F          0590     ld l, a
+04050A 13          0591     inc de
+04050B 1A          0592     ld a, (de)
+04050C 67          0593     ld h, a
+04050D             0594     ; (third byte handling if needed for 24-bit addressing)
+04050D             0595 
+04050D D1          0596     pop de
+04050E C1          0597     pop bc
+04050F C9          0598     ret
+040510             0599 
+040510             0600 ; CONS: Create a new cell with CAR=bc, CDR=de
+040510             0601 ; Input: BC = CAR value, DE = CDR value
+040510             0602 ; Output: HL = address of new cell
+040510             0603 cons:
+040510 C5          0604     push bc                  ; Save CAR
+040511 D5          0605     push de                  ; Save CDR
+040512             0606 
+040512 2A 45 00 04 0607     ld hl, (heap_ptr)        ; Get current heap pointer
+040516             0608 
+040516 D1          0609     pop de                   ; Get CDR
+040517 ED 1F       0610     ld (hl), de              ; Store CDR
+040519 23          0611     inc hl
+04051A 23          0612     inc hl
+04051B 23          0613     inc hl
+04051C             0614 
+04051C C1          0615     pop bc                   ; Get CAR
+04051D ED 0F       0616     ld (hl), bc              ; Store CAR
+04051F             0617 
+04051F 2A 45 00 04 0618     ld hl, (heap_ptr)        ; Return the new cell address
+040523             0619 
+040523             0620     ; Update heap pointer (6 bytes per cell in ADL mode)
+040523 01 06 00 00 0621     ld bc, 6                 ; Cell size is 6 bytes (2x3-byte pointers)
+040527 09          0622     add hl, bc
+040528 22 45 00 04 0623     ld (heap_ptr), hl
+04052C             0624 
+04052C C9          0625     ret
+04052D             0626 
+04052D             0627 ; End of file

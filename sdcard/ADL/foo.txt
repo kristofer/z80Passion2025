@@ -1,7 +1,1 @@
-this  is  wacky! 
-
-This relly is VI!
-
-after all this time on a z80.
-
-
+this is a file

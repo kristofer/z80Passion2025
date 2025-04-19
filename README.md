@@ -18,8 +18,12 @@ Messing about in the Project board.
 
 ## Useful Links
 
-[agon-utilities](https://github.com/lennart-benschop/agon-utilities)
-[sectorlisp](https://github.com/jart/sectorlisp)
+- [agon-utilities](https://github.com/lennart-benschop/agon-utilities)
+- [sectorlisp](https://github.com/jart/sectorlisp)
+- [agon development asm](https://github.com/andymccall/agon-development)
+- [the agon ez80asm assember](https://github.com/AgonConsole8/agon-ez80asm)
+- [the Emulator](https://github.com/tomm/fab-agon-emulator)
+- [Agon Light Assembly examples](https://github.com/schur/Agon-Light-Assembly)
 
 ### when I started
 
