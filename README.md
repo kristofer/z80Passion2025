@@ -18,6 +18,7 @@ Messing about in the Project board.
 
 ## Useful Links
 
+- [agondev, new C compiler](https://github.com/AgonPlatform/agondev)
 - [agon-utilities](https://github.com/lennart-benschop/agon-utilities)
 - [sectorlisp](https://github.com/jart/sectorlisp)
 - [agon development asm](https://github.com/andymccall/agon-development)
@@ -25,8 +26,8 @@ Messing about in the Project board.
 - [the Emulator](https://github.com/tomm/fab-agon-emulator)
 - [Agon Light Assembly examples](https://github.com/schur/Agon-Light-Assembly)
 - [Agon Software (awesome list)](https://github.com/sabotrax/agon-software)
-
-
+- [agon asm examples](https://github.com/kristofer/Agon-FUN)
+- [envenomator Jeroen Venema Agon samples](https://github.com/kristofer/Agon)
 ### when I started
 
 I had four main ideas for sidecar passion projects for Spring25 cohort.
