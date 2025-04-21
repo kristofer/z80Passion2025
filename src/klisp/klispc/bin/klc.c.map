@@ -1,0 +1,198 @@
+Archive member included to satisfy reference by file (symbol)
+
+/media/kristofer/ORICO/p/agondev/release/lib/libc.a(puts.o)
+                              obj/klc.o (_puts)
+/media/kristofer/ORICO/p/agondev/release/lib/libc.a(putchar.o)
+                              /media/kristofer/ORICO/p/agondev/release/lib/libc.a(puts.o) (_putchar)
+/media/kristofer/ORICO/p/agondev/release/lib/libc.a(files.o)
+                              /media/kristofer/ORICO/p/agondev/release/lib/libc.a(putchar.o) (_stdout)
+/media/kristofer/ORICO/p/agondev/release/lib/libc.a(fputc.o)
+                              /media/kristofer/ORICO/p/agondev/release/lib/libc.a(putchar.o) (_fputc)
+/media/kristofer/ORICO/p/agondev/release/lib/libc.a(mos_fputc.o)
+                              /media/kristofer/ORICO/p/agondev/release/lib/libc.a(fputc.o) (_mos_fputc)
+/media/kristofer/ORICO/p/agondev/release/lib/libc.a(outchar.o)
+                              /media/kristofer/ORICO/p/agondev/release/lib/libc.a(putchar.o) (_outchar)
+/media/kristofer/ORICO/p/agondev/release/lib/libcrt.a(crt0.o)
+                              (__start)
+/media/kristofer/ORICO/p/agondev/release/lib/libcrt.a(frameset0.o)
+                              obj/klc.o (__frameset0)
+/media/kristofer/ORICO/p/agondev/release/lib/libcrt.a(indcallhl.o)
+                              /media/kristofer/ORICO/p/agondev/release/lib/libcrt.a(crt0.o) (__indcallhl)
+/media/kristofer/ORICO/p/agondev/release/lib/libc.a(free.c.o)
+                              /media/kristofer/ORICO/p/agondev/release/lib/libcrt.a(crt0.o) (_free)
+/media/kristofer/ORICO/p/agondev/release/lib/libc.a(malloc.c.o)
+                              /media/kristofer/ORICO/p/agondev/release/lib/libcrt.a(crt0.o) (_malloc)
+/media/kristofer/ORICO/p/agondev/release/lib/libc.a(sbrk.o)
+                              /media/kristofer/ORICO/p/agondev/release/lib/libc.a(malloc.c.o) (_sbrk)
+/media/kristofer/ORICO/p/agondev/release/lib/libcrt.a(frameset.o)
+                              /media/kristofer/ORICO/p/agondev/release/lib/libc.a(free.c.o) (__frameset)
+
+There are no discarded input sections
+
+Memory Configuration
+
+Name             Origin             Length             Attributes
+USERRAM          0x00040000         0x00070000         rw
+*default*        0x00000000         0xffffffff
+
+Linker script and memory map
+
+                0x00040000                        RAM_START = 0x40000
+                0x00070000                        RAM_SIZE = 0x70000
+                0x00000000                        _has_exit_handler = 0x0
+                0x00040000                        . = RAM_START
+
+.init           0x00040000      0x1d4
+ *(.init .init.args .init.bss .fini)
+ .init          0x00040000       0xbb /media/kristofer/ORICO/p/agondev/release/lib/libcrt.a(crt0.o)
+                0x00040040                __mos_header
+                0x00040045                __start
+                0x000400b8                __start._main
+ .fini          0x000400bb       0xbe /media/kristofer/ORICO/p/agondev/release/lib/libcrt.a(crt0.o)
+                0x000400bb                ___exithl
+                0x000400bd                _exit
+                0x0004011c                __Exit
+                0x00040120                _abort
+ .init.bss      0x00040179       0x11 /media/kristofer/ORICO/p/agondev/release/lib/libcrt.a(crt0.o)
+ .init.args     0x0004018a       0x4a /media/kristofer/ORICO/p/agondev/release/lib/libcrt.a(crt0.o)
+                0x0004018a                _parse_option
+                0x0004018a                _parse_params
+
+.text           0x000401d4      0x37f
+ *(.text)
+ .text          0x000401d4       0x32 obj/klc.o
+                0x000401d4                _main
+ .text          0x00040206       0x2c /media/kristofer/ORICO/p/agondev/release/lib/libc.a(puts.o)
+                0x00040206                _puts
+ .text          0x00040232       0x2f /media/kristofer/ORICO/p/agondev/release/lib/libc.a(putchar.o)
+                0x00040232                _putchar
+ .text          0x00040261       0x52 /media/kristofer/ORICO/p/agondev/release/lib/libc.a(files.o)
+                0x00040261                __stdio_init
+ .text          0x000402b3       0xb7 /media/kristofer/ORICO/p/agondev/release/lib/libc.a(fputc.o)
+                0x000402b3                _fputc
+                0x00040343                _fput_char
+ .text          0x0004036a       0x18 /media/kristofer/ORICO/p/agondev/release/lib/libc.a(mos_fputc.o)
+                0x0004036a                _mos_fputc
+ .text          0x00040382        0x7 /media/kristofer/ORICO/p/agondev/release/lib/libc.a(outchar.o)
+                0x00040382                _outchar
+ .text          0x00040389       0x2c /media/kristofer/ORICO/p/agondev/release/lib/libcrt.a(crt0.o)
+                0x00040389                _atexit
+                0x00040389                _on_exit
+ .text          0x000403b5        0xb /media/kristofer/ORICO/p/agondev/release/lib/libcrt.a(frameset0.o)
+                0x000403b5                __frameset0
+ .text          0x000403c0        0x1 /media/kristofer/ORICO/p/agondev/release/lib/libcrt.a(indcallhl.o)
+                0x000403c0                __indcallhl
+ .text          0x000403c1       0xbd /media/kristofer/ORICO/p/agondev/release/lib/libc.a(free.c.o)
+                0x000403c1                _free
+ .text          0x0004047e       0x9f /media/kristofer/ORICO/p/agondev/release/lib/libc.a(malloc.c.o)
+                0x0004047e                _malloc
+ .text          0x0004051d       0x28 /media/kristofer/ORICO/p/agondev/release/lib/libc.a(sbrk.o)
+                0x0004051d                _sbrk
+ .text          0x00040545        0xe /media/kristofer/ORICO/p/agondev/release/lib/libcrt.a(frameset.o)
+                0x00040545                __frameset
+
+.init_array     0x00040553        0x0
+ *(.init_array)
+ .init_array    0x00040553        0x0 /media/kristofer/ORICO/p/agondev/release/lib/libcrt.a(crt0.o)
+
+.ctors          0x00040553        0x0
+ *(.ctors)
+ .ctors         0x00040553        0x0 /media/kristofer/ORICO/p/agondev/release/lib/libcrt.a(crt0.o)
+
+.dtors          0x00040553        0x0
+ *(.dtors)
+ .dtors         0x00040553        0x0 /media/kristofer/ORICO/p/agondev/release/lib/libcrt.a(crt0.o)
+
+.comment        0x00000000      0x227
+ .comment       0x00000000       0x71 obj/klc.o
+ .comment       0x00000071       0x71 /media/kristofer/ORICO/p/agondev/release/lib/libc.a(files.o)
+ .comment       0x000000e2       0x71 /media/kristofer/ORICO/p/agondev/release/lib/libc.a(fputc.o)
+ .comment       0x00000153       0x6a /media/kristofer/ORICO/p/agondev/release/lib/libc.a(free.c.o)
+ .comment       0x000001bd       0x6a /media/kristofer/ORICO/p/agondev/release/lib/libc.a(malloc.c.o)
+
+.fini_array     0x00040553        0x0
+ *(.fini_array)
+ .fini_array    0x00040553        0x0 /media/kristofer/ORICO/p/agondev/release/lib/libcrt.a(crt0.o)
+
+.rodata         0x00040553       0x5a
+ *(.rodata)
+ .rodata        0x00040553       0x45 obj/klc.o
+ .rodata        0x00040598        0x9 /media/kristofer/ORICO/p/agondev/release/lib/libc.a(puts.o)
+                0x00040598                ___null_literal_str
+                0x0004059f                ___end_of_line_str
+ .rodata        0x000405a1        0xc /media/kristofer/ORICO/p/agondev/release/lib/libcrt.a(crt0.o)
+
+.data           0x000405ad       0x48
+ *(.data)
+ .data          0x000405ad        0x0 obj/klc.o
+ .data          0x000405ad        0x0 /media/kristofer/ORICO/p/agondev/release/lib/libc.a(puts.o)
+ .data          0x000405ad        0x0 /media/kristofer/ORICO/p/agondev/release/lib/libc.a(putchar.o)
+ .data          0x000405ad        0xf /media/kristofer/ORICO/p/agondev/release/lib/libc.a(files.o)
+                0x000405ad                _stdin
+                0x000405b2                _stdout
+                0x000405b7                _stderr
+ .data          0x000405bc        0x0 /media/kristofer/ORICO/p/agondev/release/lib/libc.a(fputc.o)
+ .data          0x000405bc        0x0 /media/kristofer/ORICO/p/agondev/release/lib/libc.a(mos_fputc.o)
+ .data          0x000405bc        0x0 /media/kristofer/ORICO/p/agondev/release/lib/libc.a(outchar.o)
+ .data          0x000405bc       0x36 /media/kristofer/ORICO/p/agondev/release/lib/libcrt.a(crt0.o)
+                0x000405ef                _exit.sp
+ .data          0x000405f2        0x0 /media/kristofer/ORICO/p/agondev/release/lib/libcrt.a(frameset0.o)
+ .data          0x000405f2        0x0 /media/kristofer/ORICO/p/agondev/release/lib/libcrt.a(indcallhl.o)
+ .data          0x000405f2        0x0 /media/kristofer/ORICO/p/agondev/release/lib/libc.a(free.c.o)
+ .data          0x000405f2        0x0 /media/kristofer/ORICO/p/agondev/release/lib/libc.a(malloc.c.o)
+ .data          0x000405f2        0x3 /media/kristofer/ORICO/p/agondev/release/lib/libc.a(sbrk.o)
+                0x000405f2                __sbrkbase
+ .data          0x000405f5        0x0 /media/kristofer/ORICO/p/agondev/release/lib/libcrt.a(frameset.o)
+
+.bss            0x000405f5       0x2e
+                0x000405f5                        bss_start = .
+ *(.bss .bss*)
+ .bss           0x000405f5        0x0 obj/klc.o
+ .bss           0x000405f5        0x0 /media/kristofer/ORICO/p/agondev/release/lib/libc.a(puts.o)
+ .bss           0x000405f5        0x0 /media/kristofer/ORICO/p/agondev/release/lib/libc.a(putchar.o)
+ .bss           0x000405f5       0x28 /media/kristofer/ORICO/p/agondev/release/lib/libc.a(files.o)
+                0x000405f5                __file_streams
+ .bss           0x0004061d        0x0 /media/kristofer/ORICO/p/agondev/release/lib/libc.a(fputc.o)
+ .bss           0x0004061d        0x0 /media/kristofer/ORICO/p/agondev/release/lib/libc.a(mos_fputc.o)
+ .bss           0x0004061d        0x0 /media/kristofer/ORICO/p/agondev/release/lib/libc.a(outchar.o)
+ .bss           0x0004061d        0x0 /media/kristofer/ORICO/p/agondev/release/lib/libcrt.a(crt0.o)
+ .bss           0x0004061d        0x0 /media/kristofer/ORICO/p/agondev/release/lib/libcrt.a(frameset0.o)
+ .bss           0x0004061d        0x0 /media/kristofer/ORICO/p/agondev/release/lib/libcrt.a(indcallhl.o)
+ .bss           0x0004061d        0x0 /media/kristofer/ORICO/p/agondev/release/lib/libc.a(free.c.o)
+ .bss           0x0004061d        0x6 /media/kristofer/ORICO/p/agondev/release/lib/libc.a(malloc.c.o)
+                0x0004061d                __alloc_base
+ .bss           0x00040623        0x0 /media/kristofer/ORICO/p/agondev/release/lib/libc.a(sbrk.o)
+ .bss           0x00040623        0x0 /media/kristofer/ORICO/p/agondev/release/lib/libcrt.a(frameset.o)
+                0x00040623                        bss_end = .
+                0x000b0000                        __stack = (RAM_START + RAM_SIZE)
+                0x000405f5                        ___low_bss = bss_start
+                0x0000002e                        ___len_bss = SIZEOF (.bss)
+                0x00040623                        ___heapbot = bss_end
+                0x000b0000                        ___heaptop = (RAM_START + RAM_SIZE)
+                0x00000001                        ___run_clearbss = (___len_bss > 0x0)
+                0x00000000                        ___init_array_count = (SIZEOF (.init_array) / 0x3)
+                0x00000000                        ___ctors_count = (SIZEOF (.ctors) / 0x3)
+                0x00000000                        ___dtors_count = (SIZEOF (.dtors) / 0x3)
+                0x00000000                        ___fini_array_count = (SIZEOF (.fini_array) / 0x3)
+                0x00000000                        ___init_count = (___init_array_count + ___ctors_count)
+                0x00000000                        ___fini_count = (___dtors_count + ___fini_array_count)
+                0x00000000                        ___run_init = (___init_count > 0x0)
+                0x00000000                        ___run_fini = (___fini_count > 0x0)
+                0x00000100                        ___init_count_a = ((((___init_count - 0x1) >> 0x10) & 0xff) + 0x1)
+                0x00000100                        ___init_count_b = (((___init_count - 0x1) & 0xff) + 0x1)
+                0x00000100                        ___init_count_c = ((((___init_count - 0x1) >> 0x8) & 0xff) + 0x1)
+                0x00000100                        ___fini_count_a = ((((___fini_count - 0x1) >> 0x10) & 0xff) + 0x1)
+                0x00000100                        ___fini_count_b = (((___fini_count - 0x1) & 0xff) + 0x1)
+                0x00000100                        ___fini_count_c = ((((___fini_count - 0x1) >> 0x8) & 0xff) + 0x1)
+                0x00040553                        ___init_array_functions = (SIZEOF (.init_array) + ADDR (.init_array))
+                0x00040553                        ___init_ctors_functions = (SIZEOF (.ctors) + ADDR (.ctors))
+                0x00040553                        ___fini_dtors_functions = (SIZEOF (.dtors) + ADDR (.dtors))
+                0x00040553                        ___fini_array_functions = (SIZEOF (.fini_array) + ADDR (.fini_array))
+LOAD obj/klc.o
+START GROUP
+LOAD /media/kristofer/ORICO/p/agondev/release/lib/libc.a
+LOAD /media/kristofer/ORICO/p/agondev/release/lib/libagon.a
+LOAD /media/kristofer/ORICO/p/agondev/release/lib/libcrt.a
+LOAD /media/kristofer/ORICO/p/agondev/release/lib/libfp.a
+END GROUP
+OUTPUT(bin/klc.c.bin binary)
