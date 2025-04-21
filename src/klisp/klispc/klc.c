@@ -1,9 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
+//#include <stdbool.h>
 #include <string.h>
 
-// // Cell type definitions
+// Cell type definitions
 // typedef enum {
 //     CELL_ATOM,
 //     CELL_PAIR
@@ -24,7 +24,7 @@
 // Cell *NIL;
 // Cell *T;
 
-// // Function prototypes
+// Function prototypes
 // Cell *cons(Cell *car, Cell *cdr);
 // Cell *car(Cell *cell);
 // Cell *cdr(Cell *cell);
@@ -34,8 +34,9 @@
 // void print_expr(Cell *expr);
 // void init_lisp();
 // void cleanup_lisp();
+// int main(int argc, char *argv[]);
 
-// // Initialize LISP environment
+// Initialize LISP environment
 // void init_lisp() {
 //     // Create NIL as a special atom
 //     NIL = (Cell*)malloc(sizeof(Cell));
@@ -51,7 +52,7 @@
 //     T->value.atom = strdup("T");
 // }
 
-// // Clean up LISP environment (very basic - not handling all memory)
+// Clean up LISP environment (very basic - not handling all memory)
 // void cleanup_lisp() {
 //     free(NIL->value.atom);
 //     free(NIL);
@@ -128,7 +129,7 @@
 //     return atom;
 // }
 
-// // Print a LISP expression
+// Print a LISP expression
 // void print_expr(Cell *expr) {
 //     if (expr == NIL) {
 //         printf("NIL");
@@ -142,28 +143,28 @@
     
 //     // Print a list: (a b c)
 //     printf("(");
-//     print_expr(car(expr));
+//    print_expr(car(expr));
     
-//     // Print the rest of the list
-//     Cell *rest = cdr(expr);
-//     while (rest != NIL && rest->type == CELL_PAIR) {
-//         printf(" ");
-//         print_expr(car(rest));
-//         rest = cdr(rest);
-//     }
+    // Print the rest of the list
+    // Cell *rest = cdr(expr);
+    // while (rest != NIL && rest->type == CELL_PAIR) {
+    //     printf(" ");
+    //     print_expr(car(rest));
+    //     rest = cdr(rest);
+    // }
     
-//     // Handle dotted pairs: (a . b)
-//     if (rest != NIL) {
-//         printf(" . ");
-//         print_expr(rest);
-//     }
+    // Handle dotted pairs: (a . b)
+    // if (rest != NIL) {
+    //     printf(" . ");
+    //     print_expr(rest);
+    // }
     
 //     printf(")");
 // }
 
-// // Simple test function
-// void run_tests() {
-//     // Create some atoms
+// Simple test function
+//void run_tests() {
+    // Create some atoms
 //     Cell *a = make_atom("A");
 //     Cell *b = make_atom("B");
 //     Cell *c = make_atom("C");
@@ -207,22 +208,22 @@
 //     printf("List test: ");
 //     print_expr(list);
 //     printf("\n");
-// }
+//}
 
-int main() {
+int main(int argc, char *argv[]) {
     // Initialize LISP environment
     printf("start\n");
     printf("init_lisp\n");
-    // init_lisp();
+//    init_lisp();
     
-    // printf("Simple LISP Implementation\n");
-    // printf("-------------------------\n");
+    printf("Simple LISP Implementation\n");
+    printf("-------------------------\n");
     
-    // // Run tests
-    // run_tests();
+    // Run tests
+//    run_tests();
     
-    // // Clean up
-    // cleanup_lisp();
+    // Clean up
+//    cleanup_lisp();
     
     return 0;
 }

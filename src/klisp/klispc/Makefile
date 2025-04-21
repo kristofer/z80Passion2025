@@ -1,25 +1,16 @@
+# ----------------------------
+# Makefile Options
+# ----------------------------
 
-default: all
+NAME=hello.c
 
-klispc:
-	@echo "Building klispc..."
-	mkdir -p bin
-	zcc +agon -o bin/klc.bin main.c -DAMALLOC
-	cp bin/klc.bin ~/LocalProjects/agon-emulator/fab-agon-emulator/sdcard/bin
+# Select option for Argument Processing at 'int main( int argc, char* argv[] )'
+# 0: Simple Command Line Processing
+# 1: Complex Command Line Processing - for Redirection & Quoting
+LDHAS_ARG_PROCESSING = 0
+LDHAS_EXIT_HANDLER = 0
 
-hello:
-	@echo "Building hello world..."
-	mkdir -p bin
-	zcc +agon -o bin/hello.bin hello.c -DAMALLOC
-	cp bin/hello.bin ~/LocalProjects/agon-emulator/fab-agon-emulator/sdcard/bin
+# ----------------------------
+#
+include $(shell agondev-config --makefile)
 
-
-clean:
-	@echo "Cleaning project..."
-	rm -rf bin
-	rm -rf src/*.bin
-	
-all: klispc hello
-	@echo "All targets built successfully."
-	@echo "You can find the binaries in the bin directory."
-	@echo "Remember to copy them to the appropriate location for your emulator."
