@@ -124,11 +124,11 @@ void init_lisp() {
     T->type = CELL_ATOM;
     T->value.atom = strdup("T");
     
-    // // Create special symbols
-    // QUOTE_SYM = make_atom("QUOTE");
-    // LAMBDA_SYM = make_atom("LAMBDA");
-    // COND_SYM = make_atom("COND");
-    // LABEL_SYM = make_atom("LABEL");
+    // Create special symbols
+    QUOTE_SYM = make_atom("QUOTE");
+    LAMBDA_SYM = make_atom("LAMBDA");
+    COND_SYM = make_atom("COND");
+    LABEL_SYM = make_atom("LABEL");
     
     // // Initialize environment with built-in functions
     // env = NIL;
@@ -411,102 +411,103 @@ void print_expr(Cell *expr) {
     printf(")");
 }
 
-// // Environment functions
-// Cell *bind(Cell *sym, Cell *val, Cell *env) {
-//     return cons(cons(sym, val), env);
-// }
+// Environment functions
+Cell *bind(Cell *sym, Cell *val, Cell *env) {
+    return cons(cons(sym, val), env);
+}
 
-// Cell *lookup(Cell *sym, Cell *env) {
-//     while (env != NIL) {
-//         Cell *binding = car(env);
-//         if (eq(car(binding), sym) == T) {
-//             return cdr(binding);
-//         }
-//         env = cdr(env);
-//     }
+Cell *lookup(Cell *sym, Cell *env) {
+    while (env != NIL) {
+        Cell *binding = car(env);
+        if (eq(car(binding), sym) == T) {
+            return cdr(binding);
+        }
+        env = cdr(env);
+    }
     
-//     char error_msg[256];
-//     sprintf(error_msg, "Unbound symbol: %s", sym->value.atom);
-//     set_error(ERR_UNBOUND_SYMBOL, error_msg);
-//     return NIL;
-// }
+    char error_msg[256];
+    sprintf(error_msg, "Unbound symbol: %s", sym->value.atom);
+    set_error(ERR_UNBOUND_SYMBOL, error_msg);
+    return NIL;
+}
 
 // Evaluate a list of expressions
-// Cell *list_of_values(Cell *list, Cell *env) {
-//     if (list == NIL) {
-//         return NIL;
-//     }
+Cell *list_of_values(Cell *list, Cell *env) {
+    if (list == NIL) {
+        return NIL;
+    }
     
-//     return cons(eval(car(list), env), list_of_values(cdr(list), env));
-// }
+    return cons(eval(car(list), env), list_of_values(cdr(list), env));
+}
 
 // Evaluate a LISP expression
-// Cell *eval(Cell *expr, Cell *env) {
-//     // Self-evaluating expressions
-//     if (expr == NIL || expr->type == CELL_FUNCTION || expr->type == CELL_SPECIAL) {
-//         return expr;
-//     }
+Cell *eval(Cell *expr, Cell *env) {
+    // Self-evaluating expressions
+    if (expr == NIL || expr->type == CELL_FUNCTION || expr->type == CELL_SPECIAL) {
+        return expr;
+    }
     
-//     // Atoms evaluate to their value in the environment
-//     if (expr->type == CELL_ATOM) {
-//         return lookup(expr, env);
-//     }
+    // Atoms evaluate to their value in the environment
+    if (expr->type == CELL_ATOM) {
+        return lookup(expr, env);
+    }
     
-//     // Lists are evaluated as function applications or special forms
-//     Cell *op = car(expr);
-//     Cell *args = cdr(expr);
+    // Lists are evaluated as function applications or special forms
+    Cell *op = car(expr);
+    Cell *args = cdr(expr);
     
-//     // Special forms
-//     if (op->type == CELL_ATOM) {
-//         // QUOTE: (QUOTE expr) -> expr
-//         if (eq(op, QUOTE_SYM) == T) {
-//             if (args == NIL || cdr(args) != NIL) {
-//                 set_error(ERR_INVALID_ARGUMENT, "QUOTE requires exactly one argument");
-//             }
-//             return car(args);
-//         }
+    // Special forms
+    if (op->type == CELL_ATOM) {
+        // QUOTE: (QUOTE expr) -> expr
+        if (eq(op, QUOTE_SYM) == T) {
+            if (args == NIL || cdr(args) != NIL) {
+                set_error(ERR_INVALID_ARGUMENT, "QUOTE requires exactly one argument");
+            }
+            return car(args);
+        }
         
-//         // LAMBDA: (LAMBDA (args) body)
-//         if (eq(op, LAMBDA_SYM) == T) {
-//             // Just return the lambda expression for now
-//             // In a real implementation, we'd create a closure with the environment
-//             return expr;
-//         }
+        // LAMBDA: (LAMBDA (args) body)
+        if (eq(op, LAMBDA_SYM) == T) {
+            // Just return the lambda expression for now
+            // In a real implementation, we'd create a closure with the environment
+            return expr;
+        }
         
-//         // COND: (COND (test1 expr1) (test2 expr2) ...)
-//         if (eq(op, COND_SYM) == T) {
-//             Cell *clauses = args;
+        // COND: (COND (test1 expr1) (test2 expr2) ...)
+        if (eq(op, COND_SYM) == T) {
+            Cell *clauses = args;
             
-//             while (clauses != NIL) {
-//                 Cell *clause = car(clauses);
+            while (clauses != NIL) {
+                Cell *clause = car(clauses);
                 
-//                 if (clause->type != CELL_PAIR) {
-//                     set_error(ERR_INVALID_ARGUMENT, "COND: clause must be a list");
-//                 }
+                if (clause->type != CELL_PAIR) {
+                    set_error(ERR_INVALID_ARGUMENT, "COND: clause must be a list");
+                }
                 
-//                 Cell *test = car(clause);
-//                 Cell *result = eval(test, env);
+                Cell *test = car(clause);
+                Cell *result = eval(test, env);
                 
-//                 // If test evaluates to non-NIL, return the result expression
-//                 if (result != NIL) {
-//                     Cell *expr = car(cdr(clause));
-//                     return eval(expr, env);
-//                 }
+                // If test evaluates to non-NIL, return the result expression
+                if (result != NIL) {
+                    Cell *expr = car(cdr(clause));
+                    return eval(expr, env);
+                }
                 
-//                 clauses = cdr(clauses);
-//             }
+                clauses = cdr(clauses);
+            }
             
-//             // No matching clause
-//             return NIL;
-//         }
-//     }
+            // No matching clause
+            return NIL;
+        }
+    }
     
-//     // Function application
-//     Cell *function = eval(op, env);
-//     Cell *evaluated_args = list_of_values(args, env);
+    // Function application
+    Cell *function = eval(op, env);
+    Cell *evaluated_args = list_of_values(args, env);
     
-//     return apply(function, evaluated_args, env);
-// }
+    //return apply(function, evaluated_args, env);
+    return function; // Placeholder for now
+}
 
 // Apply a function to arguments
 // Cell *apply(Cell *fn, Cell *args, Cell *env) {
@@ -616,9 +617,9 @@ void repl() {
                 printf("**\n");
                 print_expr(expr);
                 printf("\n**\n");
-                // Cell *result = eval(expr, env);
-                // print_expr(result);
-                // printf("\n");
+                Cell *result = eval(expr, env);
+                print_expr(result);
+                printf("\n");
             }
         } else {
             // Error occurred
