@@ -132,6 +132,14 @@ void init_lisp() {
     
     // Initialize environment with built-in functions
     env = NIL;
+    env = bind(make_atom("T"), T, env);   // Add this line
+    env = bind(make_atom("NIL"), NIL, env); // Also good to add NIL
+    //maybe?
+    env = bind(make_atom("QUOTE"), QUOTE_SYM, env);
+    env = bind(make_atom("LAMBDA"), LAMBDA_SYM, env);
+    env = bind(make_atom("COND"), COND_SYM, env);
+    env = bind(make_atom("LABEL"), LABEL_SYM, env);
+    //maybe?
     env = bind(make_atom("CONS"), make_atom("CONS"), env);
     env = bind(make_atom("CAR"), make_atom("CAR"), env);
     env = bind(make_atom("CDR"), make_atom("CDR"), env);
@@ -468,11 +476,13 @@ Cell *eval(Cell *expr, Cell *env) {
         
         // LAMBDA: (LAMBDA (args) body)
         if (eq(op, LAMBDA_SYM) == T) {
-            // Just return the lambda expression for now
-            // In a real implementation, we'd create a closure with the environment
-            return expr;
-        }
-        
+            // Create a proper closure by capturing the current environment
+            return cons(LAMBDA_SYM, 
+                        cons(car(cdr(expr)),        // parameters
+                            cons(car(cdr(cdr(expr))),  // body
+                                cons(env, NIL)))); // current environment
+        }        
+
         // COND: (COND (test1 expr1) (test2 expr2) ...)
         if (eq(op, COND_SYM) == T) {
             Cell *clauses = args;
@@ -487,12 +497,17 @@ Cell *eval(Cell *expr, Cell *env) {
                 Cell *test = car(clause);
                 Cell *result = eval(test, env);
                 
-                // If test evaluates to non-NIL, return the result expression
+                // If test evaluates to non-NIL, evaluate the consequent
                 if (result != NIL) {
+                    // Special case for one-element clauses (return the test result)
+                    if (cdr(clause) == NIL) {
+                        return result;
+                    }
+                    
                     Cell *expr = car(cdr(clause));
                     return eval(expr, env);
                 }
-                
+
                 clauses = cdr(clauses);
             }
             
@@ -501,6 +516,37 @@ Cell *eval(Cell *expr, Cell *env) {
         }
     }
     
+    // LABEL: (LABEL name (LAMBDA (args) body))
+    if (eq(op, LABEL_SYM) == T) {
+        if (args == NIL || cdr(args) == NIL || cdr(cdr(args)) != NIL) {
+            set_error(ERR_INVALID_ARGUMENT, "LABEL requires exactly two arguments");
+        }
+        
+        Cell *name = car(args);
+        Cell *lambda_expr = car(cdr(args));
+        
+        // Ensure the name is an atom
+        if (name->type != CELL_ATOM) {
+            set_error(ERR_TYPE_MISMATCH, "LABEL: First argument must be a symbol");
+        }
+        
+        // Ensure second argument is a lambda expression
+        if (lambda_expr->type != CELL_PAIR || 
+            eq(car(lambda_expr), LAMBDA_SYM) != T) {
+            set_error(ERR_TYPE_MISMATCH, "LABEL: Second argument must be a LAMBDA expression");
+        }
+        
+        // Create a new environment with the recursive binding
+        Cell *recursive_env = bind(name, lambda_expr, env);
+        
+        // Return a lambda that will use this recursive environment
+        // We essentially transform (LABEL f (LAMBDA (...) ...)) 
+        // into a lambda that has f in its environment
+        return cons(LAMBDA_SYM, 
+                    cons(car(cdr(lambda_expr)),     // parameters
+                        cons(car(cdr(cdr(lambda_expr))),  // body
+                            cons(recursive_env, NIL)))); // environment
+    }    
     // Function application
     Cell *function = eval(op, env);
     Cell *evaluated_args = list_of_values(args, env);
@@ -558,9 +604,13 @@ Cell *apply(Cell *fn, Cell *args, Cell *env) {
     if (fn->type == CELL_PAIR && eq(car(fn), LAMBDA_SYM) == T) {
         Cell *params = car(cdr(fn));
         Cell *body = car(cdr(cdr(fn)));
-        
+
+        // Check if this lambda has a closure environment (from LABEL)
+        Cell *closure_env = cdr(cdr(cdr(fn)));
+        Cell *base_env = (closure_env != NIL) ? car(closure_env) : env;
+                
         // Create new environment with args bound to params
-        Cell *new_env = env;
+        Cell *new_env = base_env;
         Cell *param = params;
         Cell *arg = args;
         
@@ -586,50 +636,101 @@ Cell *apply(Cell *fn, Cell *args, Cell *env) {
     return NIL;
 }
 
+// Add this function to track parenthesis balance
+int is_balanced(const char *input) {
+    int balance = 0;
+    bool in_string = false;
+    bool escaped = false;
+    
+    for (int i = 0; input[i] != '\0'; i++) {
+        if (in_string) {
+            if (escaped) {
+                escaped = false;
+            } else if (input[i] == '\\') {
+                escaped = true;
+            } else if (input[i] == '"') {
+                in_string = false;
+            }
+            continue;
+        }
+        
+        if (input[i] == '"') {
+            in_string = true;
+        } else if (input[i] == '(') {
+            balance++;
+        } else if (input[i] == ')') {
+            balance--;
+            if (balance < 0) return -1;  // Unmatched closing paren
+        }
+    }
+    
+    return balance;  // 0 = balanced, >0 = needs more closing parens
+}
+
 // REPL - Read-Eval-Print Loop
 void repl() {
-    char input[1024];
+    char input_buffer[4096] = {0};  // Larger buffer to accumulate input
+    char line[1024];
+    int len = 0;
     
     printf("KLISP Interpreter\n");
     printf("Type expressions or 'exit' to quit\n");
     
     while (1) {
-        printf("> ");
+        // Show appropriate prompt based on input state
+        if (len == 0) {
+            printf("> ");
+        } else {
+            printf("... ");  // Continuation prompt
+        }
         fflush(stdout);
         
-        if (!fgets(input, sizeof(input), stdin)) {
+        // Read a line
+        if (!fgets(line, sizeof(line), stdin)) {
             break;
         }
         
         // Check for exit command
-        if (strncmp(input, "exit", 4) == 0) {
+        if (len == 0 && strncmp(line, "exit", 4) == 0) {
             break;
         }
         
-        // Handle errors with setjmp/longjmp
-        if (setjmp(error_jmp_buf) == 0) {
-            // Create a string reader from the input
-            StringReader reader = create_string_reader(input);
-            
-            Cell *expr = read_expr(&reader);
-            
-            if (expr) {
-                printf("** expr\n");
-                print_expr(expr);
-                printf("\n** env \n");
-                print_expr(env);
-                printf("\n** result\n");
-                Cell *result = eval(expr, env);
-                print_expr(result);
-                printf("\n");
+        // Append to existing input
+        strncat(input_buffer + len, line, sizeof(input_buffer) - len - 1);
+        len = strlen(input_buffer);
+        
+        // Check if we have a complete expression
+        int balance = is_balanced(input_buffer);
+        
+        if (balance == 0) {
+            // Complete expression - process it
+            if (setjmp(error_jmp_buf) == 0) {
+                StringReader reader = create_string_reader(input_buffer);
+                Cell *expr = read_expr(&reader);
+                
+                if (expr) {
+                    printf("** expr\n");
+                    print_expr(expr);
+                    printf("\n** env \n");
+                    print_expr(env);
+                    printf("\n** result\n");
+                    Cell *result = eval(expr, env);
+                    print_expr(result);
+                    printf("\n");                                    }
+            } else {
+                // Error occurred
+                printf("Error: %s\n", error_message);
+                clear_error();
             }
-        } else {
-            // Error occurred
-            printf("Error: %s\n", error_message);
-            clear_error();
+            
+            // Reset buffer for next input
+            input_buffer[0] = '\0';
+            len = 0;
         }
+        // If balance > 0, continue reading more input
     }
 }
+
 
 void run_tests() {
     printf("Tests: \n");
