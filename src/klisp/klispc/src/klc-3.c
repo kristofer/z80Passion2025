@@ -130,13 +130,13 @@ void init_lisp() {
     COND_SYM = make_atom("COND");
     LABEL_SYM = make_atom("LABEL");
     
-    // // Initialize environment with built-in functions
-    // env = NIL;
-    // env = bind(make_atom("CONS"), make_atom("CONS"), env);
-    // env = bind(make_atom("CAR"), make_atom("CAR"), env);
-    // env = bind(make_atom("CDR"), make_atom("CDR"), env);
-    // env = bind(make_atom("ATOM"), make_atom("ATOM"), env);
-    // env = bind(make_atom("EQ"), make_atom("EQ"), env);
+    // Initialize environment with built-in functions
+    env = NIL;
+    env = bind(make_atom("CONS"), make_atom("CONS"), env);
+    env = bind(make_atom("CAR"), make_atom("CAR"), env);
+    env = bind(make_atom("CDR"), make_atom("CDR"), env);
+    env = bind(make_atom("ATOM"), make_atom("ATOM"), env);
+    env = bind(make_atom("EQ"), make_atom("EQ"), env);
 }
 
 // Clean up LISP environment (basic - not handling all memory)
