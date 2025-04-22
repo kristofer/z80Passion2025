@@ -247,15 +247,43 @@ Cell *read_expr(StringReader *reader) {
     char token[256];
     int token_len = 0;
     
-    // Skip whitespace
-    while ((c = reader_getc(reader)) != EOF && isspace(c)) {
-        // Skip
+     // Skip whitespace and comments
+     while (1) {
+        c = reader_getc(reader);
+        if (c == EOF) {
+            return NULL;
+        }
+        
+        // Check for comments (;; to end of line)
+        if (c == ';' && reader->pos < reader->len && reader->input[reader->pos] == ';') {
+            // Skip the second semicolon
+            reader_getc(reader);
+            
+            // Collect comment text for display
+            char comment[1024] = {0};
+            int comment_len = 0;
+            
+            // Read until end of line
+            while ((c = reader_getc(reader)) != EOF && c != '\n' && c != '\r') {
+                if (comment_len < sizeof(comment) - 1) {
+                    comment[comment_len++] = c;
+                }
+            }
+            comment[comment_len] = '\0';
+            
+            // Print the comment
+            printf(";; %s\n", comment);
+            
+            // Continue skipping whitespace or finding more comments
+            continue;
+        }
+        
+        // If not a comment or whitespace, break out
+        if (!isspace(c)) {
+            break;
+        }
     }
-    
-    if (c == EOF) {
-        return NULL;
-    }
-    
+   
     // Check for list syntax
     if (c == '(') {
         // Read list elements
