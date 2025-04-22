@@ -637,6 +637,46 @@ void run_tests() {
     Cell *c = make_atom("C");
     printf("Atom Tests\n");
 
+    // Test CONS
+    Cell *pair = cons(a, b);
+    printf("CONS test: ");
+    print_expr(pair);
+    printf("\n");
+    
+    // Test CAR
+    printf("CAR test: ");
+    print_expr(car(pair));
+    printf("\n");
+    
+    // Test CDR
+    printf("CDR test: ");
+    print_expr(cdr(pair));
+    printf("\n");
+    
+    // Test ATOM
+    printf("ATOM test on atom: ");
+    print_expr(atom(a));
+    printf("\n");
+    
+    printf("ATOM test on pair: ");
+    print_expr(atom(pair));
+    printf("\n");
+    
+    // Test EQ
+    printf("EQ test on same atom: ");
+    print_expr(eq(a, a));
+    printf("\n");
+    
+    printf("EQ test on different atoms: ");
+    print_expr(eq(a, b));
+    printf("\n");
+    
+    // Create a small list (A B C)
+    Cell *list = cons(a, cons(b, cons(c, NIL)));
+    printf("List test: ");
+    print_expr(list);
+    printf("\n");
+    
     printf("End Tests\n\n");
 }
 

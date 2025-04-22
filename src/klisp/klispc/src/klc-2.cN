@@ -170,7 +170,7 @@ void run_tests() {
     Cell *b = make_atom("B");
     Cell *c = make_atom("C");
     
-//     // Test CONS
+    // Test CONS
     Cell *pair = cons(a, b);
     printf("CONS test: ");
     print_expr(pair);
