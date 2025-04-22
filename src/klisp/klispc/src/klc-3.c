@@ -505,8 +505,8 @@ Cell *eval(Cell *expr, Cell *env) {
     Cell *function = eval(op, env);
     Cell *evaluated_args = list_of_values(args, env);
     
-    //return apply(function, evaluated_args, env);
-    return function; // Placeholder for now
+    return apply(function, evaluated_args, env);
+    //return function; // Placeholder for now
 }
 
 // Apply a function to arguments
@@ -614,9 +614,11 @@ void repl() {
             Cell *expr = read_expr(&reader);
             
             if (expr) {
-                printf("**\n");
+                printf("** expr\n");
                 print_expr(expr);
-                printf("\n**\n");
+                printf("\n** env \n");
+                print_expr(env);
+                printf("\n** result\n");
                 Cell *result = eval(expr, env);
                 print_expr(result);
                 printf("\n");
@@ -680,7 +682,7 @@ void run_tests() {
     printf("End Tests\n\n");
 }
 
-int main() {
+int main(int argc, char *argv[]) {
     // Initialize error handling
     clear_error();
     run_tests();
