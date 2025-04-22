@@ -1,0 +1,1396 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
+#include <ctype.h>
+#include <math.h>
+#include <setjmp.h>
+#include <stdarg.h>
+
+// Forward declarations
+typedef struct Object Object;
+typedef struct Env Env;
+
+// --- Types ---
+
+typedef enum {
+    TYPE_NIL,
+    TYPE_BOOL,
+    TYPE_NUMBER,
+    TYPE_SYMBOL,
+    TYPE_STRING, // Added for potential string support
+    TYPE_CONS,
+    TYPE_PRIMITIVE,
+    TYPE_PROCEDURE,
+    TYPE_ERROR // Added for error signaling
+} ObjectType;
+
+typedef Object* (*PrimitiveFunc)(Object *args, Env *env);
+
+struct Object {
+    ObjectType type;
+    union {
+        bool bool_val;
+        double number_val;
+        char *string_val; // Also used for symbols
+        struct {
+            Object *car;
+            Object *cdr;
+        } cons_val;
+        struct {
+            const char *name; // For debugging/printing
+            PrimitiveFunc func;
+        } primitive_val;
+        struct {
+            Object *params; // List of symbols
+            Object *body;   // List representing the body
+            Env *env;       // Closure environment
+        } procedure_val;
+        char *error_message;
+    } value;
+    // --- Garbage Collection Fields (Example) ---
+    bool marked;
+    Object *forwarding_address; // For copying collectors
+};
+
+struct Env {
+    Env *outer;
+    // Simple association list for variables for now
+    // A hash table would be more efficient for larger environments
+    Object *vars; // List of symbols
+    Object *vals; // List of corresponding values
+};
+
+// --- Global Environment & Constants ---
+
+Env *global_env = NULL;
+Object *nil_obj = NULL;
+Object *true_obj = NULL;
+Object *false_obj = NULL; // Often represented by nil in Lisp, but explicit bool is clearer
+
+// --- Error Handling ---
+jmp_buf error_handler;
+char error_buffer[256];
+
+void lisp_error(const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    vsnprintf(error_buffer, sizeof(error_buffer), format, args);
+    va_end(args);
+    longjmp(error_handler, 1); // Jump back to the REPL or error handling point
+}
+
+// --- Memory Management (Placeholder - Needs a real GC) ---
+// Simple bump allocator for demonstration. NOT SUITABLE FOR REAL USE.
+#define HEAP_SIZE (1024 * 1024) // 1MB heap
+char heap[HEAP_SIZE];
+size_t heap_ptr = 0;
+
+void *gc_alloc(size_t size) {
+    if (heap_ptr + size > HEAP_SIZE) {
+        // Trigger GC here in a real implementation
+        lisp_error("Out of memory");
+        return NULL; // Unreachable after longjmp
+    }
+    void *ptr = &heap[heap_ptr];
+    heap_ptr += size;
+    // Basic alignment (adjust size if needed)
+    heap_ptr = (heap_ptr + sizeof(void*) - 1) & ~(sizeof(void*) - 1);
+    return ptr;
+}
+
+Object *make_object(ObjectType type) {
+    Object *obj = (Object *)gc_alloc(sizeof(Object));
+    obj->type = type;
+    obj->marked = false; // For GC
+    obj->forwarding_address = NULL; // For GC
+    return obj;
+}
+
+// --- Object Constructors ---
+
+Object *make_nil() {
+    // Singleton nil object
+    if (!nil_obj) {
+        nil_obj = make_object(TYPE_NIL);
+    }
+    return nil_obj;
+}
+
+Object *make_bool(bool value) {
+    // Singleton true/false objects
+    if (value) {
+        if (!true_obj) {
+            true_obj = make_object(TYPE_BOOL);
+            true_obj->value.bool_val = true;
+        }
+        return true_obj;
+    } else {
+        // Often Lisp uses nil for false, but we can have a distinct false
+        if (!false_obj) {
+            false_obj = make_object(TYPE_BOOL);
+            false_obj->value.bool_val = false;
+        }
+        return false_obj;
+        // Or return make_nil(); if using nil for false
+    }
+}
+
+
+Object *make_number(double value) {
+    Object *obj = make_object(TYPE_NUMBER);
+    obj->value.number_val = value;
+    return obj;
+}
+
+Object *make_symbol(const char *name) {
+    // In a real implementation, symbols should be interned (only one object per unique name)
+    Object *obj = make_object(TYPE_SYMBOL);
+    char *sym_name = (char *)gc_alloc(strlen(name) + 1);
+    strcpy(sym_name, name);
+    obj->value.string_val = sym_name;
+    return obj;
+}
+
+Object *make_string(const char *value) {
+    Object *obj = make_object(TYPE_STRING);
+     char *str_val = (char *)gc_alloc(strlen(value) + 1);
+    strcpy(str_val, value);
+    obj->value.string_val = str_val;
+    return obj;
+}
+
+
+Object *cons(Object *car, Object *cdr) {
+    Object *obj = make_object(TYPE_CONS);
+    obj->value.cons_val.car = car;
+    obj->value.cons_val.cdr = cdr;
+    return obj;
+}
+
+Object *make_primitive(PrimitiveFunc func, const char *name) {
+    Object *obj = make_object(TYPE_PRIMITIVE);
+    obj->value.primitive_val.func = func;
+    obj->value.primitive_val.name = name; // Store name for debugging
+    return obj;
+}
+
+Object *make_procedure(Object *params, Object *body, Env *env) {
+    Object *obj = make_object(TYPE_PROCEDURE);
+    obj->value.procedure_val.params = params;
+    obj->value.procedure_val.body = body;
+    obj->value.procedure_val.env = env; // Capture environment
+    return obj;
+}
+
+// --- Environment Operations ---
+
+Env *create_env(Env *outer) {
+    Env *env = (Env *)gc_alloc(sizeof(Env));
+    env->outer = outer;
+    env->vars = make_nil();
+    env->vals = make_nil();
+    return env;
+}
+
+// Find the environment where a variable is defined
+Env *env_find(Env *env, Object *var) {
+    if (env == NULL) return NULL; // Should not happen with global env
+    if (var->type != TYPE_SYMBOL) {
+         lisp_error("Attempt to lookup non-symbol variable");
+         return NULL; // Unreachable
+    }
+
+    Object *vars = env->vars;
+    Object *vals = env->vals;
+    while (vars->type == TYPE_CONS) {
+        if (strcmp(vars->value.cons_val.car->value.string_val, var->value.string_val) == 0) {
+            return env; // Found in this environment
+        }
+        vars = vars->value.cons_val.cdr;
+        vals = vals->value.cons_val.cdr; // Keep vals aligned
+    }
+
+    // Not found here, check outer environment
+    if (env->outer == NULL) {
+        lisp_error("Unbound variable: %s", var->value.string_val);
+        return NULL; // Unreachable
+    }
+    return env_find(env->outer, var);
+}
+
+// Get the value of a variable
+Object *env_get(Env *env, Object *var) {
+    if (var->type != TYPE_SYMBOL) {
+         lisp_error("Attempt to get non-symbol variable");
+         return NULL; // Unreachable
+    }
+
+    Object *vars = env->vars;
+    Object *vals = env->vals;
+    while (vars->type == TYPE_CONS) {
+        if (strcmp(vars->value.cons_val.car->value.string_val, var->value.string_val) == 0) {
+            return vals->value.cons_val.car; // Found it
+        }
+        vars = vars->value.cons_val.cdr;
+        vals = vals->value.cons_val.cdr;
+    }
+
+     lisp_error("Variable %s not found in env_get (should have been caught by env_find)", var->value.string_val);
+     return NULL; // Unreachable
+}
+
+// Define a variable in the *current* environment
+void env_define(Env *env, Object *var, Object *val) {
+     if (var->type != TYPE_SYMBOL) {
+         lisp_error("Attempt to define non-symbol variable");
+         return;
+    }
+    // Check if it already exists in the current env, update if so
+    Object *vars = env->vars;
+    Object *vals = env->vals;
+     while (vars->type == TYPE_CONS) {
+        if (strcmp(vars->value.cons_val.car->value.string_val, var->value.string_val) == 0) {
+            vals->value.cons_val.car = val; // Update existing binding
+            return;
+        }
+        vars = vars->value.cons_val.cdr;
+        vals = vals->value.cons_val.cdr;
+    }
+
+    // Not found, add new binding
+    env->vars = cons(var, env->vars);
+    env->vals = cons(val, env->vals);
+}
+
+// Set an existing variable in the environment where it's defined
+void env_set(Env *env, Object *var, Object *val) {
+     if (var->type != TYPE_SYMBOL) {
+         lisp_error("Attempt to set non-symbol variable");
+         return;
+    }
+    Env *target_env = env_find(env, var); // Finds the correct env or errors
+    // Now update the value in the target_env
+    Object *vars = target_env->vars;
+    Object *vals = target_env->vals;
+     while (vars->type == TYPE_CONS) {
+        if (strcmp(vars->value.cons_val.car->value.string_val, var->value.string_val) == 0) {
+            vals->value.cons_val.car = val; // Update existing binding
+            return;
+        }
+        vars = vars->value.cons_val.cdr;
+        vals = vals->value.cons_val.cdr;
+    }
+    // Should be unreachable because env_find would have errored if not found
+    lisp_error("Internal error: Variable %s not found after env_find succeeded", var->value.string_val);
+}
+
+
+// --- Forward declaration for eval ---
+Object *eval(Object *x, Env *env);
+
+// --- Primitives ---
+
+// Helper to check argument count
+void check_arg_count(const char *name, Object *args, int expected) {
+    int count = 0;
+    Object *current = args;
+    while (current->type == TYPE_CONS) {
+        count++;
+        current = current->value.cons_val.cdr;
+    }
+    if (current->type != TYPE_NIL) { // Improper list
+         lisp_error("%s: Expected proper list of arguments", name);
+    }
+    if (count != expected) {
+        lisp_error("%s: Expected %d arguments, got %d", name, expected, count);
+    }
+}
+// Helper to check argument count range
+void check_arg_count_min(const char *name, Object *args, int min_expected) {
+    int count = 0;
+    Object *current = args;
+    while (current->type == TYPE_CONS) {
+        count++;
+        current = current->value.cons_val.cdr;
+    }
+     if (current->type != TYPE_NIL) { // Improper list
+         lisp_error("%s: Expected proper list of arguments", name);
+    }
+    if (count < min_expected) {
+        lisp_error("%s: Expected at least %d arguments, got %d", name, min_expected, count);
+    }
+}
+
+
+Object *prim_add(Object *args, Env *env) {
+    double sum = 0;
+    while (args->type == TYPE_CONS) {
+        Object *arg = args->value.cons_val.car;
+        if (arg->type != TYPE_NUMBER) lisp_error("+: Expected number argument, got type %d", arg->type);
+        sum += arg->value.number_val;
+        args = args->value.cons_val.cdr;
+    }
+     if (args->type != TYPE_NIL) lisp_error("+: Argument list is not proper");
+    return make_number(sum);
+}
+
+Object *prim_subtract(Object *args, Env *env) {
+    check_arg_count_min("-", args, 1);
+    Object *first_arg = args->value.cons_val.car;
+    if (first_arg->type != TYPE_NUMBER) lisp_error("-: Expected number argument, got type %d", first_arg->type);
+    double result = first_arg->value.number_val;
+    args = args->value.cons_val.cdr;
+
+    if (args->type == TYPE_NIL) { // Unary minus
+        return make_number(-result);
+    }
+
+    while (args->type == TYPE_CONS) {
+        Object *arg = args->value.cons_val.car;
+        if (arg->type != TYPE_NUMBER) lisp_error("-: Expected number argument, got type %d", arg->type);
+        result -= arg->value.number_val;
+        args = args->value.cons_val.cdr;
+    }
+     if (args->type != TYPE_NIL) lisp_error("-: Argument list is not proper");
+    return make_number(result);
+}
+
+Object *prim_multiply(Object *args, Env *env) {
+    double product = 1;
+    while (args->type == TYPE_CONS) {
+        Object *arg = args->value.cons_val.car;
+        if (arg->type != TYPE_NUMBER) lisp_error("*: Expected number argument, got type %d", arg->type);
+        product *= arg->value.number_val;
+        args = args->value.cons_val.cdr;
+    }
+     if (args->type != TYPE_NIL) lisp_error("*: Argument list is not proper");
+    return make_number(product);
+}
+
+Object *prim_divide(Object *args, Env *env) {
+    check_arg_count_min("/", args, 1);
+    Object *first_arg = args->value.cons_val.car;
+    if (first_arg->type != TYPE_NUMBER) lisp_error("/: Expected number argument, got type %d", first_arg->type);
+    double result = first_arg->value.number_val;
+    args = args->value.cons_val.cdr;
+
+    if (args->type == TYPE_NIL) { // Reciprocal
+        if (result == 0.0) lisp_error("/: Division by zero");
+        return make_number(1.0 / result);
+    }
+
+    while (args->type == TYPE_CONS) {
+        Object *arg = args->value.cons_val.car;
+        if (arg->type != TYPE_NUMBER) lisp_error("/: Expected number argument, got type %d", arg->type);
+        if (arg->value.number_val == 0.0) lisp_error("/: Division by zero");
+        result /= arg->value.number_val;
+        args = args->value.cons_val.cdr;
+    }
+     if (args->type != TYPE_NIL) lisp_error("/: Argument list is not proper");
+    return make_number(result);
+}
+
+
+Object *prim_greater(Object *args, Env *env) {
+    check_arg_count(">", args, 2);
+    Object *a = args->value.cons_val.car;
+    Object *b = args->value.cons_val.cdr->value.cons_val.car;
+    if (a->type != TYPE_NUMBER || b->type != TYPE_NUMBER) lisp_error(">: Expected number arguments");
+    return make_bool(a->value.number_val > b->value.number_val);
+}
+Object *prim_less(Object *args, Env *env) {
+    check_arg_count("<", args, 2);
+    Object *a = args->value.cons_val.car;
+    Object *b = args->value.cons_val.cdr->value.cons_val.car;
+    if (a->type != TYPE_NUMBER || b->type != TYPE_NUMBER) lisp_error("<: Expected number arguments");
+    return make_bool(a->value.number_val < b->value.number_val);
+}
+// Add >, <, >=, <=, = similarly
+
+Object *prim_cons(Object *args, Env *env) {
+    check_arg_count("cons", args, 2);
+    Object *car = args->value.cons_val.car;
+    Object *cdr = args->value.cons_val.cdr->value.cons_val.car;
+    return cons(car, cdr);
+}
+
+Object *prim_car(Object *args, Env *env) {
+    check_arg_count("car", args, 1);
+    Object *list = args->value.cons_val.car;
+    if (list->type != TYPE_CONS) lisp_error("car: Expected a cons cell, got type %d", list->type);
+    return list->value.cons_val.car;
+}
+
+Object *prim_cdr(Object *args, Env *env) {
+    check_arg_count("cdr", args, 1);
+    Object *list = args->value.cons_val.car;
+    if (list->type != TYPE_CONS) lisp_error("cdr: Expected a cons cell, got type %d", list->type);
+    return list->value.cons_val.cdr;
+}
+
+Object *prim_list(Object *args, Env *env) {
+    // 'list' primitive just returns the list of evaluated arguments it received
+    return args;
+}
+
+Object *prim_is_null(Object *args, Env *env) {
+    check_arg_count("null?", args, 1);
+    return make_bool(args->value.cons_val.car->type == TYPE_NIL);
+}
+
+Object *prim_is_list(Object *args, Env *env) {
+    check_arg_count("list?", args, 1);
+    Object *obj = args->value.cons_val.car;
+    // In Scheme, only proper lists ending in nil are true lists.
+    while (obj->type == TYPE_CONS) {
+        obj = obj->value.cons_val.cdr;
+    }
+    return make_bool(obj->type == TYPE_NIL);
+}
+
+Object *prim_is_symbol(Object *args, Env *env) {
+    check_arg_count("symbol?", args, 1);
+    return make_bool(args->value.cons_val.car->type == TYPE_SYMBOL);
+}
+
+Object *prim_is_number(Object *args, Env *env) {
+    check_arg_count("number?", args, 1);
+    return make_bool(args->value.cons_val.car->type == TYPE_NUMBER);
+}
+
+Object *prim_is_procedure(Object *args, Env *env) {
+    check_arg_count("procedure?", args, 1);
+    Object *obj = args->value.cons_val.car;
+    return make_bool(obj->type == TYPE_PRIMITIVE || obj->type == TYPE_PROCEDURE);
+}
+
+Object *prim_eq(Object *args, Env *env) {
+    check_arg_count("eq?", args, 2);
+    Object *a = args->value.cons_val.car;
+    Object *b = args->value.cons_val.cdr->value.cons_val.car;
+    // eq? checks for object identity (pointer equality)
+    // For numbers or symbols, might need value comparison depending on interning strategy
+    if (a->type == TYPE_NUMBER && b->type == TYPE_NUMBER) {
+        return make_bool(a->value.number_val == b->value.number_val);
+    }
+    if (a->type == TYPE_SYMBOL && b->type == TYPE_SYMBOL) {
+        // Assumes symbols are interned if value comparison is desired
+        return make_bool(strcmp(a->value.string_val, b->value.string_val) == 0);
+    }
+    return make_bool(a == b);
+}
+
+// equal? needs recursive comparison for lists/structures
+Object *prim_equal(Object *args, Env *env); // Forward declare
+
+bool are_equal(Object *a, Object *b) {
+    if (a == b) return true; // Identity implies equality
+    if (a->type != b->type) return false;
+
+    switch (a->type) {
+        case TYPE_NIL: return true; // nil == nil
+        case TYPE_BOOL: return a->value.bool_val == b->value.bool_val;
+        case TYPE_NUMBER: return a->value.number_val == b->value.number_val;
+        case TYPE_SYMBOL: // Assumes interning or compares names
+        case TYPE_STRING: return strcmp(a->value.string_val, b->value.string_val) == 0;
+        case TYPE_CONS:
+            return are_equal(a->value.cons_val.car, b->value.cons_val.car) &&
+                   are_equal(a->value.cons_val.cdr, b->value.cons_val.cdr);
+        case TYPE_PRIMITIVE: // Primitives are equal only if identical
+        case TYPE_PROCEDURE: // Procedures are equal only if identical
+        default: return false;
+    }
+}
+
+Object *prim_equal(Object *args, Env *env) {
+    check_arg_count("equal?", args, 2);
+    Object *a = args->value.cons_val.car;
+    Object *b = args->value.cons_val.cdr->value.cons_val.car;
+    return make_bool(are_equal(a, b));
+}
+
+
+// --- Setup Standard Environment ---
+
+void add_primitive(Env *env, const char *name, PrimitiveFunc func) {
+    env_define(env, make_symbol(name), make_primitive(func, name));
+}
+
+void setup_standard_env() {
+    global_env = create_env(NULL); // No outer env for global
+
+    // Initialize constants
+    make_nil(); // Ensure nil_obj is created
+    make_bool(true); // Ensure true_obj is created
+    make_bool(false); // Ensure false_obj is created
+    env_define(global_env, make_symbol("nil"), nil_obj);
+    env_define(global_env, make_symbol("t"), true_obj); // Common Lisp true symbol
+    // Add false? env_define(global_env, make_symbol("#f"), false_obj); // Scheme false
+
+    // Add primitives
+    add_primitive(global_env, "+", prim_add);
+    add_primitive(global_env, "-", prim_subtract);
+    add_primitive(global_env, "*", prim_multiply);
+    add_primitive(global_env, "/", prim_divide);
+    add_primitive(global_env, ">", prim_greater);
+    add_primitive(global_env, "<", prim_less);
+    // Add >=, <=, =
+    add_primitive(global_env, "cons", prim_cons);
+    add_primitive(global_env, "car", prim_car);
+    add_primitive(global_env, "cdr", prim_cdr);
+    add_primitive(global_env, "list", prim_list);
+    add_primitive(global_env, "null?", prim_is_null);
+    add_primitive(global_env, "list?", prim_is_list);
+    add_primitive(global_env, "symbol?", prim_is_symbol);
+    add_primitive(global_env, "number?", prim_is_number);
+    add_primitive(global_env, "procedure?", prim_is_procedure);
+    add_primitive(global_env, "eq?", prim_eq);
+    add_primitive(global_env, "equal?", prim_equal);
+
+    // Add math constants/functions if needed
+    env_define(global_env, make_symbol("pi"), make_number(M_PI));
+    // add_primitive(global_env, "sin", prim_sin); // Need to implement these
+    // add_primitive(global_env, "cos", prim_cos);
+    // add_primitive(global_env, "sqrt", prim_sqrt);
+}
+
+
+// --- Eval ---
+
+Object *eval_list(Object *list, Env *env) {
+    if (list->type == TYPE_NIL) {
+        return make_nil(); // Empty list evaluates to empty list
+    }
+    if (list->type != TYPE_CONS) {
+        lisp_error("Cannot eval non-list as argument list");
+        return NULL; // Unreachable
+    }
+    Object *evaluated_car = eval(list->value.cons_val.car, env);
+    Object *evaluated_cdr = eval_list(list->value.cons_val.cdr, env);
+    return cons(evaluated_car, evaluated_cdr);
+}
+
+
+Object *eval(Object *x, Env *env) {
+eval_loop: // Tail call optimization for self-recursive calls like in 'if'
+
+    if (x == NULL) {
+        lisp_error("Eval received NULL object");
+        return NULL; // Unreachable
+    }
+
+    switch (x->type) {
+        case TYPE_SYMBOL: { // Variable reference
+            Env *found_env = env_find(env, x); // Errors if not found
+            return env_get(found_env, x);
+        }
+        case TYPE_NUMBER: // Constant literals
+        case TYPE_BOOL:
+        case TYPE_STRING:
+        case TYPE_NIL:
+        case TYPE_PRIMITIVE: // Primitives evaluate to themselves
+        case TYPE_PROCEDURE: // Procedures evaluate to themselves
+            return x;
+
+        case TYPE_CONS: { // List - represents special form or function call
+            Object *op_obj = x->value.cons_val.car;
+            Object *args = x->value.cons_val.cdr;
+
+            // --- Special Forms ---
+            if (op_obj->type == TYPE_SYMBOL) {
+                const char *op_sym = op_obj->value.string_val;
+
+                if (strcmp(op_sym, "quote") == 0) {
+                    check_arg_count("quote", args, 1);
+                    return args->value.cons_val.car; // Return argument unevaluated
+                }
+
+                if (strcmp(op_sym, "if") == 0) {
+                    // (if test conseq alt)
+                    Object *test_expr, *conseq_expr, *alt_expr;
+                    if (args->type != TYPE_CONS || args->value.cons_val.cdr->type != TYPE_CONS) {
+                         lisp_error("if: Malformed arguments");
+                    }
+                    test_expr = args->value.cons_val.car;
+                    args = args->value.cons_val.cdr;
+                    conseq_expr = args->value.cons_val.car;
+                    args = args->value.cons_val.cdr;
+                    // Alt is optional, defaults to nil if missing or list ends
+                    alt_expr = (args->type == TYPE_CONS) ? args->value.cons_val.car : make_nil();
+                    if (args->type == TYPE_CONS && args->value.cons_val.cdr->type != TYPE_NIL) {
+                        lisp_error("if: Too many arguments");
+                    }
+
+
+                    Object *test_result = eval(test_expr, env);
+                    // In Scheme/Lisp, anything not false (or nil) is true
+                    bool is_true = !(test_result->type == TYPE_BOOL && !test_result->value.bool_val) &&
+                                   !(test_result->type == TYPE_NIL); // Handle nil as false if desired
+
+                    // Tail call optimization: jump to evaluate the chosen branch
+                    x = is_true ? conseq_expr : alt_expr;
+                    goto eval_loop;
+                }
+
+                if (strcmp(op_sym, "define") == 0) {
+                    // (define var exp) or (define (f arg...) body) - latter is syntax sugar
+                     if (args->type != TYPE_CONS || args->value.cons_val.cdr->type != TYPE_CONS || args->value.cons_val.cdr->value.cons_val.cdr->type != TYPE_NIL) {
+                         lisp_error("define: Requires exactly 2 arguments (var exp)");
+                     }
+                    Object *var = args->value.cons_val.car;
+                    Object *exp = args->value.cons_val.cdr->value.cons_val.car;
+
+                    // Handle (define (f args...) body) syntax sugar here if needed
+                    // It translates to (define f (lambda (args...) body))
+
+                    if (var->type != TYPE_SYMBOL) {
+                        lisp_error("define: Variable name must be a symbol");
+                    }
+
+                    Object *val = eval(exp, env);
+                    env_define(env, var, val); // Define in *current* environment
+                    return var; // Or return nil, convention varies
+                }
+
+                 if (strcmp(op_sym, "set!") == 0) {
+                    // (set! var exp)
+                     if (args->type != TYPE_CONS || args->value.cons_val.cdr->type != TYPE_CONS || args->value.cons_val.cdr->value.cons_val.cdr->type != TYPE_NIL) {
+                         lisp_error("set!: Requires exactly 2 arguments (var exp)");
+                     }
+                    Object *var = args->value.cons_val.car;
+                    Object *exp = args->value.cons_val.cdr->value.cons_val.car;
+
+                     if (var->type != TYPE_SYMBOL) {
+                        lisp_error("set!: Variable name must be a symbol");
+                    }
+
+                    Object *val = eval(exp, env);
+                    env_set(env, var, val); // Set in environment where var is defined
+                    return val; // Or return nil/void
+                }
+
+                if (strcmp(op_sym, "lambda") == 0) {
+                    // (lambda (param...) body)
+                     if (args->type != TYPE_CONS || args->value.cons_val.cdr->type != TYPE_CONS || args->value.cons_val.cdr->value.cons_val.cdr->type != TYPE_NIL) {
+                         lisp_error("lambda: Requires exactly 2 arguments ((params...) body)");
+                     }
+                    Object *params = args->value.cons_val.car;
+                    Object *body = args->value.cons_val.cdr->value.cons_val.car;
+
+                    // Validate params is a list of symbols
+                    Object *p = params;
+                    while(p->type == TYPE_CONS) {
+                        if (p->value.cons_val.car->type != TYPE_SYMBOL) {
+                            lisp_error("lambda: Parameters must be symbols");
+                        }
+                        p = p->value.cons_val.cdr;
+                    }
+                    if (p->type != TYPE_NIL) {
+                         lisp_error("lambda: Parameter list must be a proper list");
+                    }
+
+                    return make_procedure(params, body, env); // Create closure
+                }
+
+                 if (strcmp(op_sym, "begin") == 0) {
+                    // (begin exp// filepath: /Users/kristofer/LocalProjects/z80Passion2025/src/klisp/lis-py/src/lis-py.c
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
+#include <ctype.h>
+#include <math.h>
+#include <setjmp.h>
+#include <stdarg.h>
+
+// Forward declarations
+typedef struct Object Object;
+typedef struct Env Env;
+
+// --- Types ---
+
+typedef enum {
+    TYPE_NIL,
+    TYPE_BOOL,
+    TYPE_NUMBER,
+    TYPE_SYMBOL,
+    TYPE_STRING, // Added for potential string support
+    TYPE_CONS,
+    TYPE_PRIMITIVE,
+    TYPE_PROCEDURE,
+    TYPE_ERROR // Added for error signaling
+} ObjectType;
+
+typedef Object* (*PrimitiveFunc)(Object *args, Env *env);
+
+struct Object {
+    ObjectType type;
+    union {
+        bool bool_val;
+        double number_val;
+        char *string_val; // Also used for symbols
+        struct {
+            Object *car;
+            Object *cdr;
+        } cons_val;
+        struct {
+            const char *name; // For debugging/printing
+            PrimitiveFunc func;
+        } primitive_val;
+        struct {
+            Object *params; // List of symbols
+            Object *body;   // List representing the body
+            Env *env;       // Closure environment
+        } procedure_val;
+        char *error_message;
+    } value;
+    // --- Garbage Collection Fields (Example) ---
+    bool marked;
+    Object *forwarding_address; // For copying collectors
+};
+
+struct Env {
+    Env *outer;
+    // Simple association list for variables for now
+    // A hash table would be more efficient for larger environments
+    Object *vars; // List of symbols
+    Object *vals; // List of corresponding values
+};
+
+// --- Global Environment & Constants ---
+
+Env *global_env = NULL;
+Object *nil_obj = NULL;
+Object *true_obj = NULL;
+Object *false_obj = NULL; // Often represented by nil in Lisp, but explicit bool is clearer
+
+// --- Error Handling ---
+jmp_buf error_handler;
+char error_buffer[256];
+
+void lisp_error(const char *format, ...) {
+    va_list args;
+    va_start(args, format);
+    vsnprintf(error_buffer, sizeof(error_buffer), format, args);
+    va_end(args);
+    longjmp(error_handler, 1); // Jump back to the REPL or error handling point
+}
+
+// --- Memory Management (Placeholder - Needs a real GC) ---
+// Simple bump allocator for demonstration. NOT SUITABLE FOR REAL USE.
+#define HEAP_SIZE (1024 * 1024) // 1MB heap
+char heap[HEAP_SIZE];
+size_t heap_ptr = 0;
+
+void *gc_alloc(size_t size) {
+    if (heap_ptr + size > HEAP_SIZE) {
+        // Trigger GC here in a real implementation
+        lisp_error("Out of memory");
+        return NULL; // Unreachable after longjmp
+    }
+    void *ptr = &heap[heap_ptr];
+    heap_ptr += size;
+    // Basic alignment (adjust size if needed)
+    heap_ptr = (heap_ptr + sizeof(void*) - 1) & ~(sizeof(void*) - 1);
+    return ptr;
+}
+
+Object *make_object(ObjectType type) {
+    Object *obj = (Object *)gc_alloc(sizeof(Object));
+    obj->type = type;
+    obj->marked = false; // For GC
+    obj->forwarding_address = NULL; // For GC
+    return obj;
+}
+
+// --- Object Constructors ---
+
+Object *make_nil() {
+    // Singleton nil object
+    if (!nil_obj) {
+        nil_obj = make_object(TYPE_NIL);
+    }
+    return nil_obj;
+}
+
+Object *make_bool(bool value) {
+    // Singleton true/false objects
+    if (value) {
+        if (!true_obj) {
+            true_obj = make_object(TYPE_BOOL);
+            true_obj->value.bool_val = true;
+        }
+        return true_obj;
+    } else {
+        // Often Lisp uses nil for false, but we can have a distinct false
+        if (!false_obj) {
+            false_obj = make_object(TYPE_BOOL);
+            false_obj->value.bool_val = false;
+        }
+        return false_obj;
+        // Or return make_nil(); if using nil for false
+    }
+}
+
+
+Object *make_number(double value) {
+    Object *obj = make_object(TYPE_NUMBER);
+    obj->value.number_val = value;
+    return obj;
+}
+
+Object *make_symbol(const char *name) {
+    // In a real implementation, symbols should be interned (only one object per unique name)
+    Object *obj = make_object(TYPE_SYMBOL);
+    char *sym_name = (char *)gc_alloc(strlen(name) + 1);
+    strcpy(sym_name, name);
+    obj->value.string_val = sym_name;
+    return obj;
+}
+
+Object *make_string(const char *value) {
+    Object *obj = make_object(TYPE_STRING);
+     char *str_val = (char *)gc_alloc(strlen(value) + 1);
+    strcpy(str_val, value);
+    obj->value.string_val = str_val;
+    return obj;
+}
+
+
+Object *cons(Object *car, Object *cdr) {
+    Object *obj = make_object(TYPE_CONS);
+    obj->value.cons_val.car = car;
+    obj->value.cons_val.cdr = cdr;
+    return obj;
+}
+
+Object *make_primitive(PrimitiveFunc func, const char *name) {
+    Object *obj = make_object(TYPE_PRIMITIVE);
+    obj->value.primitive_val.func = func;
+    obj->value.primitive_val.name = name; // Store name for debugging
+    return obj;
+}
+
+Object *make_procedure(Object *params, Object *body, Env *env) {
+    Object *obj = make_object(TYPE_PROCEDURE);
+    obj->value.procedure_val.params = params;
+    obj->value.procedure_val.body = body;
+    obj->value.procedure_val.env = env; // Capture environment
+    return obj;
+}
+
+// --- Environment Operations ---
+
+Env *create_env(Env *outer) {
+    Env *env = (Env *)gc_alloc(sizeof(Env));
+    env->outer = outer;
+    env->vars = make_nil();
+    env->vals = make_nil();
+    return env;
+}
+
+// Find the environment where a variable is defined
+Env *env_find(Env *env, Object *var) {
+    if (env == NULL) return NULL; // Should not happen with global env
+    if (var->type != TYPE_SYMBOL) {
+         lisp_error("Attempt to lookup non-symbol variable");
+         return NULL; // Unreachable
+    }
+
+    Object *vars = env->vars;
+    Object *vals = env->vals;
+    while (vars->type == TYPE_CONS) {
+        if (strcmp(vars->value.cons_val.car->value.string_val, var->value.string_val) == 0) {
+            return env; // Found in this environment
+        }
+        vars = vars->value.cons_val.cdr;
+        vals = vals->value.cons_val.cdr; // Keep vals aligned
+    }
+
+    // Not found here, check outer environment
+    if (env->outer == NULL) {
+        lisp_error("Unbound variable: %s", var->value.string_val);
+        return NULL; // Unreachable
+    }
+    return env_find(env->outer, var);
+}
+
+// Get the value of a variable
+Object *env_get(Env *env, Object *var) {
+    if (var->type != TYPE_SYMBOL) {
+         lisp_error("Attempt to get non-symbol variable");
+         return NULL; // Unreachable
+    }
+
+    Object *vars = env->vars;
+    Object *vals = env->vals;
+    while (vars->type == TYPE_CONS) {
+        if (strcmp(vars->value.cons_val.car->value.string_val, var->value.string_val) == 0) {
+            return vals->value.cons_val.car; // Found it
+        }
+        vars = vars->value.cons_val.cdr;
+        vals = vals->value.cons_val.cdr;
+    }
+
+     lisp_error("Variable %s not found in env_get (should have been caught by env_find)", var->value.string_val);
+     return NULL; // Unreachable
+}
+
+// Define a variable in the *current* environment
+void env_define(Env *env, Object *var, Object *val) {
+     if (var->type != TYPE_SYMBOL) {
+         lisp_error("Attempt to define non-symbol variable");
+         return;
+    }
+    // Check if it already exists in the current env, update if so
+    Object *vars = env->vars;
+    Object *vals = env->vals;
+     while (vars->type == TYPE_CONS) {
+        if (strcmp(vars->value.cons_val.car->value.string_val, var->value.string_val) == 0) {
+            vals->value.cons_val.car = val; // Update existing binding
+            return;
+        }
+        vars = vars->value.cons_val.cdr;
+        vals = vals->value.cons_val.cdr;
+    }
+
+    // Not found, add new binding
+    env->vars = cons(var, env->vars);
+    env->vals = cons(val, env->vals);
+}
+
+// Set an existing variable in the environment where it's defined
+void env_set(Env *env, Object *var, Object *val) {
+     if (var->type != TYPE_SYMBOL) {
+         lisp_error("Attempt to set non-symbol variable");
+         return;
+    }
+    Env *target_env = env_find(env, var); // Finds the correct env or errors
+    // Now update the value in the target_env
+    Object *vars = target_env->vars;
+    Object *vals = target_env->vals;
+     while (vars->type == TYPE_CONS) {
+        if (strcmp(vars->value.cons_val.car->value.string_val, var->value.string_val) == 0) {
+            vals->value.cons_val.car = val; // Update existing binding
+            return;
+        }
+        vars = vars->value.cons_val.cdr;
+        vals = vals->value.cons_val.cdr;
+    }
+    // Should be unreachable because env_find would have errored if not found
+    lisp_error("Internal error: Variable %s not found after env_find succeeded", var->value.string_val);
+}
+
+
+// --- Forward declaration for eval ---
+Object *eval(Object *x, Env *env);
+
+// --- Primitives ---
+
+// Helper to check argument count
+void check_arg_count(const char *name, Object *args, int expected) {
+    int count = 0;
+    Object *current = args;
+    while (current->type == TYPE_CONS) {
+        count++;
+        current = current->value.cons_val.cdr;
+    }
+    if (current->type != TYPE_NIL) { // Improper list
+         lisp_error("%s: Expected proper list of arguments", name);
+    }
+    if (count != expected) {
+        lisp_error("%s: Expected %d arguments, got %d", name, expected, count);
+    }
+}
+// Helper to check argument count range
+void check_arg_count_min(const char *name, Object *args, int min_expected) {
+    int count = 0;
+    Object *current = args;
+    while (current->type == TYPE_CONS) {
+        count++;
+        current = current->value.cons_val.cdr;
+    }
+     if (current->type != TYPE_NIL) { // Improper list
+         lisp_error("%s: Expected proper list of arguments", name);
+    }
+    if (count < min_expected) {
+        lisp_error("%s: Expected at least %d arguments, got %d", name, min_expected, count);
+    }
+}
+
+
+Object *prim_add(Object *args, Env *env) {
+    double sum = 0;
+    while (args->type == TYPE_CONS) {
+        Object *arg = args->value.cons_val.car;
+        if (arg->type != TYPE_NUMBER) lisp_error("+: Expected number argument, got type %d", arg->type);
+        sum += arg->value.number_val;
+        args = args->value.cons_val.cdr;
+    }
+     if (args->type != TYPE_NIL) lisp_error("+: Argument list is not proper");
+    return make_number(sum);
+}
+
+Object *prim_subtract(Object *args, Env *env) {
+    check_arg_count_min("-", args, 1);
+    Object *first_arg = args->value.cons_val.car;
+    if (first_arg->type != TYPE_NUMBER) lisp_error("-: Expected number argument, got type %d", first_arg->type);
+    double result = first_arg->value.number_val;
+    args = args->value.cons_val.cdr;
+
+    if (args->type == TYPE_NIL) { // Unary minus
+        return make_number(-result);
+    }
+
+    while (args->type == TYPE_CONS) {
+        Object *arg = args->value.cons_val.car;
+        if (arg->type != TYPE_NUMBER) lisp_error("-: Expected number argument, got type %d", arg->type);
+        result -= arg->value.number_val;
+        args = args->value.cons_val.cdr;
+    }
+     if (args->type != TYPE_NIL) lisp_error("-: Argument list is not proper");
+    return make_number(result);
+}
+
+Object *prim_multiply(Object *args, Env *env) {
+    double product = 1;
+    while (args->type == TYPE_CONS) {
+        Object *arg = args->value.cons_val.car;
+        if (arg->type != TYPE_NUMBER) lisp_error("*: Expected number argument, got type %d", arg->type);
+        product *= arg->value.number_val;
+        args = args->value.cons_val.cdr;
+    }
+     if (args->type != TYPE_NIL) lisp_error("*: Argument list is not proper");
+    return make_number(product);
+}
+
+Object *prim_divide(Object *args, Env *env) {
+    check_arg_count_min("/", args, 1);
+    Object *first_arg = args->value.cons_val.car;
+    if (first_arg->type != TYPE_NUMBER) lisp_error("/: Expected number argument, got type %d", first_arg->type);
+    double result = first_arg->value.number_val;
+    args = args->value.cons_val.cdr;
+
+    if (args->type == TYPE_NIL) { // Reciprocal
+        if (result == 0.0) lisp_error("/: Division by zero");
+        return make_number(1.0 / result);
+    }
+
+    while (args->type == TYPE_CONS) {
+        Object *arg = args->value.cons_val.car;
+        if (arg->type != TYPE_NUMBER) lisp_error("/: Expected number argument, got type %d", arg->type);
+        if (arg->value.number_val == 0.0) lisp_error("/: Division by zero");
+        result /= arg->value.number_val;
+        args = args->value.cons_val.cdr;
+    }
+     if (args->type != TYPE_NIL) lisp_error("/: Argument list is not proper");
+    return make_number(result);
+}
+
+
+Object *prim_greater(Object *args, Env *env) {
+    check_arg_count(">", args, 2);
+    Object *a = args->value.cons_val.car;
+    Object *b = args->value.cons_val.cdr->value.cons_val.car;
+    if (a->type != TYPE_NUMBER || b->type != TYPE_NUMBER) lisp_error(">: Expected number arguments");
+    return make_bool(a->value.number_val > b->value.number_val);
+}
+Object *prim_less(Object *args, Env *env) {
+    check_arg_count("<", args, 2);
+    Object *a = args->value.cons_val.car;
+    Object *b = args->value.cons_val.cdr->value.cons_val.car;
+    if (a->type != TYPE_NUMBER || b->type != TYPE_NUMBER) lisp_error("<: Expected number arguments");
+    return make_bool(a->value.number_val < b->value.number_val);
+}
+// Add >, <, >=, <=, = similarly
+
+Object *prim_cons(Object *args, Env *env) {
+    check_arg_count("cons", args, 2);
+    Object *car = args->value.cons_val.car;
+    Object *cdr = args->value.cons_val.cdr->value.cons_val.car;
+    return cons(car, cdr);
+}
+
+Object *prim_car(Object *args, Env *env) {
+    check_arg_count("car", args, 1);
+    Object *list = args->value.cons_val.car;
+    if (list->type != TYPE_CONS) lisp_error("car: Expected a cons cell, got type %d", list->type);
+    return list->value.cons_val.car;
+}
+
+Object *prim_cdr(Object *args, Env *env) {
+    check_arg_count("cdr", args, 1);
+    Object *list = args->value.cons_val.car;
+    if (list->type != TYPE_CONS) lisp_error("cdr: Expected a cons cell, got type %d", list->type);
+    return list->value.cons_val.cdr;
+}
+
+Object *prim_list(Object *args, Env *env) {
+    // 'list' primitive just returns the list of evaluated arguments it received
+    return args;
+}
+
+Object *prim_is_null(Object *args, Env *env) {
+    check_arg_count("null?", args, 1);
+    return make_bool(args->value.cons_val.car->type == TYPE_NIL);
+}
+
+Object *prim_is_list(Object *args, Env *env) {
+    check_arg_count("list?", args, 1);
+    Object *obj = args->value.cons_val.car;
+    // In Scheme, only proper lists ending in nil are true lists.
+    while (obj->type == TYPE_CONS) {
+        obj = obj->value.cons_val.cdr;
+    }
+    return make_bool(obj->type == TYPE_NIL);
+}
+
+Object *prim_is_symbol(Object *args, Env *env) {
+    check_arg_count("symbol?", args, 1);
+    return make_bool(args->value.cons_val.car->type == TYPE_SYMBOL);
+}
+
+Object *prim_is_number(Object *args, Env *env) {
+    check_arg_count("number?", args, 1);
+    return make_bool(args->value.cons_val.car->type == TYPE_NUMBER);
+}
+
+Object *prim_is_procedure(Object *args, Env *env) {
+    check_arg_count("procedure?", args, 1);
+    Object *obj = args->value.cons_val.car;
+    return make_bool(obj->type == TYPE_PRIMITIVE || obj->type == TYPE_PROCEDURE);
+}
+
+Object *prim_eq(Object *args, Env *env) {
+    check_arg_count("eq?", args, 2);
+    Object *a = args->value.cons_val.car;
+    Object *b = args->value.cons_val.cdr->value.cons_val.car;
+    // eq? checks for object identity (pointer equality)
+    // For numbers or symbols, might need value comparison depending on interning strategy
+    if (a->type == TYPE_NUMBER && b->type == TYPE_NUMBER) {
+        return make_bool(a->value.number_val == b->value.number_val);
+    }
+    if (a->type == TYPE_SYMBOL && b->type == TYPE_SYMBOL) {
+        // Assumes symbols are interned if value comparison is desired
+        return make_bool(strcmp(a->value.string_val, b->value.string_val) == 0);
+    }
+    return make_bool(a == b);
+}
+
+// equal? needs recursive comparison for lists/structures
+Object *prim_equal(Object *args, Env *env); // Forward declare
+
+bool are_equal(Object *a, Object *b) {
+    if (a == b) return true; // Identity implies equality
+    if (a->type != b->type) return false;
+
+    switch (a->type) {
+        case TYPE_NIL: return true; // nil == nil
+        case TYPE_BOOL: return a->value.bool_val == b->value.bool_val;
+        case TYPE_NUMBER: return a->value.number_val == b->value.number_val;
+        case TYPE_SYMBOL: // Assumes interning or compares names
+        case TYPE_STRING: return strcmp(a->value.string_val, b->value.string_val) == 0;
+        case TYPE_CONS:
+            return are_equal(a->value.cons_val.car, b->value.cons_val.car) &&
+                   are_equal(a->value.cons_val.cdr, b->value.cons_val.cdr);
+        case TYPE_PRIMITIVE: // Primitives are equal only if identical
+        case TYPE_PROCEDURE: // Procedures are equal only if identical
+        default: return false;
+    }
+}
+
+Object *prim_equal(Object *args, Env *env) {
+    check_arg_count("equal?", args, 2);
+    Object *a = args->value.cons_val.car;
+    Object *b = args->value.cons_val.cdr->value.cons_val.car;
+    return make_bool(are_equal(a, b));
+}
+
+
+// --- Setup Standard Environment ---
+
+void add_primitive(Env *env, const char *name, PrimitiveFunc func) {
+    env_define(env, make_symbol(name), make_primitive(func, name));
+}
+
+void setup_standard_env() {
+    global_env = create_env(NULL); // No outer env for global
+
+    // Initialize constants
+    make_nil(); // Ensure nil_obj is created
+    make_bool(true); // Ensure true_obj is created
+    make_bool(false); // Ensure false_obj is created
+    env_define(global_env, make_symbol("nil"), nil_obj);
+    env_define(global_env, make_symbol("t"), true_obj); // Common Lisp true symbol
+    // Add false? env_define(global_env, make_symbol("#f"), false_obj); // Scheme false
+
+    // Add primitives
+    add_primitive(global_env, "+", prim_add);
+    add_primitive(global_env, "-", prim_subtract);
+    add_primitive(global_env, "*", prim_multiply);
+    add_primitive(global_env, "/", prim_divide);
+    add_primitive(global_env, ">", prim_greater);
+    add_primitive(global_env, "<", prim_less);
+    // Add >=, <=, =
+    add_primitive(global_env, "cons", prim_cons);
+    add_primitive(global_env, "car", prim_car);
+    add_primitive(global_env, "cdr", prim_cdr);
+    add_primitive(global_env, "list", prim_list);
+    add_primitive(global_env, "null?", prim_is_null);
+    add_primitive(global_env, "list?", prim_is_list);
+    add_primitive(global_env, "symbol?", prim_is_symbol);
+    add_primitive(global_env, "number?", prim_is_number);
+    add_primitive(global_env, "procedure?", prim_is_procedure);
+    add_primitive(global_env, "eq?", prim_eq);
+    add_primitive(global_env, "equal?", prim_equal);
+
+    // Add math constants/functions if needed
+    env_define(global_env, make_symbol("pi"), make_number(M_PI));
+    // add_primitive(global_env, "sin", prim_sin); // Need to implement these
+    // add_primitive(global_env, "cos", prim_cos);
+    // add_primitive(global_env, "sqrt", prim_sqrt);
+}
+
+
+// --- Eval ---
+
+Object *eval_list(Object *list, Env *env) {
+    if (list->type == TYPE_NIL) {
+        return make_nil(); // Empty list evaluates to empty list
+    }
+    if (list->type != TYPE_CONS) {
+        lisp_error("Cannot eval non-list as argument list");
+        return NULL; // Unreachable
+    }
+    Object *evaluated_car = eval(list->value.cons_val.car, env);
+    Object *evaluated_cdr = eval_list(list->value.cons_val.cdr, env);
+    return cons(evaluated_car, evaluated_cdr);
+}
+
+
+Object *eval(Object *x, Env *env) {
+eval_loop: // Tail call optimization for self-recursive calls like in 'if'
+
+    if (x == NULL) {
+        lisp_error("Eval received NULL object");
+        return NULL; // Unreachable
+    }
+
+    switch (x->type) {
+        case TYPE_SYMBOL: { // Variable reference
+            Env *found_env = env_find(env, x); // Errors if not found
+            return env_get(found_env, x);
+        }
+        case TYPE_NUMBER: // Constant literals
+        case TYPE_BOOL:
+        case TYPE_STRING:
+        case TYPE_NIL:
+        case TYPE_PRIMITIVE: // Primitives evaluate to themselves
+        case TYPE_PROCEDURE: // Procedures evaluate to themselves
+            return x;
+
+        case TYPE_CONS: { // List - represents special form or function call
+            Object *op_obj = x->value.cons_val.car;
+            Object *args = x->value.cons_val.cdr;
+
+            // --- Special Forms ---
+            if (op_obj->type == TYPE_SYMBOL) {
+                const char *op_sym = op_obj->value.string_val;
+
+                if (strcmp(op_sym, "quote") == 0) {
+                    check_arg_count("quote", args, 1);
+                    return args->value.cons_val.car; // Return argument unevaluated
+                }
+
+                if (strcmp(op_sym, "if") == 0) {
+                    // (if test conseq alt)
+                    Object *test_expr, *conseq_expr, *alt_expr;
+                    if (args->type != TYPE_CONS || args->value.cons_val.cdr->type != TYPE_CONS) {
+                         lisp_error("if: Malformed arguments");
+                    }
+                    test_expr = args->value.cons_val.car;
+                    args = args->value.cons_val.cdr;
+                    conseq_expr = args->value.cons_val.car;
+                    args = args->value.cons_val.cdr;
+                    // Alt is optional, defaults to nil if missing or list ends
+                    alt_expr = (args->type == TYPE_CONS) ? args->value.cons_val.car : make_nil();
+                    if (args->type == TYPE_CONS && args->value.cons_val.cdr->type != TYPE_NIL) {
+                        lisp_error("if: Too many arguments");
+                    }
+
+
+                    Object *test_result = eval(test_expr, env);
+                    // In Scheme/Lisp, anything not false (or nil) is true
+                    bool is_true = !(test_result->type == TYPE_BOOL && !test_result->value.bool_val) &&
+                                   !(test_result->type == TYPE_NIL); // Handle nil as false if desired
+
+                    // Tail call optimization: jump to evaluate the chosen branch
+                    x = is_true ? conseq_expr : alt_expr;
+                    goto eval_loop;
+                }
+
+                if (strcmp(op_sym, "define") == 0) {
+                    // (define var exp) or (define (f arg...) body) - latter is syntax sugar
+                     if (args->type != TYPE_CONS || args->value.cons_val.cdr->type != TYPE_CONS || args->value.cons_val.cdr->value.cons_val.cdr->type != TYPE_NIL) {
+                         lisp_error("define: Requires exactly 2 arguments (var exp)");
+                     }
+                    Object *var = args->value.cons_val.car;
+                    Object *exp = args->value.cons_val.cdr->value.cons_val.car;
+
+                    // Handle (define (f args...) body) syntax sugar here if needed
+                    // It translates to (define f (lambda (args...) body))
+
+                    if (var->type != TYPE_SYMBOL) {
+                        lisp_error("define: Variable name must be a symbol");
+                    }
+
+                    Object *val = eval(exp, env);
+                    env_define(env, var, val); // Define in *current* environment
+                    return var; // Or return nil, convention varies
+                }
+
+                 if (strcmp(op_sym, "set!") == 0) {
+                    // (set! var exp)
+                     if (args->type != TYPE_CONS || args->value.cons_val.cdr->type != TYPE_CONS || args->value.cons_val.cdr->value.cons_val.cdr->type != TYPE_NIL) {
+                         lisp_error("set!: Requires exactly 2 arguments (var exp)");
+                     }
+                    Object *var = args->value.cons_val.car;
+                    Object *exp = args->value.cons_val.cdr->value.cons_val.car;
+
+                     if (var->type != TYPE_SYMBOL) {
+                        lisp_error("set!: Variable name must be a symbol");
+                    }
+
+                    Object *val = eval(exp, env);
+                    env_set(env, var, val); // Set in environment where var is defined
+                    return val; // Or return nil/void
+                }
+
+                if (strcmp(op_sym, "lambda") == 0) {
+                    // (lambda (param...) body)
+                     if (args->type != TYPE_CONS || args->value.cons_val.cdr->type != TYPE_CONS || args->value.cons_val.cdr->value.cons_val.cdr->type != TYPE_NIL) {
+                         lisp_error("lambda: Requires exactly 2 arguments ((params...) body)");
+                     }
+                    Object *params = args->value.cons_val.car;
+                    Object *body = args->value.cons_val.cdr->value.cons_val.car;
+
+                    // Validate params is a list of symbols
+                    Object *p = params;
+                    while(p->type == TYPE_CONS) {
+                        if (p->value.cons_val.car->type != TYPE_SYMBOL) {
+                            lisp_error("lambda: Parameters must be symbols");
+                        }
+                        p = p->value.cons_val.cdr;
+                    }
+                    if (p->type != TYPE_NIL) {
+                         lisp_error("lambda: Parameter list must be a proper list");
+                    }
+
+                    return make_procedure(params, body, env); // Create closure
+                }
+
+                 if (strcmp(op_sym, "begin") == 0) {
+                    // (begin exp
+
+                    
