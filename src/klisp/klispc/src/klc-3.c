@@ -733,7 +733,7 @@ void repl() {
 
 
 void run_tests() {
-    printf("Tests: \n");
+    printf("** UNIT Tests: \n");
     // Create some atoms
     Cell *a = make_atom("A");
     Cell *b = make_atom("B");
@@ -780,13 +780,13 @@ void run_tests() {
     print_expr(list);
     printf("\n");
     
-    printf("End Tests\n\n");
+    printf("** End Tests\n\n");
 }
 // Function to run a LISP file
 void run_file(const char *filename) {
     FILE *file = fopen(filename, "r");
     if (!file) {
-        fprintf(stderr, "Error: Could not open file '%s'\n", filename);
+        printf("Error: Could not open file '%s'\n", filename);
         return;
     }
     
@@ -797,7 +797,7 @@ void run_file(const char *filename) {
     
     char *buffer = (char*)malloc(file_size + 1);
     if (!buffer) {
-        fprintf(stderr, "Error: Out of memory\n");
+        printf("Error: Out of memory\n");
         fclose(file);
         return;
     }
@@ -815,16 +815,19 @@ void run_file(const char *filename) {
         // Execute each expression in the file
         while ((expr = read_expr(&reader)) != NULL) {
             Cell *result = eval(expr, env);
-            
+            print_expr(expr);
+            printf(" => ");
+            print_expr(result);
+            printf("\n");
             // Only print the result of the last expression
-            if (reader.pos >= reader.len || reader.input[reader.pos] == '\0') {
-                print_expr(result);
-                printf("\n");
-            }
+            // if (reader.pos >= reader.len || reader.input[reader.pos] == '\0') {
+            //     print_expr(result);
+            //     printf("\n");
+            // }
         }
     } else {
         // Error occurred
-        fprintf(stderr, "Error: %s\n", error_message);
+        printf("Error: %s\n", error_message);
         clear_error();
     }
     
