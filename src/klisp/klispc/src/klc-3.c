@@ -782,7 +782,58 @@ void run_tests() {
     
     printf("End Tests\n\n");
 }
+// Function to run a LISP file
+void run_file(const char *filename) {
+    FILE *file = fopen(filename, "r");
+    if (!file) {
+        fprintf(stderr, "Error: Could not open file '%s'\n", filename);
+        return;
+    }
+    
+    // Read the entire file into memory
+    fseek(file, 0, SEEK_END);
+    long file_size = ftell(file);
+    fseek(file, 0, SEEK_SET);
+    
+    char *buffer = (char*)malloc(file_size + 1);
+    if (!buffer) {
+        fprintf(stderr, "Error: Out of memory\n");
+        fclose(file);
+        return;
+    }
+    
+    printf("running file: %s\n", filename);
+    size_t bytes_read = fread(buffer, 1, file_size, file);
+    buffer[bytes_read] = '\0';
+    fclose(file);
+    
+    // Process the file contents
+    if (setjmp(error_jmp_buf) == 0) {
+        StringReader reader = create_string_reader(buffer);
+        Cell *expr;
+        
+        // Execute each expression in the file
+        while ((expr = read_expr(&reader)) != NULL) {
+            Cell *result = eval(expr, env);
+            
+            // Only print the result of the last expression
+            if (reader.pos >= reader.len || reader.input[reader.pos] == '\0') {
+                print_expr(result);
+                printf("\n");
+            }
+        }
+    } else {
+        // Error occurred
+        fprintf(stderr, "Error: %s\n", error_message);
+        clear_error();
+    }
+    
+    free(buffer);
+    printf("Done: %s\n", filename);
 
+}
+
+// Modify main to handle file argument
 int main(int argc, char *argv[]) {
     // Initialize error handling
     clear_error();
@@ -791,9 +842,17 @@ int main(int argc, char *argv[]) {
     // Initialize LISP environment
     if (setjmp(error_jmp_buf) == 0) {
         init_lisp();
-        repl();
+        
+        if (argc > 1) {
+            // Run the specified file
+            run_file(argv[1]);
+        } else {
+            // No file specified, run tests and start REPL
+            run_tests();
+            repl();
+        }
     } else {
-        printf("Fatal error during initialization: %s\n", error_message);
+        fprintf(stderr, "Fatal error during initialization: %s\n", error_message);
     }
     
     // Clean up
