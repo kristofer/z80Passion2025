@@ -510,81 +510,81 @@ Cell *eval(Cell *expr, Cell *env) {
 }
 
 // Apply a function to arguments
-// Cell *apply(Cell *fn, Cell *args, Cell *env) {
-//     // Built-in functions
-//     if (fn->type == CELL_ATOM) {
-//         if (strcmp(fn->value.atom, "CONS") == 0) {
-//             if (args == NIL || cdr(args) == NIL || cdr(cdr(args)) != NIL) {
-//                 set_error(ERR_INVALID_ARGUMENT, "CONS requires exactly two arguments");
-//             }
-//             return cons(car(args), car(cdr(args)));
-//         }
+Cell *apply(Cell *fn, Cell *args, Cell *env) {
+    // Built-in functions
+    if (fn->type == CELL_ATOM) {
+        if (strcmp(fn->value.atom, "CONS") == 0) {
+            if (args == NIL || cdr(args) == NIL || cdr(cdr(args)) != NIL) {
+                set_error(ERR_INVALID_ARGUMENT, "CONS requires exactly two arguments");
+            }
+            return cons(car(args), car(cdr(args)));
+        }
         
-//         if (strcmp(fn->value.atom, "CAR") == 0) {
-//             if (args == NIL || cdr(args) != NIL) {
-//                 set_error(ERR_INVALID_ARGUMENT, "CAR requires exactly one argument");
-//             }
-//             return car(car(args));
-//         }
+        if (strcmp(fn->value.atom, "CAR") == 0) {
+            if (args == NIL || cdr(args) != NIL) {
+                set_error(ERR_INVALID_ARGUMENT, "CAR requires exactly one argument");
+            }
+            return car(car(args));
+        }
         
-//         if (strcmp(fn->value.atom, "CDR") == 0) {
-//             if (args == NIL || cdr(args) != NIL) {
-//                 set_error(ERR_INVALID_ARGUMENT, "CDR requires exactly one argument");
-//             }
-//             return cdr(car(args));
-//         }
+        if (strcmp(fn->value.atom, "CDR") == 0) {
+            if (args == NIL || cdr(args) != NIL) {
+                set_error(ERR_INVALID_ARGUMENT, "CDR requires exactly one argument");
+            }
+            return cdr(car(args));
+        }
         
-//         if (strcmp(fn->value.atom, "ATOM") == 0) {
-//             if (args == NIL || cdr(args) != NIL) {
-//                 set_error(ERR_INVALID_ARGUMENT, "ATOM requires exactly one argument");
-//             }
-//             return atom(car(args));
-//         }
+        if (strcmp(fn->value.atom, "ATOM") == 0) {
+            if (args == NIL || cdr(args) != NIL) {
+                set_error(ERR_INVALID_ARGUMENT, "ATOM requires exactly one argument");
+            }
+            return atom(car(args));
+        }
         
-//         if (strcmp(fn->value.atom, "EQ") == 0) {
-//             if (args == NIL || cdr(args) == NIL || cdr(cdr(args)) != NIL) {
-//                 set_error(ERR_INVALID_ARGUMENT, "EQ requires exactly two arguments");
-//             }
-//             return eq(car(args), car(cdr(args)));
-//         }
+        if (strcmp(fn->value.atom, "EQ") == 0) {
+            if (args == NIL || cdr(args) == NIL || cdr(cdr(args)) != NIL) {
+                set_error(ERR_INVALID_ARGUMENT, "EQ requires exactly two arguments");
+            }
+            return eq(car(args), car(cdr(args)));
+        }
         
-//         char error_msg[256];
-//         sprintf(error_msg, "Unknown function: %s", fn->value.atom);
-//         set_error(ERR_UNBOUND_SYMBOL, error_msg);
-//         return NIL;
-//     }
+        char error_msg[256];
+        sprintf(error_msg, "Unknown function: %s", fn->value.atom);
+        set_error(ERR_UNBOUND_SYMBOL, error_msg);
+        return NIL;
+    }
     
-//     // Lambda expressions: (LAMBDA (params) body)
-//     if (fn->type == CELL_PAIR && eq(car(fn), LAMBDA_SYM) == T) {
-//         Cell *params = car(cdr(fn));
-//         Cell *body = car(cdr(cdr(fn)));
+    // Lambda expressions: (LAMBDA (params) body)
+    if (fn->type == CELL_PAIR && eq(car(fn), LAMBDA_SYM) == T) {
+        Cell *params = car(cdr(fn));
+        Cell *body = car(cdr(cdr(fn)));
         
-//         // Create new environment with args bound to params
-//         Cell *new_env = env;
-//         Cell *param = params;
-//         Cell *arg = args;
+        // Create new environment with args bound to params
+        Cell *new_env = env;
+        Cell *param = params;
+        Cell *arg = args;
         
-//         while (param != NIL && arg != NIL) {
-//             new_env = bind(car(param), car(arg), new_env);
-//             param = cdr(param);
-//             arg = cdr(arg);
-//         }
+        while (param != NIL && arg != NIL) {
+            new_env = bind(car(param), car(arg), new_env);
+            param = cdr(param);
+            arg = cdr(arg);
+        }
         
-//         if (param != NIL) {
-//             set_error(ERR_INVALID_ARGUMENT, "Too few arguments for lambda");
-//         }
+        if (param != NIL) {
+            set_error(ERR_INVALID_ARGUMENT, "Too few arguments for lambda");
+        }
         
-//         if (arg != NIL) {
-//             set_error(ERR_INVALID_ARGUMENT, "Too many arguments for lambda");
-//         }
+        if (arg != NIL) {
+            set_error(ERR_INVALID_ARGUMENT, "Too many arguments for lambda");
+        }
         
-//         // Evaluate body in new environment
-//         return eval(body, new_env);
-//     }
+        // Evaluate body in new environment
+        return eval(body, new_env);
+    }
     
-//     set_error(ERR_TYPE_MISMATCH, "Object is not a function");
-//     return NIL;
-// }
+    set_error(ERR_TYPE_MISMATCH, "Object is not a function");
+    return NIL;
+}
 
 // REPL - Read-Eval-Print Loop
 void repl() {
