@@ -4,6 +4,10 @@ ideas for the Agon Light 2
 ZeeEighty - an adventure in lisp, emacs, and the z80.
 Specifically, the Agon Light 2 from Olimex.
 
+Currently messing with a Lisp implementation for the Agon Light. 
+UDecided to use the [agondev c compiler](https://github.com/AgonPlatform/agondev) which seems to be actively developed by @envenomator and shows great promise.
+Most developed version is [klc-3.c](src/klisp/klispc/src/klc-3.c)
+
 - Lisp from Nothing by Holm might be a way to start.
 - Is there a small emacs in c which launches an elisp interpreter?
 - Small-C - would it work as a bootstrap compiler?

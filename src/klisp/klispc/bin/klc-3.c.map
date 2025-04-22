@@ -162,9 +162,9 @@ Linker script and memory map
                 0x0004018a                _parse_option
                 0x0004018a                _parse_params
 
-.text           0x000401d4     0x3a4f
+.text           0x000401d4     0x3b95
  *(.text)
- .text          0x000401d4     0x1a2f obj/klc-3.o
+ .text          0x000401d4     0x1b75 obj/klc-3.o
                 0x000401d4                _create_string_reader
                 0x000401fa                _reader_getc
                 0x00040236                _reader_ungetc
@@ -180,180 +180,180 @@ Linker script and memory map
                 0x0004069c                _atom
                 0x000406c4                _eq
                 0x00040735                _read_expr
-                0x00040b92                _print_expr
-                0x00040c5f                _lookup
-                0x00040d3e                _list_of_values
-                0x00040d8d                _eval
-                0x000410ee                _apply
-                0x00041541                _is_balanced
-                0x000415db                _repl
-                0x00041868                _run_tests
-                0x00041a2b                _run_file
-                0x00041b92                _main
- .text          0x00041c03       0xbd /Users/kristofer/agondev/release/lib/libc.a(free.c.o)
-                0x00041c03                _free
- .text          0x00041cc0        0xb /Users/kristofer/agondev/release/lib/libc.a(isdigit.o)
-                0x00041cc0                _isdigit
- .text          0x00041ccb        0xf /Users/kristofer/agondev/release/lib/libc.a(isspace.o)
-                0x00041ccb                _isspace
- .text          0x00041cda       0x27 /Users/kristofer/agondev/release/lib/libc.a(longjmp.o)
-                0x00041cda                _longjmp
- .text          0x00041d01       0x9f /Users/kristofer/agondev/release/lib/libc.a(malloc.c.o)
-                0x00041d01                _malloc
- .text          0x00041da0       0x2f /Users/kristofer/agondev/release/lib/libc.a(putchar.o)
-                0x00041da0                _putchar
- .text          0x00041dcf       0x2c /Users/kristofer/agondev/release/lib/libc.a(puts.o)
-                0x00041dcf                _puts
- .text          0x00041dfb       0x28 /Users/kristofer/agondev/release/lib/libc.a(sbrk.o)
-                0x00041dfb                _sbrk
- .text          0x00041e23       0x1d /Users/kristofer/agondev/release/lib/libc.a(setjmp.o)
-                0x00041e23                _setjmp
- .text          0x00041e40       0x1d /Users/kristofer/agondev/release/lib/libc.a(strcmp.o)
-                0x00041e40                _strcmp
- .text          0x00041e5d       0x1f /Users/kristofer/agondev/release/lib/libc.a(strdup.o)
-                0x00041e5d                _strdup
- .text          0x00041e7c       0x15 /Users/kristofer/agondev/release/lib/libc.a(strlen.o)
-                0x00041e7c                _strlen
- .text          0x00041e91       0x2d /Users/kristofer/agondev/release/lib/libc.a(strncat.o)
-                0x00041e91                _strncat
- .text          0x00041ebe       0x32 /Users/kristofer/agondev/release/lib/libc.a(strncmp.o)
-                0x00041ebe                _strncmp
- .text          0x00041ef0       0x43 /Users/kristofer/agondev/release/lib/libc.a(strncpy.o)
-                0x00041ef0                _strncpy
- .text          0x00041f33       0x44 /Users/kristofer/agondev/release/lib/libc.a(fclose.o)
-                0x00041f33                _fclose
- .text          0x00041f77       0x10 /Users/kristofer/agondev/release/lib/libc.a(fflush.o)
-                0x00041f77                _fflush
- .text          0x00041f87       0x93 /Users/kristofer/agondev/release/lib/libc.a(fgets.o)
-                0x00041f87                _fgets
- .text          0x0004201a       0x52 /Users/kristofer/agondev/release/lib/libc.a(files.o)
-                0x0004201a                __stdio_init
- .text          0x0004206c      0x12c /Users/kristofer/agondev/release/lib/libc.a(fopen.o)
-                0x0004206c                _fopen
-                0x0004212d                ___fmodeflags
- .text          0x00042198       0xb7 /Users/kristofer/agondev/release/lib/libc.a(fputc.o)
-                0x00042198                _fputc
-                0x00042228                _fput_char
- .text          0x0004224f       0xcc /Users/kristofer/agondev/release/lib/libc.a(fread.o)
-                0x0004224f                _fread
- .text          0x0004231b       0xa9 /Users/kristofer/agondev/release/lib/libc.a(fseek.o)
-                0x0004231b                _fseek
- .text          0x000423c4       0x3d /Users/kristofer/agondev/release/lib/libc.a(ftell.o)
-                0x000423c4                _ftell
- .text          0x00042401     0x13b8 /Users/kristofer/agondev/release/lib/libc.a(nanoprintf.o)
-                0x00042401                _npf_vpprintf
-                0x00043542                _npf_pprintf
-                0x0004356a                _npf_snprintf
-                0x00043592                _npf_vsnprintf
-                0x0004363f                _vprintf
-                0x0004366f                _printf
-                0x0004368e                _fprintf
-                0x000436b1                _vfprintf
-                0x000436e6                _vsnprintf
-                0x00043749                _snprintf
-                0x00043771                _vsprintf
-                0x00043790                _sprintf
- .text          0x000437b9       0x15 /Users/kristofer/agondev/release/lib/libc.a(mos_fclose.o)
-                0x000437b9                _mos_fclose
- .text          0x000437ce       0x1f /Users/kristofer/agondev/release/lib/libc.a(mos_flseek.o)
-                0x000437ce                _mos_flseek
- .text          0x000437ed       0x18 /Users/kristofer/agondev/release/lib/libc.a(mos_fopen.o)
-                0x000437ed                _mos_fopen
- .text          0x00043805       0x18 /Users/kristofer/agondev/release/lib/libc.a(mos_fputc.o)
-                0x00043805                _mos_fputc
- .text          0x0004381d       0x1c /Users/kristofer/agondev/release/lib/libc.a(mos_fread.o)
-                0x0004381d                _mos_fread
- .text          0x00043839       0x15 /Users/kristofer/agondev/release/lib/libc.a(mos_getfil.o)
-                0x00043839                _mos_getfil
- .text          0x0004384e        0x7 /Users/kristofer/agondev/release/lib/libc.a(outchar.o)
-                0x0004384e                _outchar
- .text          0x00043855       0x1d /Users/kristofer/agondev/release/lib/libc.a(strchr.o)
-                0x00043855                _strchr
- .text          0x00043872        0x0 /Users/kristofer/agondev/release/lib/libc.a(errno.o)
- .text          0x00043872       0xdf /Users/kristofer/agondev/release/lib/libc.a(fgetc.o)
-                0x00043872                _fgetc
- .text          0x00043951       0x3d /Users/kristofer/agondev/release/lib/libc.a(ungetc.o)
-                0x00043951                _ungetc
- .text          0x0004398e       0x15 /Users/kristofer/agondev/release/lib/libc.a(mos_fgetc.o)
-                0x0004398e                _mos_fgetc
- .text          0x000439a3       0x1c /Users/kristofer/agondev/release/lib/libcrt.a(and.o)
-                0x000439a3                __land
-                0x000439a8                __iand
-                0x000439a9                __iand.hijack_land
- .text          0x000439bf        0xa /Users/kristofer/agondev/release/lib/libcrt.a(bshru.o)
-                0x000439bf                __bshru
- .text          0x000439c9       0x2c /Users/kristofer/agondev/release/lib/libcrt.a(crt0.o)
-                0x000439c9                _atexit
-                0x000439c9                _on_exit
- .text          0x000439f5        0xe /Users/kristofer/agondev/release/lib/libcrt.a(frameset.o)
-                0x000439f5                __frameset
- .text          0x00043a03        0xb /Users/kristofer/agondev/release/lib/libcrt.a(frameset0.o)
-                0x00043a03                __frameset0
- .text          0x00043a0e        0x8 /Users/kristofer/agondev/release/lib/libcrt.a(idivu.o)
-                0x00043a0e                __idivu
- .text          0x00043a16       0x18 /Users/kristofer/agondev/release/lib/libcrt.a(idvrmu.o)
-                0x00043a16                __idvrmu
-                0x00043a1a                __idvrmu.hijack_a_iters_ude_dividend
- .text          0x00043a2e       0x30 /Users/kristofer/agondev/release/lib/libcrt.a(imulu.o)
-                0x00043a2e                __imuls
-                0x00043a2e                __imulu
- .text          0x00043a5e        0x7 /Users/kristofer/agondev/release/lib/libcrt.a(inchar.o)
-                0x00043a5e                _inchar
- .text          0x00043a65        0x1 /Users/kristofer/agondev/release/lib/libcrt.a(indcallhl.o)
-                0x00043a65                __indcallhl
- .text          0x00043a66       0x26 /Users/kristofer/agondev/release/lib/libcrt.a(ishl.o)
-                0x00043a66                __sshl
-                0x00043a66                __ishl
- .text          0x00043a8c       0x41 /Users/kristofer/agondev/release/lib/libcrt.a(ishrs.o)
-                0x00043a8c                __ishru
-                0x00043a91                __ishrs
- .text          0x00043acd        0x6 /Users/kristofer/agondev/release/lib/libcrt.a(ladd.o)
-                0x00043acd                __ladd
- .text          0x00043ad3        0x8 /Users/kristofer/agondev/release/lib/libcrt.a(lcmpu.o)
-                0x00043ad3                __lcmpu
- .text          0x00043adb        0xb /Users/kristofer/agondev/release/lib/libcrt.a(lcmpzero.o)
-                0x00043adb                __lcmpzero
- .text          0x00043ae6        0xa /Users/kristofer/agondev/release/lib/libcrt.a(ldivu.o)
-                0x00043ae6                __ldivu
- .text          0x00043af0       0x28 /Users/kristofer/agondev/release/lib/libcrt.a(ldvrmu.o)
-                0x00043af0                __ldvrmu
- .text          0x00043b18       0x5c /Users/kristofer/agondev/release/lib/libcrt.a(lmulu.o)
-                0x00043b18                __lmuls
-                0x00043b18                __lmulu
- .text          0x00043b74        0xd /Users/kristofer/agondev/release/lib/libcrt.a(lneg.o)
-                0x00043b74                __lneg
- .text          0x00043b81        0xd /Users/kristofer/agondev/release/lib/libcrt.a(lshl.o)
-                0x00043b81                __lshl
- .text          0x00043b8e       0x10 /Users/kristofer/agondev/release/lib/libcrt.a(lshru.o)
-                0x00043b8e                __lshru
- .text          0x00043b9e        0x9 /Users/kristofer/agondev/release/lib/libcrt.a(sand.o)
-                0x00043b9e                __sand
- .text          0x00043ba7        0xf /Users/kristofer/agondev/release/lib/libcrt.a(setflag.o)
-                0x00043ba7                __setflag
- .text          0x00043bb6        0xd /Users/kristofer/agondev/release/lib/libcrt.a(sshru.o)
-                0x00043bb6                __sshru
- .text          0x00043bc3       0x1b /Users/kristofer/agondev/release/lib/libcrt.a(xor.o)
-                0x00043bc3                __lxor
-                0x00043bc7                __ixor
- .text          0x00043bde       0x1b /Users/kristofer/agondev/release/lib/libcrt.a(lshrs.o)
-                0x00043bde                __lshrs
-                0x00043bea                __lshrs.hijack_lshru
- .text          0x00043bf9       0x1d /Users/kristofer/agondev/release/lib/libfp.a(fpcmp.o)
-                0x00043bf9                __fcmp
- .text          0x00043c16        0xd /Users/kristofer/agondev/release/lib/libcrt.a(lcmps.o)
-                0x00043c16                __lcmps
+                0x00040cd8                _print_expr
+                0x00040da5                _lookup
+                0x00040e84                _list_of_values
+                0x00040ed3                _eval
+                0x00041234                _apply
+                0x00041687                _is_balanced
+                0x00041721                _repl
+                0x000419ae                _run_tests
+                0x00041b71                _run_file
+                0x00041cd8                _main
+ .text          0x00041d49       0xbd /Users/kristofer/agondev/release/lib/libc.a(free.c.o)
+                0x00041d49                _free
+ .text          0x00041e06        0xb /Users/kristofer/agondev/release/lib/libc.a(isdigit.o)
+                0x00041e06                _isdigit
+ .text          0x00041e11        0xf /Users/kristofer/agondev/release/lib/libc.a(isspace.o)
+                0x00041e11                _isspace
+ .text          0x00041e20       0x27 /Users/kristofer/agondev/release/lib/libc.a(longjmp.o)
+                0x00041e20                _longjmp
+ .text          0x00041e47       0x9f /Users/kristofer/agondev/release/lib/libc.a(malloc.c.o)
+                0x00041e47                _malloc
+ .text          0x00041ee6       0x2f /Users/kristofer/agondev/release/lib/libc.a(putchar.o)
+                0x00041ee6                _putchar
+ .text          0x00041f15       0x2c /Users/kristofer/agondev/release/lib/libc.a(puts.o)
+                0x00041f15                _puts
+ .text          0x00041f41       0x28 /Users/kristofer/agondev/release/lib/libc.a(sbrk.o)
+                0x00041f41                _sbrk
+ .text          0x00041f69       0x1d /Users/kristofer/agondev/release/lib/libc.a(setjmp.o)
+                0x00041f69                _setjmp
+ .text          0x00041f86       0x1d /Users/kristofer/agondev/release/lib/libc.a(strcmp.o)
+                0x00041f86                _strcmp
+ .text          0x00041fa3       0x1f /Users/kristofer/agondev/release/lib/libc.a(strdup.o)
+                0x00041fa3                _strdup
+ .text          0x00041fc2       0x15 /Users/kristofer/agondev/release/lib/libc.a(strlen.o)
+                0x00041fc2                _strlen
+ .text          0x00041fd7       0x2d /Users/kristofer/agondev/release/lib/libc.a(strncat.o)
+                0x00041fd7                _strncat
+ .text          0x00042004       0x32 /Users/kristofer/agondev/release/lib/libc.a(strncmp.o)
+                0x00042004                _strncmp
+ .text          0x00042036       0x43 /Users/kristofer/agondev/release/lib/libc.a(strncpy.o)
+                0x00042036                _strncpy
+ .text          0x00042079       0x44 /Users/kristofer/agondev/release/lib/libc.a(fclose.o)
+                0x00042079                _fclose
+ .text          0x000420bd       0x10 /Users/kristofer/agondev/release/lib/libc.a(fflush.o)
+                0x000420bd                _fflush
+ .text          0x000420cd       0x93 /Users/kristofer/agondev/release/lib/libc.a(fgets.o)
+                0x000420cd                _fgets
+ .text          0x00042160       0x52 /Users/kristofer/agondev/release/lib/libc.a(files.o)
+                0x00042160                __stdio_init
+ .text          0x000421b2      0x12c /Users/kristofer/agondev/release/lib/libc.a(fopen.o)
+                0x000421b2                _fopen
+                0x00042273                ___fmodeflags
+ .text          0x000422de       0xb7 /Users/kristofer/agondev/release/lib/libc.a(fputc.o)
+                0x000422de                _fputc
+                0x0004236e                _fput_char
+ .text          0x00042395       0xcc /Users/kristofer/agondev/release/lib/libc.a(fread.o)
+                0x00042395                _fread
+ .text          0x00042461       0xa9 /Users/kristofer/agondev/release/lib/libc.a(fseek.o)
+                0x00042461                _fseek
+ .text          0x0004250a       0x3d /Users/kristofer/agondev/release/lib/libc.a(ftell.o)
+                0x0004250a                _ftell
+ .text          0x00042547     0x13b8 /Users/kristofer/agondev/release/lib/libc.a(nanoprintf.o)
+                0x00042547                _npf_vpprintf
+                0x00043688                _npf_pprintf
+                0x000436b0                _npf_snprintf
+                0x000436d8                _npf_vsnprintf
+                0x00043785                _vprintf
+                0x000437b5                _printf
+                0x000437d4                _fprintf
+                0x000437f7                _vfprintf
+                0x0004382c                _vsnprintf
+                0x0004388f                _snprintf
+                0x000438b7                _vsprintf
+                0x000438d6                _sprintf
+ .text          0x000438ff       0x15 /Users/kristofer/agondev/release/lib/libc.a(mos_fclose.o)
+                0x000438ff                _mos_fclose
+ .text          0x00043914       0x1f /Users/kristofer/agondev/release/lib/libc.a(mos_flseek.o)
+                0x00043914                _mos_flseek
+ .text          0x00043933       0x18 /Users/kristofer/agondev/release/lib/libc.a(mos_fopen.o)
+                0x00043933                _mos_fopen
+ .text          0x0004394b       0x18 /Users/kristofer/agondev/release/lib/libc.a(mos_fputc.o)
+                0x0004394b                _mos_fputc
+ .text          0x00043963       0x1c /Users/kristofer/agondev/release/lib/libc.a(mos_fread.o)
+                0x00043963                _mos_fread
+ .text          0x0004397f       0x15 /Users/kristofer/agondev/release/lib/libc.a(mos_getfil.o)
+                0x0004397f                _mos_getfil
+ .text          0x00043994        0x7 /Users/kristofer/agondev/release/lib/libc.a(outchar.o)
+                0x00043994                _outchar
+ .text          0x0004399b       0x1d /Users/kristofer/agondev/release/lib/libc.a(strchr.o)
+                0x0004399b                _strchr
+ .text          0x000439b8        0x0 /Users/kristofer/agondev/release/lib/libc.a(errno.o)
+ .text          0x000439b8       0xdf /Users/kristofer/agondev/release/lib/libc.a(fgetc.o)
+                0x000439b8                _fgetc
+ .text          0x00043a97       0x3d /Users/kristofer/agondev/release/lib/libc.a(ungetc.o)
+                0x00043a97                _ungetc
+ .text          0x00043ad4       0x15 /Users/kristofer/agondev/release/lib/libc.a(mos_fgetc.o)
+                0x00043ad4                _mos_fgetc
+ .text          0x00043ae9       0x1c /Users/kristofer/agondev/release/lib/libcrt.a(and.o)
+                0x00043ae9                __land
+                0x00043aee                __iand
+                0x00043aef                __iand.hijack_land
+ .text          0x00043b05        0xa /Users/kristofer/agondev/release/lib/libcrt.a(bshru.o)
+                0x00043b05                __bshru
+ .text          0x00043b0f       0x2c /Users/kristofer/agondev/release/lib/libcrt.a(crt0.o)
+                0x00043b0f                _atexit
+                0x00043b0f                _on_exit
+ .text          0x00043b3b        0xe /Users/kristofer/agondev/release/lib/libcrt.a(frameset.o)
+                0x00043b3b                __frameset
+ .text          0x00043b49        0xb /Users/kristofer/agondev/release/lib/libcrt.a(frameset0.o)
+                0x00043b49                __frameset0
+ .text          0x00043b54        0x8 /Users/kristofer/agondev/release/lib/libcrt.a(idivu.o)
+                0x00043b54                __idivu
+ .text          0x00043b5c       0x18 /Users/kristofer/agondev/release/lib/libcrt.a(idvrmu.o)
+                0x00043b5c                __idvrmu
+                0x00043b60                __idvrmu.hijack_a_iters_ude_dividend
+ .text          0x00043b74       0x30 /Users/kristofer/agondev/release/lib/libcrt.a(imulu.o)
+                0x00043b74                __imuls
+                0x00043b74                __imulu
+ .text          0x00043ba4        0x7 /Users/kristofer/agondev/release/lib/libcrt.a(inchar.o)
+                0x00043ba4                _inchar
+ .text          0x00043bab        0x1 /Users/kristofer/agondev/release/lib/libcrt.a(indcallhl.o)
+                0x00043bab                __indcallhl
+ .text          0x00043bac       0x26 /Users/kristofer/agondev/release/lib/libcrt.a(ishl.o)
+                0x00043bac                __sshl
+                0x00043bac                __ishl
+ .text          0x00043bd2       0x41 /Users/kristofer/agondev/release/lib/libcrt.a(ishrs.o)
+                0x00043bd2                __ishru
+                0x00043bd7                __ishrs
+ .text          0x00043c13        0x6 /Users/kristofer/agondev/release/lib/libcrt.a(ladd.o)
+                0x00043c13                __ladd
+ .text          0x00043c19        0x8 /Users/kristofer/agondev/release/lib/libcrt.a(lcmpu.o)
+                0x00043c19                __lcmpu
+ .text          0x00043c21        0xb /Users/kristofer/agondev/release/lib/libcrt.a(lcmpzero.o)
+                0x00043c21                __lcmpzero
+ .text          0x00043c2c        0xa /Users/kristofer/agondev/release/lib/libcrt.a(ldivu.o)
+                0x00043c2c                __ldivu
+ .text          0x00043c36       0x28 /Users/kristofer/agondev/release/lib/libcrt.a(ldvrmu.o)
+                0x00043c36                __ldvrmu
+ .text          0x00043c5e       0x5c /Users/kristofer/agondev/release/lib/libcrt.a(lmulu.o)
+                0x00043c5e                __lmuls
+                0x00043c5e                __lmulu
+ .text          0x00043cba        0xd /Users/kristofer/agondev/release/lib/libcrt.a(lneg.o)
+                0x00043cba                __lneg
+ .text          0x00043cc7        0xd /Users/kristofer/agondev/release/lib/libcrt.a(lshl.o)
+                0x00043cc7                __lshl
+ .text          0x00043cd4       0x10 /Users/kristofer/agondev/release/lib/libcrt.a(lshru.o)
+                0x00043cd4                __lshru
+ .text          0x00043ce4        0x9 /Users/kristofer/agondev/release/lib/libcrt.a(sand.o)
+                0x00043ce4                __sand
+ .text          0x00043ced        0xf /Users/kristofer/agondev/release/lib/libcrt.a(setflag.o)
+                0x00043ced                __setflag
+ .text          0x00043cfc        0xd /Users/kristofer/agondev/release/lib/libcrt.a(sshru.o)
+                0x00043cfc                __sshru
+ .text          0x00043d09       0x1b /Users/kristofer/agondev/release/lib/libcrt.a(xor.o)
+                0x00043d09                __lxor
+                0x00043d0d                __ixor
+ .text          0x00043d24       0x1b /Users/kristofer/agondev/release/lib/libcrt.a(lshrs.o)
+                0x00043d24                __lshrs
+                0x00043d30                __lshrs.hijack_lshru
+ .text          0x00043d3f       0x1d /Users/kristofer/agondev/release/lib/libfp.a(fpcmp.o)
+                0x00043d3f                __fcmp
+ .text          0x00043d5c        0xd /Users/kristofer/agondev/release/lib/libcrt.a(lcmps.o)
+                0x00043d5c                __lcmps
 
-.init_array     0x00043c23        0x0
+.init_array     0x00043d69        0x0
  *(.init_array)
- .init_array    0x00043c23        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(crt0.o)
+ .init_array    0x00043d69        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(crt0.o)
 
-.ctors          0x00043c23        0x0
+.ctors          0x00043d69        0x0
  *(.ctors)
- .ctors         0x00043c23        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(crt0.o)
+ .ctors         0x00043d69        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(crt0.o)
 
-.dtors          0x00043c23        0x0
+.dtors          0x00043d69        0x0
  *(.dtors)
- .dtors         0x00043c23        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(crt0.o)
+ .dtors         0x00043d69        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(crt0.o)
 
 .comment        0x00000000      0x702
  .comment       0x00000000       0x71 obj/klc-3.o
@@ -373,181 +373,181 @@ Linker script and memory map
  .comment       0x00000620       0x71 /Users/kristofer/agondev/release/lib/libc.a(fgetc.o)
  .comment       0x00000691       0x71 /Users/kristofer/agondev/release/lib/libc.a(ungetc.o)
 
-.fini_array     0x00043c23        0x0
+.fini_array     0x00043d69        0x0
  *(.fini_array)
- .fini_array    0x00043c23        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(crt0.o)
+ .fini_array    0x00043d69        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(crt0.o)
 
-.rodata         0x00043c23      0x56e
+.rodata         0x00043d69      0x580
  *(.rodata)
- .rodata        0x00043c23      0x4aa obj/klc-3.o
- .rodata        0x000440cd        0x9 /Users/kristofer/agondev/release/lib/libc.a(puts.o)
-                0x000440cd                ___null_literal_str
-                0x000440d4                ___end_of_line_str
- .rodata        0x000440d6        0x4 /Users/kristofer/agondev/release/lib/libc.a(fopen.o)
- .rodata        0x000440da       0xab /Users/kristofer/agondev/release/lib/libc.a(nanoprintf.o)
- .rodata        0x00044185        0xc /Users/kristofer/agondev/release/lib/libcrt.a(crt0.o)
+ .rodata        0x00043d69      0x4bc obj/klc-3.o
+ .rodata        0x00044225        0x9 /Users/kristofer/agondev/release/lib/libc.a(puts.o)
+                0x00044225                ___null_literal_str
+                0x0004422c                ___end_of_line_str
+ .rodata        0x0004422e        0x4 /Users/kristofer/agondev/release/lib/libc.a(fopen.o)
+ .rodata        0x00044232       0xab /Users/kristofer/agondev/release/lib/libc.a(nanoprintf.o)
+ .rodata        0x000442dd        0xc /Users/kristofer/agondev/release/lib/libcrt.a(crt0.o)
 
-.data           0x00044191       0x48
+.data           0x000442e9       0x48
  *(.data)
- .data          0x00044191        0x0 obj/klc-3.o
- .data          0x00044191        0x0 /Users/kristofer/agondev/release/lib/libc.a(free.c.o)
- .data          0x00044191        0x0 /Users/kristofer/agondev/release/lib/libc.a(isdigit.o)
- .data          0x00044191        0x0 /Users/kristofer/agondev/release/lib/libc.a(isspace.o)
- .data          0x00044191        0x0 /Users/kristofer/agondev/release/lib/libc.a(longjmp.o)
- .data          0x00044191        0x0 /Users/kristofer/agondev/release/lib/libc.a(malloc.c.o)
- .data          0x00044191        0x0 /Users/kristofer/agondev/release/lib/libc.a(putchar.o)
- .data          0x00044191        0x0 /Users/kristofer/agondev/release/lib/libc.a(puts.o)
- .data          0x00044191        0x3 /Users/kristofer/agondev/release/lib/libc.a(sbrk.o)
-                0x00044191                __sbrkbase
- .data          0x00044194        0x0 /Users/kristofer/agondev/release/lib/libc.a(setjmp.o)
- .data          0x00044194        0x0 /Users/kristofer/agondev/release/lib/libc.a(strcmp.o)
- .data          0x00044194        0x0 /Users/kristofer/agondev/release/lib/libc.a(strdup.o)
- .data          0x00044194        0x0 /Users/kristofer/agondev/release/lib/libc.a(strlen.o)
- .data          0x00044194        0x0 /Users/kristofer/agondev/release/lib/libc.a(strncat.o)
- .data          0x00044194        0x0 /Users/kristofer/agondev/release/lib/libc.a(strncmp.o)
- .data          0x00044194        0x0 /Users/kristofer/agondev/release/lib/libc.a(strncpy.o)
- .data          0x00044194        0x0 /Users/kristofer/agondev/release/lib/libc.a(fclose.o)
- .data          0x00044194        0x0 /Users/kristofer/agondev/release/lib/libc.a(fflush.o)
- .data          0x00044194        0x0 /Users/kristofer/agondev/release/lib/libc.a(fgets.o)
- .data          0x00044194        0xf /Users/kristofer/agondev/release/lib/libc.a(files.o)
-                0x00044194                _stdin
-                0x00044199                _stdout
-                0x0004419e                _stderr
- .data          0x000441a3        0x0 /Users/kristofer/agondev/release/lib/libc.a(fopen.o)
- .data          0x000441a3        0x0 /Users/kristofer/agondev/release/lib/libc.a(fputc.o)
- .data          0x000441a3        0x0 /Users/kristofer/agondev/release/lib/libc.a(fread.o)
- .data          0x000441a3        0x0 /Users/kristofer/agondev/release/lib/libc.a(fseek.o)
- .data          0x000441a3        0x0 /Users/kristofer/agondev/release/lib/libc.a(ftell.o)
- .data          0x000441a3        0x0 /Users/kristofer/agondev/release/lib/libc.a(nanoprintf.o)
- .data          0x000441a3        0x0 /Users/kristofer/agondev/release/lib/libc.a(mos_fclose.o)
- .data          0x000441a3        0x0 /Users/kristofer/agondev/release/lib/libc.a(mos_flseek.o)
- .data          0x000441a3        0x0 /Users/kristofer/agondev/release/lib/libc.a(mos_fopen.o)
- .data          0x000441a3        0x0 /Users/kristofer/agondev/release/lib/libc.a(mos_fputc.o)
- .data          0x000441a3        0x0 /Users/kristofer/agondev/release/lib/libc.a(mos_fread.o)
- .data          0x000441a3        0x0 /Users/kristofer/agondev/release/lib/libc.a(mos_getfil.o)
- .data          0x000441a3        0x0 /Users/kristofer/agondev/release/lib/libc.a(outchar.o)
- .data          0x000441a3        0x0 /Users/kristofer/agondev/release/lib/libc.a(strchr.o)
- .data          0x000441a3        0x0 /Users/kristofer/agondev/release/lib/libc.a(errno.o)
- .data          0x000441a3        0x0 /Users/kristofer/agondev/release/lib/libc.a(fgetc.o)
- .data          0x000441a3        0x0 /Users/kristofer/agondev/release/lib/libc.a(ungetc.o)
- .data          0x000441a3        0x0 /Users/kristofer/agondev/release/lib/libc.a(mos_fgetc.o)
- .data          0x000441a3        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(and.o)
- .data          0x000441a3        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(bshru.o)
- .data          0x000441a3       0x36 /Users/kristofer/agondev/release/lib/libcrt.a(crt0.o)
-                0x000441d6                _exit.sp
- .data          0x000441d9        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(frameset.o)
- .data          0x000441d9        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(frameset0.o)
- .data          0x000441d9        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(idivu.o)
- .data          0x000441d9        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(idvrmu.o)
- .data          0x000441d9        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(imulu.o)
- .data          0x000441d9        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(inchar.o)
- .data          0x000441d9        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(indcallhl.o)
- .data          0x000441d9        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(ishl.o)
- .data          0x000441d9        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(ishrs.o)
- .data          0x000441d9        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(ladd.o)
- .data          0x000441d9        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(lcmpu.o)
- .data          0x000441d9        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(lcmpzero.o)
- .data          0x000441d9        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(ldivu.o)
- .data          0x000441d9        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(ldvrmu.o)
- .data          0x000441d9        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(lmulu.o)
- .data          0x000441d9        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(lneg.o)
- .data          0x000441d9        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(lshl.o)
- .data          0x000441d9        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(lshru.o)
- .data          0x000441d9        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(sand.o)
- .data          0x000441d9        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(setflag.o)
- .data          0x000441d9        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(sshru.o)
- .data          0x000441d9        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(xor.o)
- .data          0x000441d9        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(lshrs.o)
- .data          0x000441d9        0x0 /Users/kristofer/agondev/release/lib/libfp.a(fpcmp.o)
- .data          0x000441d9        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(lcmps.o)
+ .data          0x000442e9        0x0 obj/klc-3.o
+ .data          0x000442e9        0x0 /Users/kristofer/agondev/release/lib/libc.a(free.c.o)
+ .data          0x000442e9        0x0 /Users/kristofer/agondev/release/lib/libc.a(isdigit.o)
+ .data          0x000442e9        0x0 /Users/kristofer/agondev/release/lib/libc.a(isspace.o)
+ .data          0x000442e9        0x0 /Users/kristofer/agondev/release/lib/libc.a(longjmp.o)
+ .data          0x000442e9        0x0 /Users/kristofer/agondev/release/lib/libc.a(malloc.c.o)
+ .data          0x000442e9        0x0 /Users/kristofer/agondev/release/lib/libc.a(putchar.o)
+ .data          0x000442e9        0x0 /Users/kristofer/agondev/release/lib/libc.a(puts.o)
+ .data          0x000442e9        0x3 /Users/kristofer/agondev/release/lib/libc.a(sbrk.o)
+                0x000442e9                __sbrkbase
+ .data          0x000442ec        0x0 /Users/kristofer/agondev/release/lib/libc.a(setjmp.o)
+ .data          0x000442ec        0x0 /Users/kristofer/agondev/release/lib/libc.a(strcmp.o)
+ .data          0x000442ec        0x0 /Users/kristofer/agondev/release/lib/libc.a(strdup.o)
+ .data          0x000442ec        0x0 /Users/kristofer/agondev/release/lib/libc.a(strlen.o)
+ .data          0x000442ec        0x0 /Users/kristofer/agondev/release/lib/libc.a(strncat.o)
+ .data          0x000442ec        0x0 /Users/kristofer/agondev/release/lib/libc.a(strncmp.o)
+ .data          0x000442ec        0x0 /Users/kristofer/agondev/release/lib/libc.a(strncpy.o)
+ .data          0x000442ec        0x0 /Users/kristofer/agondev/release/lib/libc.a(fclose.o)
+ .data          0x000442ec        0x0 /Users/kristofer/agondev/release/lib/libc.a(fflush.o)
+ .data          0x000442ec        0x0 /Users/kristofer/agondev/release/lib/libc.a(fgets.o)
+ .data          0x000442ec        0xf /Users/kristofer/agondev/release/lib/libc.a(files.o)
+                0x000442ec                _stdin
+                0x000442f1                _stdout
+                0x000442f6                _stderr
+ .data          0x000442fb        0x0 /Users/kristofer/agondev/release/lib/libc.a(fopen.o)
+ .data          0x000442fb        0x0 /Users/kristofer/agondev/release/lib/libc.a(fputc.o)
+ .data          0x000442fb        0x0 /Users/kristofer/agondev/release/lib/libc.a(fread.o)
+ .data          0x000442fb        0x0 /Users/kristofer/agondev/release/lib/libc.a(fseek.o)
+ .data          0x000442fb        0x0 /Users/kristofer/agondev/release/lib/libc.a(ftell.o)
+ .data          0x000442fb        0x0 /Users/kristofer/agondev/release/lib/libc.a(nanoprintf.o)
+ .data          0x000442fb        0x0 /Users/kristofer/agondev/release/lib/libc.a(mos_fclose.o)
+ .data          0x000442fb        0x0 /Users/kristofer/agondev/release/lib/libc.a(mos_flseek.o)
+ .data          0x000442fb        0x0 /Users/kristofer/agondev/release/lib/libc.a(mos_fopen.o)
+ .data          0x000442fb        0x0 /Users/kristofer/agondev/release/lib/libc.a(mos_fputc.o)
+ .data          0x000442fb        0x0 /Users/kristofer/agondev/release/lib/libc.a(mos_fread.o)
+ .data          0x000442fb        0x0 /Users/kristofer/agondev/release/lib/libc.a(mos_getfil.o)
+ .data          0x000442fb        0x0 /Users/kristofer/agondev/release/lib/libc.a(outchar.o)
+ .data          0x000442fb        0x0 /Users/kristofer/agondev/release/lib/libc.a(strchr.o)
+ .data          0x000442fb        0x0 /Users/kristofer/agondev/release/lib/libc.a(errno.o)
+ .data          0x000442fb        0x0 /Users/kristofer/agondev/release/lib/libc.a(fgetc.o)
+ .data          0x000442fb        0x0 /Users/kristofer/agondev/release/lib/libc.a(ungetc.o)
+ .data          0x000442fb        0x0 /Users/kristofer/agondev/release/lib/libc.a(mos_fgetc.o)
+ .data          0x000442fb        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(and.o)
+ .data          0x000442fb        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(bshru.o)
+ .data          0x000442fb       0x36 /Users/kristofer/agondev/release/lib/libcrt.a(crt0.o)
+                0x0004432e                _exit.sp
+ .data          0x00044331        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(frameset.o)
+ .data          0x00044331        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(frameset0.o)
+ .data          0x00044331        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(idivu.o)
+ .data          0x00044331        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(idvrmu.o)
+ .data          0x00044331        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(imulu.o)
+ .data          0x00044331        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(inchar.o)
+ .data          0x00044331        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(indcallhl.o)
+ .data          0x00044331        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(ishl.o)
+ .data          0x00044331        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(ishrs.o)
+ .data          0x00044331        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(ladd.o)
+ .data          0x00044331        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(lcmpu.o)
+ .data          0x00044331        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(lcmpzero.o)
+ .data          0x00044331        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(ldivu.o)
+ .data          0x00044331        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(ldvrmu.o)
+ .data          0x00044331        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(lmulu.o)
+ .data          0x00044331        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(lneg.o)
+ .data          0x00044331        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(lshl.o)
+ .data          0x00044331        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(lshru.o)
+ .data          0x00044331        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(sand.o)
+ .data          0x00044331        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(setflag.o)
+ .data          0x00044331        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(sshru.o)
+ .data          0x00044331        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(xor.o)
+ .data          0x00044331        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(lshrs.o)
+ .data          0x00044331        0x0 /Users/kristofer/agondev/release/lib/libfp.a(fpcmp.o)
+ .data          0x00044331        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(lcmps.o)
 
-.bss            0x000441d9      0x155
-                0x000441d9                        bss_start = .
+.bss            0x00044331      0x155
+                0x00044331                        bss_start = .
  *(.bss .bss*)
- .bss           0x000441d9      0x124 obj/klc-3.o
-                0x000441d9                _error_type
-                0x000441dc                _env
-                0x000441df                _error_message
-                0x000442df                _error_jmp_buf
-                0x000442eb                _NIL
-                0x000442ee                _T
-                0x000442f1                _QUOTE_SYM
-                0x000442f4                _LAMBDA_SYM
-                0x000442f7                _COND_SYM
-                0x000442fa                _LABEL_SYM
- .bss           0x000442fd        0x0 /Users/kristofer/agondev/release/lib/libc.a(free.c.o)
- .bss           0x000442fd        0x0 /Users/kristofer/agondev/release/lib/libc.a(isdigit.o)
- .bss           0x000442fd        0x0 /Users/kristofer/agondev/release/lib/libc.a(isspace.o)
- .bss           0x000442fd        0x0 /Users/kristofer/agondev/release/lib/libc.a(longjmp.o)
- .bss           0x000442fd        0x6 /Users/kristofer/agondev/release/lib/libc.a(malloc.c.o)
-                0x000442fd                __alloc_base
- .bss           0x00044303        0x0 /Users/kristofer/agondev/release/lib/libc.a(putchar.o)
- .bss           0x00044303        0x0 /Users/kristofer/agondev/release/lib/libc.a(puts.o)
- .bss           0x00044303        0x0 /Users/kristofer/agondev/release/lib/libc.a(sbrk.o)
- .bss           0x00044303        0x0 /Users/kristofer/agondev/release/lib/libc.a(setjmp.o)
- .bss           0x00044303        0x0 /Users/kristofer/agondev/release/lib/libc.a(strcmp.o)
- .bss           0x00044303        0x0 /Users/kristofer/agondev/release/lib/libc.a(strdup.o)
- .bss           0x00044303        0x0 /Users/kristofer/agondev/release/lib/libc.a(strlen.o)
- .bss           0x00044303        0x0 /Users/kristofer/agondev/release/lib/libc.a(strncat.o)
- .bss           0x00044303        0x0 /Users/kristofer/agondev/release/lib/libc.a(strncmp.o)
- .bss           0x00044303        0x0 /Users/kristofer/agondev/release/lib/libc.a(strncpy.o)
- .bss           0x00044303        0x0 /Users/kristofer/agondev/release/lib/libc.a(fclose.o)
- .bss           0x00044303        0x0 /Users/kristofer/agondev/release/lib/libc.a(fflush.o)
- .bss           0x00044303        0x0 /Users/kristofer/agondev/release/lib/libc.a(fgets.o)
- .bss           0x00044303       0x28 /Users/kristofer/agondev/release/lib/libc.a(files.o)
-                0x00044303                __file_streams
- .bss           0x0004432b        0x0 /Users/kristofer/agondev/release/lib/libc.a(fopen.o)
- .bss           0x0004432b        0x0 /Users/kristofer/agondev/release/lib/libc.a(fputc.o)
- .bss           0x0004432b        0x0 /Users/kristofer/agondev/release/lib/libc.a(fread.o)
- .bss           0x0004432b        0x0 /Users/kristofer/agondev/release/lib/libc.a(fseek.o)
- .bss           0x0004432b        0x0 /Users/kristofer/agondev/release/lib/libc.a(ftell.o)
- .bss           0x0004432b        0x0 /Users/kristofer/agondev/release/lib/libc.a(nanoprintf.o)
- .bss           0x0004432b        0x0 /Users/kristofer/agondev/release/lib/libc.a(mos_fclose.o)
- .bss           0x0004432b        0x0 /Users/kristofer/agondev/release/lib/libc.a(mos_flseek.o)
- .bss           0x0004432b        0x0 /Users/kristofer/agondev/release/lib/libc.a(mos_fopen.o)
- .bss           0x0004432b        0x0 /Users/kristofer/agondev/release/lib/libc.a(mos_fputc.o)
- .bss           0x0004432b        0x0 /Users/kristofer/agondev/release/lib/libc.a(mos_fread.o)
- .bss           0x0004432b        0x0 /Users/kristofer/agondev/release/lib/libc.a(mos_getfil.o)
- .bss           0x0004432b        0x0 /Users/kristofer/agondev/release/lib/libc.a(outchar.o)
- .bss           0x0004432b        0x0 /Users/kristofer/agondev/release/lib/libc.a(strchr.o)
- .bss           0x0004432b        0x3 /Users/kristofer/agondev/release/lib/libc.a(errno.o)
-                0x0004432b                _errno
- .bss           0x0004432e        0x0 /Users/kristofer/agondev/release/lib/libc.a(fgetc.o)
- .bss           0x0004432e        0x0 /Users/kristofer/agondev/release/lib/libc.a(ungetc.o)
- .bss           0x0004432e        0x0 /Users/kristofer/agondev/release/lib/libc.a(mos_fgetc.o)
- .bss           0x0004432e        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(and.o)
- .bss           0x0004432e        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(bshru.o)
- .bss           0x0004432e        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(crt0.o)
- .bss           0x0004432e        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(frameset.o)
- .bss           0x0004432e        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(frameset0.o)
- .bss           0x0004432e        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(idivu.o)
- .bss           0x0004432e        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(idvrmu.o)
- .bss           0x0004432e        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(imulu.o)
- .bss           0x0004432e        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(inchar.o)
- .bss           0x0004432e        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(indcallhl.o)
- .bss           0x0004432e        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(ishl.o)
- .bss           0x0004432e        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(ishrs.o)
- .bss           0x0004432e        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(ladd.o)
- .bss           0x0004432e        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(lcmpu.o)
- .bss           0x0004432e        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(lcmpzero.o)
- .bss           0x0004432e        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(ldivu.o)
- .bss           0x0004432e        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(ldvrmu.o)
- .bss           0x0004432e        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(lmulu.o)
- .bss           0x0004432e        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(lneg.o)
- .bss           0x0004432e        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(lshl.o)
- .bss           0x0004432e        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(lshru.o)
- .bss           0x0004432e        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(sand.o)
- .bss           0x0004432e        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(setflag.o)
- .bss           0x0004432e        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(sshru.o)
- .bss           0x0004432e        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(xor.o)
- .bss           0x0004432e        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(lshrs.o)
- .bss           0x0004432e        0x0 /Users/kristofer/agondev/release/lib/libfp.a(fpcmp.o)
- .bss           0x0004432e        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(lcmps.o)
-                0x0004432e                        bss_end = .
+ .bss           0x00044331      0x124 obj/klc-3.o
+                0x00044331                _error_type
+                0x00044334                _env
+                0x00044337                _error_message
+                0x00044437                _error_jmp_buf
+                0x00044443                _NIL
+                0x00044446                _T
+                0x00044449                _QUOTE_SYM
+                0x0004444c                _LAMBDA_SYM
+                0x0004444f                _COND_SYM
+                0x00044452                _LABEL_SYM
+ .bss           0x00044455        0x0 /Users/kristofer/agondev/release/lib/libc.a(free.c.o)
+ .bss           0x00044455        0x0 /Users/kristofer/agondev/release/lib/libc.a(isdigit.o)
+ .bss           0x00044455        0x0 /Users/kristofer/agondev/release/lib/libc.a(isspace.o)
+ .bss           0x00044455        0x0 /Users/kristofer/agondev/release/lib/libc.a(longjmp.o)
+ .bss           0x00044455        0x6 /Users/kristofer/agondev/release/lib/libc.a(malloc.c.o)
+                0x00044455                __alloc_base
+ .bss           0x0004445b        0x0 /Users/kristofer/agondev/release/lib/libc.a(putchar.o)
+ .bss           0x0004445b        0x0 /Users/kristofer/agondev/release/lib/libc.a(puts.o)
+ .bss           0x0004445b        0x0 /Users/kristofer/agondev/release/lib/libc.a(sbrk.o)
+ .bss           0x0004445b        0x0 /Users/kristofer/agondev/release/lib/libc.a(setjmp.o)
+ .bss           0x0004445b        0x0 /Users/kristofer/agondev/release/lib/libc.a(strcmp.o)
+ .bss           0x0004445b        0x0 /Users/kristofer/agondev/release/lib/libc.a(strdup.o)
+ .bss           0x0004445b        0x0 /Users/kristofer/agondev/release/lib/libc.a(strlen.o)
+ .bss           0x0004445b        0x0 /Users/kristofer/agondev/release/lib/libc.a(strncat.o)
+ .bss           0x0004445b        0x0 /Users/kristofer/agondev/release/lib/libc.a(strncmp.o)
+ .bss           0x0004445b        0x0 /Users/kristofer/agondev/release/lib/libc.a(strncpy.o)
+ .bss           0x0004445b        0x0 /Users/kristofer/agondev/release/lib/libc.a(fclose.o)
+ .bss           0x0004445b        0x0 /Users/kristofer/agondev/release/lib/libc.a(fflush.o)
+ .bss           0x0004445b        0x0 /Users/kristofer/agondev/release/lib/libc.a(fgets.o)
+ .bss           0x0004445b       0x28 /Users/kristofer/agondev/release/lib/libc.a(files.o)
+                0x0004445b                __file_streams
+ .bss           0x00044483        0x0 /Users/kristofer/agondev/release/lib/libc.a(fopen.o)
+ .bss           0x00044483        0x0 /Users/kristofer/agondev/release/lib/libc.a(fputc.o)
+ .bss           0x00044483        0x0 /Users/kristofer/agondev/release/lib/libc.a(fread.o)
+ .bss           0x00044483        0x0 /Users/kristofer/agondev/release/lib/libc.a(fseek.o)
+ .bss           0x00044483        0x0 /Users/kristofer/agondev/release/lib/libc.a(ftell.o)
+ .bss           0x00044483        0x0 /Users/kristofer/agondev/release/lib/libc.a(nanoprintf.o)
+ .bss           0x00044483        0x0 /Users/kristofer/agondev/release/lib/libc.a(mos_fclose.o)
+ .bss           0x00044483        0x0 /Users/kristofer/agondev/release/lib/libc.a(mos_flseek.o)
+ .bss           0x00044483        0x0 /Users/kristofer/agondev/release/lib/libc.a(mos_fopen.o)
+ .bss           0x00044483        0x0 /Users/kristofer/agondev/release/lib/libc.a(mos_fputc.o)
+ .bss           0x00044483        0x0 /Users/kristofer/agondev/release/lib/libc.a(mos_fread.o)
+ .bss           0x00044483        0x0 /Users/kristofer/agondev/release/lib/libc.a(mos_getfil.o)
+ .bss           0x00044483        0x0 /Users/kristofer/agondev/release/lib/libc.a(outchar.o)
+ .bss           0x00044483        0x0 /Users/kristofer/agondev/release/lib/libc.a(strchr.o)
+ .bss           0x00044483        0x3 /Users/kristofer/agondev/release/lib/libc.a(errno.o)
+                0x00044483                _errno
+ .bss           0x00044486        0x0 /Users/kristofer/agondev/release/lib/libc.a(fgetc.o)
+ .bss           0x00044486        0x0 /Users/kristofer/agondev/release/lib/libc.a(ungetc.o)
+ .bss           0x00044486        0x0 /Users/kristofer/agondev/release/lib/libc.a(mos_fgetc.o)
+ .bss           0x00044486        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(and.o)
+ .bss           0x00044486        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(bshru.o)
+ .bss           0x00044486        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(crt0.o)
+ .bss           0x00044486        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(frameset.o)
+ .bss           0x00044486        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(frameset0.o)
+ .bss           0x00044486        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(idivu.o)
+ .bss           0x00044486        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(idvrmu.o)
+ .bss           0x00044486        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(imulu.o)
+ .bss           0x00044486        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(inchar.o)
+ .bss           0x00044486        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(indcallhl.o)
+ .bss           0x00044486        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(ishl.o)
+ .bss           0x00044486        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(ishrs.o)
+ .bss           0x00044486        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(ladd.o)
+ .bss           0x00044486        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(lcmpu.o)
+ .bss           0x00044486        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(lcmpzero.o)
+ .bss           0x00044486        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(ldivu.o)
+ .bss           0x00044486        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(ldvrmu.o)
+ .bss           0x00044486        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(lmulu.o)
+ .bss           0x00044486        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(lneg.o)
+ .bss           0x00044486        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(lshl.o)
+ .bss           0x00044486        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(lshru.o)
+ .bss           0x00044486        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(sand.o)
+ .bss           0x00044486        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(setflag.o)
+ .bss           0x00044486        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(sshru.o)
+ .bss           0x00044486        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(xor.o)
+ .bss           0x00044486        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(lshrs.o)
+ .bss           0x00044486        0x0 /Users/kristofer/agondev/release/lib/libfp.a(fpcmp.o)
+ .bss           0x00044486        0x0 /Users/kristofer/agondev/release/lib/libcrt.a(lcmps.o)
+                0x00044486                        bss_end = .
                 0x000b0000                        __stack = (RAM_START + RAM_SIZE)
-                0x000441d9                        ___low_bss = bss_start
+                0x00044331                        ___low_bss = bss_start
                 0x00000155                        ___len_bss = SIZEOF (.bss)
-                0x0004432e                        ___heapbot = bss_end
+                0x00044486                        ___heapbot = bss_end
                 0x000b0000                        ___heaptop = (RAM_START + RAM_SIZE)
                 0x00000001                        ___run_clearbss = (___len_bss > 0x0)
                 0x00000000                        ___init_array_count = (SIZEOF (.init_array) / 0x3)
@@ -564,10 +564,10 @@ Linker script and memory map
                 0x00000100                        ___fini_count_a = ((((___fini_count - 0x1) >> 0x10) & 0xff) + 0x1)
                 0x00000100                        ___fini_count_b = (((___fini_count - 0x1) & 0xff) + 0x1)
                 0x00000100                        ___fini_count_c = ((((___fini_count - 0x1) >> 0x8) & 0xff) + 0x1)
-                0x00043c23                        ___init_array_functions = (SIZEOF (.init_array) + ADDR (.init_array))
-                0x00043c23                        ___init_ctors_functions = (SIZEOF (.ctors) + ADDR (.ctors))
-                0x00043c23                        ___fini_dtors_functions = (SIZEOF (.dtors) + ADDR (.dtors))
-                0x00043c23                        ___fini_array_functions = (SIZEOF (.fini_array) + ADDR (.fini_array))
+                0x00043d69                        ___init_array_functions = (SIZEOF (.init_array) + ADDR (.init_array))
+                0x00043d69                        ___init_ctors_functions = (SIZEOF (.ctors) + ADDR (.ctors))
+                0x00043d69                        ___fini_dtors_functions = (SIZEOF (.dtors) + ADDR (.dtors))
+                0x00043d69                        ___fini_array_functions = (SIZEOF (.fini_array) + ADDR (.fini_array))
 LOAD obj/klc-3.o
 START GROUP
 LOAD /Users/kristofer/agondev/release/lib/libc.a
