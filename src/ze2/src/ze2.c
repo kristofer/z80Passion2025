@@ -1,17 +1,17 @@
 /* ze2.c,  Ze Emacs, Public Domain, Hugh Barney, 2024, Derived from: Anthony's Editor January 93 */
 #include <stdlib.h>
 #include <assert.h>
-#include <curses.h>
 #include <stdio.h>
-#include <fcntl.h>
-#include <sys/stat.h>
 #include <ctype.h>
 #include <string.h>
-#include <unistd.h>
+#include <stdbool.h>
+#include <mos_api.h>
 
-#define E_NAME          "ze2"
+#include "acurses.h"
+
+#define E_NAME          "zek"
 #define E_VERSION       "v0.1"
-#define E_LABEL         "Ze:"
+#define E_LABEL         "zek:"
 #define MSGLINE         (LINES-1)
 #define CHUNK           8096L
 #define K_BUFFER_LENGTH 256
@@ -19,6 +19,9 @@
 #define TEMPBUF         512
 #define MIN_GAP_EXPAND  512
 #define STRBUF_M        64
+
+#define LINES 30
+#define COLS 80
 
 typedef unsigned char char_t;
 typedef long point_t;
@@ -85,7 +88,7 @@ buffer_t* new_buffer()
 
 void fatal(char *msg)
 {
-    noraw();
+    //noraw();
     endwin();
     printf("\n" E_NAME " " E_VERSION ": %s\n", msg);
     exit(1);
@@ -97,8 +100,8 @@ int msg(char *msg, ...)
     va_start(args, msg);
     (void)vsprintf(msgline, msg, args);
     va_end(args);
-    msgflag = TRUE;
-    return FALSE;
+    msgflag = true;
+    return false;
 }
 
 /* Given a buffer offset, convert it to a pointer into the buffer */
@@ -154,7 +157,7 @@ int growgap(buffer_t *bp, point_t n)
     assert(bp->b_buf <= bp->b_gap);
     assert(bp->b_gap < bp->b_egap);          /* Gap must grow only. */
     assert(bp->b_egap <= bp->b_ebuf);
-    return (TRUE);
+    return (true);
 }
 
 point_t movegap(buffer_t *bp, point_t offset)
@@ -186,24 +189,70 @@ void save()
 }
 
 /* reads file into buffer at point */
+// /* reads file into buffer at point */
 int insert_file(char *fn)
 {
-    FILE *fp;
-    size_t len;
-    struct stat sb;
-
-    if (stat(fn, &sb) < 0) return msg("Failed to find file \"%s\".", fn);
-    if (MAX_SIZE_T < sb.st_size) return msg("File \"%s\" is too big to load.", fn);
-    if (curbp->b_egap - curbp->b_gap < sb.st_size * sizeof (char_t) && !growgap(curbp, sb.st_size))
-        return (FALSE);
-    if ((fp = fopen(fn, "r")) == NULL) return msg("Failed to open file \"%s\".", fn);
+    FIL fp;             // FatFS file object
+    FILINFO fno;        // FatFS file information
+    FRESULT fr;         // FatFS result code
+    uint24_t bytes_read;    // Bytes actually read
+    
+    // Get file information instead of using stat()
+    fr = ffs_stat(&fno, fn);
+    if (fr != FR_OK) 
+        return msg("Failed to find file \"%s\". Error: %d", fn, fr);
+    
+    // Check if file is too big
+    if (MAX_SIZE_T < fno.fsize) 
+        return msg("File \"%s\" is too big to load.", fn);
+    
+    // Ensure gap is large enough
+    if (curbp->b_egap - curbp->b_gap < fno.fsize * sizeof(char_t) && 
+        !growgap(curbp, fno.fsize))
+        return (false);
+    
+    // Open file using FatFS
+    fr = ffs_fopen(&fp, fn, FA_READ);
+    if (fr != FR_OK) 
+        return msg("Failed to open file \"%s\". Error: %d", fn, fr);
+    
+    // Position gap at current point
     curbp->b_point = movegap(curbp, curbp->b_point);
-    curbp->b_gap += len = fread(curbp->b_gap, sizeof (char), (size_t) sb.st_size, fp);
-    if (fclose(fp) != 0) return msg("Failed to close file \"%s\".", fn);
-    msg("File \"%s\" %ld bytes read.", fn, len);
-    return (TRUE);
+    
+    // Read file content into gap
+    bytes_read = ffs_fread(&fp, curbp->b_gap, fno.fsize);
+    if (fr != FR_OK) {
+        ffs_fclose(&fp);
+        return msg("Failed to read file \"%s\". Error: %d", fn, fr);
+    }
+    
+    // Update gap pointer
+    curbp->b_gap += bytes_read;
+    
+    // Close file
+    fr = ffs_fclose(&fp);
+    if (fr != FR_OK)
+        return msg("Failed to close file \"%s\". Error: %d", fn, fr);
+    
+    // Report success
+    msg("File \"%s\" %lu bytes read.", fn, (unsigned long)bytes_read);
+    return (true);
 }
 
+void display_key(int ch) {
+    vdp_set_text_colour( COLOR_RED );
+     // Display control characters in a special way
+     if (ch < 32) {
+         printf("^%c", ch + 64);  // Show as ^A, ^B, etc.
+     } else if (ch == 127) {
+         printf("^?");            // DEL character
+     } else {
+         printf("%c", ch);        // Normal character
+     }
+     vdp_set_text_colour( COLOR_WHITE );
+
+ }
+ 
 char_t *get_key(keymap_t *keys, keymap_t **key_return)
 {
     keymap_t *k;
@@ -218,10 +267,13 @@ char_t *get_key(keymap_t *keys, keymap_t **key_return)
         return record++;
     }
     
+    int esc_count = 0;
+
     record = buffer; /* reset record buffer. */
     do {
         assert(K_BUFFER_LENGTH > record - buffer);
-        *record++ = (unsigned)getch(); /* read and record one byte. */
+        *record++ = getchar();
+        // (unsigned)getch(); /* read and record one byte. */
         *record = '\0';
 
         /* if recorded bytes match any multi-byte sequence... */
@@ -363,14 +415,14 @@ void modeline(buffer_t *bp)
     char temp[TEMPBUF];
     char mch;
     
-    standout();
+    //standout();
     move(bp->w_top + bp->w_rows, 0);
     mch = bp->b_modified ? '*' : '=';
     sprintf(temp, "=%c " E_LABEL " == %s ", mch, bp->b_fname);
     addstr(temp);
     for (i = strlen(temp) + 1; i <= COLS; i++)
         addch('=');
-    standend();
+    //standend();
 }
 
 void dispmsg()
@@ -378,7 +430,7 @@ void dispmsg()
     move(MSGLINE, 0);
     if (msgflag) {
         addstr(msgline);
-        msgflag = FALSE;
+        msgflag = false;
     }
     clrtoeol();
 }
@@ -433,10 +485,10 @@ void display()
                 j += *p == '\t' ? 8-(j&7) : 1;
                 addch(*p);
             } else {
-                const char *ctrl = unctrl(*p);
-                j += (int) strlen(ctrl);
-                addstr(ctrl);
-            }
+                char ctrl_str[3] = {'^', *p + 64, '\0'};
+                printf("%s", ctrl_str);  // Print the control character representation
+                j += 2; 
+             } // Control chars take 2 display positions                        }
         }
         if (*p == '\n' || COLS <= j) {
             j -= COLS;
@@ -468,6 +520,7 @@ void down() { curbp->b_point = column_to_point(curbp, next_line_point(curbp, cur
 void beginning_of_line() { curbp->b_point = start_of_line_point(curbp,curbp->b_point); }
 void end_of_line() { curbp->b_point = next_line_point(curbp, curbp->b_point); left(); }
 void quit() { done = 1; }
+void redraw() { clear(); display();}
 
 void pgdown()
 {
@@ -522,6 +575,7 @@ keymap_t keymap[] = {
     {"C-d forward-delete-char  ", "\x04", delete },
     {"C-e end-of-line          ", "\x05", end_of_line },
     {"C-f                      ", "\x06", right },
+    {"C-l                      ", "\x0C", redraw },
     {"C-n                      ", "\x0E", down },
     {"C-p                      ", "\x10", up },
     {"C-h backspace            ", "\x08", backsp },
@@ -548,8 +602,6 @@ int main(int argc, char **argv)
 {
     if (argc != 2) fatal("usage: " E_NAME " filename\n");
     initscr();    
-    raw();
-    noecho();
     curbp = new_buffer();
     (void)insert_file(argv[1]);
     strncpy(curbp->b_fname, argv[1], MAX_FNAME);  /* save filename regardless */
@@ -558,6 +610,7 @@ int main(int argc, char **argv)
     key_map = keymap;
 
     while (!done) {
+        clear();
         display();
         input = get_key(key_map, &key_return);
         if (key_return != NULL) {
@@ -571,7 +624,7 @@ int main(int argc, char **argv)
     }
 
     if (curbp != NULL) free(curbp);
-    noraw();
+
     endwin();
     return 0;
 }

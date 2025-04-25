@@ -6,9 +6,9 @@
 #include <agon/vdp_vdu.h>
 //#include <agon/vdp_vdu.h>
 
-//#include "VDUIncludefile"
+#include "acurses.h"
 
-#define VERSION "0.1.0"
+#define VERSION "a.1.0"
 #define MAX_LINES 5000
 #define MAX_LINE_LEN 256
 #define CTRL(x) ((x) & 0x1f)
@@ -44,14 +44,20 @@ void editor_open(char *filename);
 void editor_save(void);
 void editor_set_status_message(const char *fmt, ...);
 
+uint8_t screen_mode;
+
 /* Terminal handling */
 void term_init(void) {
     // Get screen dimensions
     uint8_t screen_width = 80;
-    uint8_t screen_height = 30;;
-    // uint8_t mode = mos_sysvars()->vdp_pflag_mode & 0x7F;
+    uint8_t screen_height = 30;
+    //uint8_t mode = mos_sysvars()->vdp_pflag_mode & 0x7F;
     
-    // // Mode dimensions are in the Agon documentation - this is approximate
+    // volatile SYSVAR *sysvid = mos_sysvars();
+    // screen_mode = sysvid->vdp_mode;
+    // screen_height = sysvid->vdp_scrRows;
+    // screen_width = sysvid->vdp_scrCols;
+    // Mode dimensions are in the Agon documentation - this is approximate
     // switch(mode) {
     //     case 0: screen_width = 40; screen_height = 30; break;
     //     case 1: screen_width = 40; screen_height = 30; break;
@@ -70,15 +76,17 @@ void term_init(void) {
     E.screen_rows = screen_height - 2; // Reserve space for status line
     
     // Clear screen
-    vdp_clear_screen();
-    vdp_console_mode(1);
-    vdp_cursor_home();
+    // vdp_clear_screen();
+    // vdp_console_mode(1);
+    // vdp_cursor_home();
+    initscr();
 }
 
 void term_cleanup(void) {
     vdp_clear_screen();
     vdp_cursor_home();
     vdp_console_mode(0);
+    endwin();
 }
 
 /* Editor initialization */
@@ -284,28 +292,28 @@ void editor_scroll(void) {
 void editor_draw_rows(void) {
     for (int y = 0; y < E.screen_rows; y++) {
         int filerow = y + E.scroll_offset;
-        
+        int len = E.lines[filerow].length;
+        vdp_cursor_tab(y, 0);
+
         if (filerow >= E.num_lines) {
             // Draw tilde for empty lines
-            vdp_cursor_tab(y, 0);
             mos_puts("~", 1, 0);
         } else {
             // Draw line content
-            int len = E.lines[filerow].length;
             if (len > E.screen_cols) len = E.screen_cols;
             
-            vdp_cursor_tab(y, 0);
             mos_puts(E.lines[filerow].text, len, 0);
         }
         
         // Clear to end of line
-        mos_puts("\033[K", 3, 0); // ANSI escape code to clear to end of line
+        // for (int i = len; i < E.screen_cols; i++) {
+        //     mos_puts(" ", 1, 0);
+        // }
     }
 }
 
 void editor_draw_status_bar(void) {
     // Set inverse video
-    mos_puts("\033[7m", 4, 0);
     
     vdp_cursor_tab(E.screen_rows, 0);
     
@@ -327,12 +335,15 @@ void editor_draw_status_bar(void) {
     mos_puts(rstatus, rlen, 0);
     
     // Reset color
-    mos_puts("\033[m", 3, 0);
+
 }
 
 void editor_draw_message_bar(void) {
     vdp_cursor_tab(E.screen_rows + 1, 0);
-    mos_puts("\033[K", 3, 0); // Clear the line
+    for (int i = 0; i < E.screen_cols; i++) {
+        mos_puts(" ", 1, 0); // Clear the line //BLEECCH!!
+    }
+    vdp_cursor_tab(E.screen_rows + 1, 0);
     
     int msglen = strlen(E.statusmsg);
     if (msglen > E.screen_cols) msglen = E.screen_cols;
@@ -345,8 +356,8 @@ void editor_refresh_screen(void) {
     editor_scroll();
     
     // Hide cursor during redraw
-    mos_puts("\033[?25l", 6, 0);
-    
+    curs_set(0);
+    move(0,0);
     // Draw all components
     editor_draw_rows();
     editor_draw_status_bar();
@@ -356,7 +367,7 @@ void editor_refresh_screen(void) {
     vdp_cursor_tab(E.cy - E.scroll_offset, E.cx);
     
     // Show cursor
-    mos_puts("\033[?25h", 6, 0);
+    curs_set(1);
 }
 
 void editor_set_status_message(const char *fmt, ...) {

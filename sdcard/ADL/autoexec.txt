@@ -1,0 +1,3 @@
+echo inint...
+set keyboard 1
+

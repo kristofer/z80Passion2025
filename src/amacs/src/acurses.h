@@ -119,7 +119,7 @@ int addstr(const char *str);
 short global_color_pairs [COLOR_PAIRS*2];	//global to acurses only
 bool blocking=true;							//default is read using blocking mode
 
-static SYSVAR *sv;
+volatile SYSVAR *sv;
 char _curse_buf[512];
 
 static KEY_EVENT prev_key_event = { 0 };
@@ -164,9 +164,9 @@ int initscr() {
     vdp_logical_scr_dims( false );
     vdp_key_init();
     // Replace obelisk with extended "plus"
-    vdp_redefine_character( 0x86,0x18,0x18,0x18,0xFF,0x18,0x18,0x18,0x18);
+    //vdp_redefine_character( 0x86,0x18,0x18,0x18,0xFF,0x18,0x18,0x18,0x18);
 	// technically in CP1252 the vertical line '|' is unbroken, with the 0xA6 being broken.	//vertical line
-	vdp_redefine_character( '|',0x18,0x18,0x18,0x18,0x18,0x18,0x18,0x18);
+	//vdp_redefine_character( '|',0x18,0x18,0x18,0x18,0x18,0x18,0x18,0x18);
 
     return true;
 };
@@ -187,12 +187,13 @@ int getcurx(int win)
 
 int getmaxy(int win)
 {
-//	vdp_get_scr_dims( true );
+    vdp_get_scr_dims( true );
 	return sv->scrRows;
 };
 
 int getmaxx(int win)
 {
+    vdp_get_scr_dims( true );
 	return sv->scrCols;
 };
 
@@ -325,6 +326,8 @@ int refresh(void)
 //dump font and reset text mode to bright white on black. NOTE: assumes video mode has at least 16 colours
 int endwin(void)
 {
+	vdp_clear_screen();
+
 	vdp_reset_system_font();
 	vdp_key_reset_interrupt();
 	vdp_set_text_colour( COLOR_WHITE + 8 );
@@ -421,7 +424,12 @@ int nonl (void)
 	return false;
 };
 
-// The halfdelay routine is used for half-delay mode, which is similar to cbreak mode in that characters typed by the user are immediately available to the program. However, after blocking for tenths tenths of seconds, ERR is returned if nothing has been typed. The value of tenths must be a number between 1 and 255. Use nocbreak to leave half-delay mode.
+// The halfdelay routine is used for half-delay mode, which is similar to cbreak 
+// mode in that characters typed 
+//by the user are immediately available to the program. 
+//However, after blocking for tenths tenths of seconds, ERR is returned if 
+//nothing has been typed. The value of tenths must be a number between 1 and 255. 
+//Use nocbreak to leave half-delay mode.
 
 int halfdelay(int tenths)
 {
