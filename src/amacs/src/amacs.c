@@ -265,7 +265,7 @@ void editor_save(void) {
     
     for (int i = 0; i < E.num_lines; i++) {
         fputs(E.lines[i].text, fp);
-        fputc('\n', fp);
+        //fputc('\n', fp);
     }
     
     fclose(fp);
