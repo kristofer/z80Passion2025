@@ -293,7 +293,7 @@ void editor_draw_rows(void) {
     for (int y = 0; y < E.screen_rows; y++) {
         int filerow = y + E.scroll_offset;
         int len = E.lines[filerow].length;
-        vdp_cursor_tab(y, 0);
+        vdp_cursor_tab(0, y);
 
         if (filerow >= E.num_lines) {
             // Draw tilde for empty lines
@@ -309,13 +309,14 @@ void editor_draw_rows(void) {
         // for (int i = len; i < E.screen_cols; i++) {
         //     mos_puts(" ", 1, 0);
         // }
+        //editor_set_status_message("Row y: %d, len: %d", y, len);
     }
 }
 
 void editor_draw_status_bar(void) {
     // Set inverse video
     
-    vdp_cursor_tab(E.screen_rows, 0);
+    vdp_cursor_tab(0, E.screen_rows);
     
     char status[80], rstatus[20];
     int len = snprintf(status, sizeof(status), "%.20s - %d lines %s",
@@ -339,11 +340,11 @@ void editor_draw_status_bar(void) {
 }
 
 void editor_draw_message_bar(void) {
-    vdp_cursor_tab(E.screen_rows + 1, 0);
+    vdp_cursor_tab(0, E.screen_rows + 1);
     for (int i = 0; i < E.screen_cols; i++) {
         mos_puts(" ", 1, 0); // Clear the line //BLEECCH!!
     }
-    vdp_cursor_tab(E.screen_rows + 1, 0);
+    vdp_cursor_tab(0, E.screen_rows + 1);
     
     int msglen = strlen(E.statusmsg);
     if (msglen > E.screen_cols) msglen = E.screen_cols;
@@ -364,7 +365,7 @@ void editor_refresh_screen(void) {
     editor_draw_message_bar();
     
     // Position cursor
-    vdp_cursor_tab(E.cy - E.scroll_offset, E.cx);
+    vdp_cursor_tab(E.cx, E.cy - E.scroll_offset);
     
     // Show cursor
     curs_set(1);
