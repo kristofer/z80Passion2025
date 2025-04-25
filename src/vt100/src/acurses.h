@@ -119,7 +119,7 @@ int addstr(const char *str);
 short global_color_pairs [COLOR_PAIRS*2];	//global to acurses only
 bool blocking=true;							//default is read using blocking mode
 
-static SYSVAR *sv;
+volatile SYSVAR *sv;
 char _curse_buf[512];
 
 static KEY_EVENT prev_key_event = { 0 };
@@ -187,12 +187,13 @@ int getcurx(int win)
 
 int getmaxy(int win)
 {
-//	vdp_get_scr_dims( true );
+    vdp_get_scr_dims( true );
 	return sv->scrRows;
 };
 
 int getmaxx(int win)
 {
+    vdp_get_scr_dims( true );
 	return sv->scrCols;
 };
 
