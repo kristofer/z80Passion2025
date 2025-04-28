@@ -86,7 +86,7 @@ void term_cleanup(void) {
     vdp_clear_screen();
     vdp_cursor_home();
     vdp_console_mode(0);
-    endwin();
+    endscr();
 }
 
 /* Editor initialization */
@@ -306,16 +306,17 @@ void editor_draw_rows(void) {
         }
         
         // Clear to end of line
-        // for (int i = len; i < E.screen_cols; i++) {
-        //     mos_puts(" ", 1, 0);
-        // }
+        for (int i = len; i < E.screen_cols; i++) {
+            mos_puts(" ", 1, 0);
+        }
         //editor_set_status_message("Row y: %d, len: %d", y, len);
     }
 }
 
 void editor_draw_status_bar(void) {
     // Set inverse video
-    
+ 
+
     vdp_cursor_tab(0, E.screen_rows);
     
     char status[80], rstatus[20];
@@ -336,10 +337,10 @@ void editor_draw_status_bar(void) {
     mos_puts(rstatus, rlen, 0);
     
     // Reset color
-
 }
 
 void editor_draw_message_bar(void) {
+
     vdp_cursor_tab(0, E.screen_rows + 1);
     for (int i = 0; i < E.screen_cols; i++) {
         mos_puts(" ", 1, 0); // Clear the line //BLEECCH!!
@@ -378,11 +379,14 @@ void editor_set_status_message(const char *fmt, ...) {
     va_end(ap);
 }
 
+#define CURRUP -1
+#define CURRDOWN -2
+#define CURRLEFT -3
+#define CURRRIGHT -4
 /* Input handling */
 void editor_move_cursor(int key) {
     switch (key) {
-        case 'h': // Left
-        case 8:   // Backspace/left arrow on Agon
+        case CURRLEFT: // Left
             if (E.cx > 0) {
                 E.cx--;
             } else if (E.cy > 0) {
@@ -391,8 +395,7 @@ void editor_move_cursor(int key) {
             }
             break;
             
-        case 'l': // Right
-        case 9:   // Tab/right arrow on Agon
+        case CURRRIGHT: // Right
             if (E.cy < E.num_lines && E.cx < E.lines[E.cy].length) {
                 E.cx++;
             } else if (E.cy < E.num_lines - 1) {
@@ -401,13 +404,11 @@ void editor_move_cursor(int key) {
             }
             break;
             
-        case 'k': // Up
-        case 11:  // Up arrow on Agon
+        case CURRUP: // Up
             if (E.cy > 0) E.cy--;
             break;
             
-        case 'j': // Down
-        case 10:  // Down arrow on Agon
+        case CURRDOWN: // Down
             if (E.cy < E.num_lines - 1) E.cy++;
             break;
     }
@@ -430,12 +431,13 @@ void editor_process_keypress(void) {
             keybuf[2] = getchar();
             
             switch (keybuf[2]) {
-                case 'A': editor_move_cursor(11); return; // Up
-                case 'B': editor_move_cursor(10); return; // Down
-                case 'C': editor_move_cursor(9); return;  // Right
-                case 'D': editor_move_cursor(8); return;  // Left
+                case 'A': editor_move_cursor(CURRUP); return; // Up
+                case 'B': editor_move_cursor(CURRDOWN); return; // Down
+                case 'C': editor_move_cursor(CURRRIGHT); return;  // Right
+                case 'D': editor_move_cursor(CURRLEFT); return;  // Left
             }
         }
+        editor_set_status_message("Unhandled escape sequence.");
         return; // Unhandled escape sequence
     }
     
@@ -460,11 +462,23 @@ void editor_process_keypress(void) {
             editor_save();
             break;
             
-        case CTRL('f'):
-            editor_set_status_message("Search not implemented");
+        case CTRL('b'):
+            editor_move_cursor(CURRLEFT);
             break;
             
-        case 13: // Enter
+        case CTRL('f'):
+            editor_move_cursor(CURRRIGHT);
+            break;
+            
+        case CTRL('n'):
+            editor_move_cursor(CURRDOWN);
+            break;
+            
+        case CTRL('p'):
+            editor_move_cursor(CURRUP);
+            break;
+            
+        case 10: // Enter
             editor_insert_newline();
             break;
             

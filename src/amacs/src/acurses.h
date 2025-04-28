@@ -158,17 +158,32 @@ void key_event_handler( KEY_EVENT key_event )
 
 int initscr() {
 	sv = vdp_vdu_init();
-    vdp_mode( 3 );	//Mode 3 is 80x30
+    vdp_mode( 1 );	//Mode 3 is 80x30
     vdp_clear_screen();
 	vdp_get_scr_dims( true );
     vdp_logical_scr_dims( false );
     vdp_key_init();
+	vdp_set_text_colour( COLOR_WHITE + 8);
+	vdp_set_text_colour( COLOR_BLACK + COLOR_BG);
+
     // Replace obelisk with extended "plus"
     //vdp_redefine_character( 0x86,0x18,0x18,0x18,0xFF,0x18,0x18,0x18,0x18);
 	// technically in CP1252 the vertical line '|' is unbroken, with the 0xA6 being broken.	//vertical line
 	//vdp_redefine_character( '|',0x18,0x18,0x18,0x18,0x18,0x18,0x18,0x18);
 
     return true;
+};
+
+int endscr(void)
+{
+	vdp_clear_screen();
+
+	vdp_reset_system_font();
+	vdp_key_reset_interrupt();
+	vdp_set_text_colour( COLOR_WHITE + 8 );
+	vdp_set_text_colour( COLOR_BLACK + COLOR_BG);
+	vdp_cursor_enable( true );
+	return true;
 };
 
 int getcury(int win)
