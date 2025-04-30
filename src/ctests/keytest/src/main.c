@@ -2,40 +2,36 @@
 // Modified from https://github.com/sijnstra/agdev-projects/blob/main/simple/src/simple.c
 //
 #include "header.h"
-#include <stdio.h>
 
 int main()
 {
-    bool exit = false;
-    uint8_t vk;
+    bool exitflag = false;
+    char ch = 0;
 
-    // Создание и генерация карты
-    vdp_mode( 18 );
-    vdp_clear_screen();
-    vdp_logical_scr_dims( false );
-    vdp_cursor_enable( false );
+//    vdp_mode( 2 );
+//    vdp_clear_screen();
+//    vdp_logical_scr_dims( false );
+//    vdp_cursor_enable( false );
+    vdp_terminal_mode();
 
-    printf("Keytest v1");
+    puts("\nKeytest v1 \n ");
 
-    while (!exit)
+    while (!exitflag)
     {
-        vk = getsysvar_vkeydown();
-        switch (vk){
-        case 0x7d:
-            exit = true; break;
-        case 0x9c:
-            printf("0x9C"); break;
-            case 0x9a:
-            printf("0x9A"); break;
-        case 0x8f:
-            break;
+        ch = getchar();//wgetch(); //getsysvar_cheydown();
+        if ( ch == '\x03' ) break;
+        if ( ch == '\x7f' ) { exitflag = true; exit(EXIT_SUCCESS); }
+        switch (ch){
+        case 0x7f:
+            exitflag = true; break;
         default:
-        printf("0x%x",vk); break;
+        printf(" 0x%02x %c",ch, ch); break;
         }
 
     }
 
-    vdp_cursor_enable( true );
+    vdp_terminal_mode();
+//    vdp_cursor_enable( true );
 
     return 0;
 }

@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <stdlib.h>
-
 #include <string.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -10,4 +9,4 @@
 #include <time.h>
 
 #include <agon/vdp_vdu.h>
-#include <agon/vdp_key.h>
+//#include <agon/vdp_key.h>
