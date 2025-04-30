@@ -4,7 +4,7 @@ ideas for the Agon Light 2
 ZeeEighty - an adventure in lisp, emacs, and the z80.
 Specifically, the Agon Light 2 from Olimex.
 
-Currently messing with a Lisp implementation for the Agon Light. 
+Currently messing with a Lisp implementation for the Agon Light.
 UDecided to use the [agondev c compiler](https://github.com/AgonPlatform/agondev) which seems to be actively developed by @envenomator and shows great promise.
 Most developed version is [klc-3.c](src/klisp/klispc/src/klc-3.c)
 
@@ -17,8 +17,12 @@ Most developed version is [klc-3.c](src/klisp/klispc/src/klc-3.c)
   - there is also a `xorvoid/sectorc`, a very small C in x86 asm
   - also a `cesarblum/sectorforth` in x86 asm
   - Nils Holm has a bootstrapping lisp system in `Lisp from Nothing`
-  
+
 Messing about in the Project board.
+
+https://github.com/AgonPlatform/agon-flash/releases/latest/download/flash.bin
+https://github.com/AgonPlatform/agon-mos/releases/latest/download/MOS.bin
+https://github.com/AgonPlatform/agon-vdp/releases/latest/download/firmware.bin
 
 ## Useful Links
 
@@ -42,4 +46,3 @@ I had four main ideas for sidecar passion projects for Spring25 cohort.
 - ZeeEighty - an adventure in lisp, emacs, and the z80
 
 Obviously, there was a leading contender for this timeframe.
-
