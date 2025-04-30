@@ -13,6 +13,7 @@ int main( void )
 	if (vdp_key_init() == -1)
 		return 1;
 
+	// terminal mode turns out to be very-wery capricious.
 	vdp_terminal_mode();
 
     //int i = 0;
