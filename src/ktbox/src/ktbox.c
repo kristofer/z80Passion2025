@@ -19,6 +19,8 @@ KTBox* ktbox_init(int cols, int rows) {
     box->cursor_x = 0;
     box->cursor_y = 0;
     box->initialized = false;
+    box->input_initialized = false;
+    box->sv = NULL;
 
     // Allocate the buffer
     box->buffer = (char**)malloc(rows * sizeof(char*));
@@ -55,6 +57,14 @@ KTBox* ktbox_init(int cols, int rows) {
 void ktbox_free(KTBox *box) {
     if (!box || !box->initialized) return;
 
+    ktdev_home(box); // Move cursor to home position
+    ktdev_blank(box); // Move cursor to home position
+
+    // Cleanup input if initialized
+    if (box->input_initialized) {
+        ktbox_cleanup_input(box);
+    }
+
     // Free each row of the buffer
     for (int i = 0; i < box->rows; i++) {
         free(box->buffer[i]);
@@ -73,15 +83,16 @@ void ktbox_free(KTBox *box) {
     free(box);
 }
 
-volatile SYSVAR *sv;
+char  *ktdev_init(int *maxc, int *maxr) {
+    // this not seems to work
+    // volatile SYSVAR *_sv;
+    // vdp_get_scr_dims(true);
+    // *maxr = _sv->scrRows;
+    // *maxc = _sv->scrCols;
 
-void ktdev_init(KTBox *box) {
-    sv = vdp_vdu_init();
-	if (vdp_key_init() == -1)
-		return;
-
-    vdp_mode( 1 );	//Mode 3 is 80x30
+    // return sprintf("max rows, cols %d, %d\n", *maxr, *maxc);
 }
+
 void ktdev_deinit(KTBox *box) {}
 
 // Resize the buffer to new dimensions
@@ -216,35 +227,36 @@ void ktbox_get_cursor(KTBox *box, int *x, int *y) {
 void ktbox_render(KTBox *box) {
     if (!box || !box->initialized) return;
 
-    ktbox_cursor_hide(true);
     // Position the cursor at the top-left
-    ktdev_home(box); // Move cursor to home position
+    //ktdev_home(box); // Move cursor to home position
+    ktbox_cursor_hide(true);
     ktdev_blank(box); // Move cursor to home position
-
     // Print the buffer
-    for (int i = 0; i < box->rows; i++) {
-        printf("%.*s\r\n", box->cols, box->buffer[i]);
+    for (int r = 0; r < box->rows; r++) {
+        for (int c = 0; c < box->cols; c++) {
+            printf("%c", box->buffer[r][c]);
+        }
+        //printf("%.*s\r\n", box->cols, box->buffer[i]);
     }
 
     // Position the cursor
-    ktbox_move_cursor(box, box->cursor_y + 1, box->cursor_x + 1);
+    ktbox_cursor_hide(false);
     fflush(stdout);
-    ktbox_cursor_hide(true);
 }
 
 void ktdev_home(KTBox *box) {
-//    ktbox_move_cursor(box, 1, 1);
-    vdp_cursor_tab( 1, 1);
+    box->cursor_x = 0;
+    box->cursor_y = 0;
+    vdp_cursor_tab( 0, 0);
 }
 
 void ktdev_blank(KTBox *box) {
-    //ktbox_fill_region(box, 0, 0, box->cols, box->rows, ' ');
     vdp_clear_screen();
 }
 
 void ktdev_delay(KTBox *box, int seconds) {
     //sleep(seconds);
-    char ch = NULL;
+    char ch = -1;
     ch = ktbox_getchar(box, 10, 10);
     for (int i = 0; i < seconds * 10; i++) {
         ktbox_putchar(box, i % 10, 10, 'X');
@@ -258,10 +270,134 @@ void ktdev_delay(KTBox *box, int seconds) {
 
 void ktbox_cursor_hide(bool hide){
 	if (hide == true) {
-			vdp_cursor_enable( false );
-			return ;
+		vdp_cursor_enable( false );
+		return ;
 	} else {
-	vdp_cursor_enable( true );
-	return ;
+	    vdp_cursor_enable( true );
+		return ;
 	}
+}
+
+void ktdev_position_cursor(KTBox *box, int x, int y){
+    vdp_cursor_tab(x, y);
+}
+void ktdev_set_cursor(KTBox *box) {
+    ktbox_move_cursor(box, box->cursor_x, box->cursor_y);
+    vdp_cursor_tab(box->cursor_x, box->cursor_y);
+}
+// Global variables for key handling
+static KEY_EVENT prev_key_event = { 0 };
+static volatile int _current_key = -1;
+// this all for debugging.
+char history[80];
+char *history_ptr = 0;
+int kevs = 0;
+int maxkevs = 0;
+void recordkey(int key) {
+    kevs++;
+    if (kevs > 78) {
+        puts("History buffer overflow");
+        history_ptr = history;
+        kevs = 0;
+        maxkevs++;
+        if (maxkevs > 2) {
+            puts("Max history buffer overflow");
+            puts(history);
+            exit(1);
+        }
+    }
+    *history_ptr++ = key;
+    *history_ptr = '\0';
+}
+// end of debugging junk.
+
+// Key event handler for Agon VDP
+// this is a callback function, invoked whenever a key event occurs
+// MANY 0 key_events
+static void ktbox_key_event_handler(KEY_EVENT key_event) {
+    if (key_event.key_data == prev_key_event.key_data) {
+        _current_key = -1;
+        return;
+    } else {
+        prev_key_event = key_event;
+        if (key_event.down != 0) {
+            _current_key = key_event.ascii;
+            recordkey(_current_key);
+        } else {
+            _current_key = -1;
+        }
+        return;
+    }
+}
+
+// Initialize the input handling system
+bool ktbox_init_input(KTBox *box) {
+    if (!box || box->input_initialized) return false;
+
+    // Initialize the VDP system
+    box->sv = vdp_vdu_init();
+
+    // Initialize keyboard handling
+    if (vdp_key_init() == -1) {
+        return false;
+    }
+
+    // Set our key event handler
+    vdp_set_key_event_handler(ktbox_key_event_handler);
+
+    box->input_initialized = true;
+    history_ptr = &history[0];
+    return true;
+}
+
+// Clean up the input handling system
+void ktbox_cleanup_input(KTBox *box) {
+    if (!box || !box->input_initialized) return;
+    // If there's a specific cleanup function in the Agon API, it would go here
+    box->input_initialized = false;
+}
+
+// Read a key (blocking)
+int ktbox_read_key(void) {
+    int key = -1;
+    while (key == -1) {
+        //vdp_update_key_state(); //was dropping everyother key
+        key = _current_key;
+        waitvblank();
+    }
+
+    // Reset _current_key to prevent repeating
+    _current_key = -1;
+
+    // Map the key to our constants if needed
+    return ktbox_map_key(key);
+}
+
+// Check if a key is available (non-blocking)
+bool ktbox_key_available(void) {
+    vdp_update_key_state();
+    return _current_key != -1;
+}
+
+// Map Agon key codes to our internal constants if needed
+int ktbox_map_key(int key_code) {
+    // This mapping depends on the specific key codes provided by the Agon keyboard system
+    // You'll need to adjust this based on the actual key codes
+
+    // For now, just return the key code as-is
+    // Extend this function with specific mappings as needed
+
+    // Example mappings (adjust based on actual Agon key codes):
+    /*
+    switch (key_code) {
+        case VDP_KEY_UP:    return KTBOX_KEY_UP;
+        case VDP_KEY_DOWN:  return KTBOX_KEY_DOWN;
+        case VDP_KEY_LEFT:  return KTBOX_KEY_LEFT;
+        case VDP_KEY_RIGHT: return KTBOX_KEY_RIGHT;
+        // Add more mappings as needed
+        default: return key_code;
+    }
+    */
+
+    return key_code;
 }
