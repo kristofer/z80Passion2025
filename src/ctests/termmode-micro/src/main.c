@@ -4,33 +4,62 @@
 #include <stdbool.h>
 #include <agon/vdp_vdu.h>
 #include <agon/vdp_key.h>
+//#include <mos_api.h>
 
 static volatile SYSVAR *sv;
 
-int main( void )
-{
-    sv = vdp_vdu_init();
-	if (vdp_key_init() == -1)
-		return 1;
+static KEY_EVENT prev_key_event = { 0 };
+int _current_key = -1;
 
-	// terminal mode turns out to be very-wery capricious.
-	vdp_terminal_mode();
+void key_event_handler( KEY_EVENT key_event ) {
+	if ( key_event.key_data == prev_key_event.key_data ) {
+	    _current_key = -1;
+		return;
+	} else {
+	    prev_key_event = key_event;
+		if (key_event.down != 0) {
+	        _current_key = key_event.ascii;
+			//printf("keh: %02x %02x ", key_event.mods,key_event.code);
+		} else {
+		_current_key = -1;
+		};
+	return;
+	};
+};
 
-    //int i = 0;
+int getCharacter() {
+    int ch = -1;
+    while (ch==-1){
+        vdp_update_key_state();
+        ch = _current_key;
+    }
+    return ch;
+}
+
+void initVDP() {
+//    sv = vdp_vdu_init();
+    if (vdp_key_init() == -1) {
+		puts("Failed to initialize keyboard");
+        return;
+    }
+    vdp_set_key_event_handler(key_event_handler);
+}
+
+void cleanupVDP() {
+}
+
+int main( void ) {
+    initVDP();
+
+    int ch = -1;
     while (true){
-        puts("input> ");
-
-        int ch = getchar();
-        printf("Character entered: %c %04x\n", ch, ch);
-
-        if ( ch == '\x7f' ) { exit(EXIT_SUCCESS); }
-        //i++; if (i > 8) break;
+        ch = getCharacter();
+        if (ch != -1) printf("key pressed: %02x\n", ch);
+        if ( ch == '\x7f' || ch == '\x1b' ) { break; }
     }
 
+    cleanupVDP();
 
-    vdp_terminal_mode();
-
-    puts("Done");
+    puts("\nDone\n");
     return 0;
-
 }
