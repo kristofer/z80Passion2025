@@ -16,7 +16,7 @@
 
 // Default terminal dimensions
 #define KTBOX_DEFAULT_COLS 80
-#define KTBOX_DEFAULT_ROWS 24
+#define KTBOX_DEFAULT_ROWS 59
 
 // Key codes for special keys
 #define KTBOX_KEY_ESC       0x1B
@@ -74,7 +74,12 @@ void ktbox_clear(KTBox *box);
 void ktbox_putchar(KTBox *box, int x, int y, char c);
 char ktbox_getchar(KTBox *box, int x, int y);
 void ktbox_puts(KTBox *box, int x, int y, const char *str);
+void ktbox_addstr(KTBox *box, const char *str);
+void ktbox_addch(KTBox *box, char c);
+// ** void mvaddstr(int x, int y, const char *str);
+// ** void addstr(const char *str);
 void ktbox_fill_region(KTBox *box, int x1, int y1, int x2, int y2, char c);
+void ktbox_clrtoeol(KTBox *box);
 
 // Cursor manipulation
 void ktbox_move_cursor(KTBox *box, int x, int y);
@@ -98,17 +103,25 @@ void ktdev_putchar(KTBox *box, int x, int y, char c);
 void ktdev_get_cursor(KTBox *box, int *x, int *y);
 void ktdev_move_cursor(KTBox *box, int x, int y);
 void ktbox_cursor_hide(bool hide);
-void ktdev_clear_screen(KTBox *box);
 void ktdev_home(KTBox *box);
 void ktdev_blank(KTBox *box);
 void ktdev_fill_region(KTBox *box, int x1, int y1, int x2, int y2, char c);
 void ktdev_render_buffer(KTBox *box);
 //void ktdev_position_cursor(KTBox *box, int x, int y);
 void ktdev_set_cursor(KTBox *box);
+void ktdev_debug(int x, int y, char *str);
 
 // debugging junk.
 extern char history[];
 extern int kevs;
+
+void flushinp(void)
+{
+    // discard any escape sequence without writing in buffer
+    //vdp_cursor_tab(10,10);
+    //printf("(**flushinp called**)");
+}
+
 //
 
 #endif /* KTBOX_H */

@@ -5,6 +5,11 @@
 #include <agon/vdp_vdu.h>
 #include <agon/vdp_key.h>
 
+
+// This is a buffered implementation of a "terminal"
+// I will go thru and redo with all Agon VDU commands
+// to cut down on screen flashing.
+
 // Initialize the screen buffer with specified dimensions
 KTBox* ktbox_init(int cols, int rows) {
     if (cols <= 0) cols = KTBOX_DEFAULT_COLS;
@@ -153,6 +158,12 @@ void ktbox_clear(KTBox *box) {
     }
 }
 
+void ktbox_clrtoeol(KTBox *box) {
+    if (!box || !box->initialized) return;
+
+    memset(box->buffer[box->cursor_y] + box->cursor_x, ' ', box->cols - box->cursor_x);
+}
+
 // Put a character at the specified position
 void ktbox_putchar(KTBox *box, int x, int y, char c) {
     if (!box || !box->initialized) return;
@@ -179,6 +190,24 @@ void ktbox_puts(KTBox *box, int x, int y, const char *str) {
         if (x + i >= box->cols) break;
         box->buffer[y][x + i] = str[i];
     }
+}
+
+// Add a string to the box
+void ktbox_addstr(KTBox *box, const char *str) {
+    if (!box || !box->initialized || !str) return;
+
+    size_t len = strlen(str);
+    for (size_t i = 0; i < len; i++) {
+        if (box->cursor_x + i >= box->cols) break;
+        box->buffer[box->cursor_y][box->cursor_x + i] = str[i];
+    }
+}
+
+void ktbox_addch(KTBox *box, char c) {
+    if (!box || !box->initialized) return;
+
+    if (box->cursor_x >= box->cols) return;
+    box->buffer[box->cursor_y][box->cursor_x++] = c;
 }
 
 // Fill a region with a specific character
@@ -225,7 +254,9 @@ void ktbox_get_cursor(KTBox *box, int *x, int *y) {
 
 /*
  * RENDER
+ *
  * Render the buffer to the terminal
+ * (currently a LOT of flashing on each keystroke)
  */
 void ktbox_render(KTBox *box) {
     if (!box || !box->initialized) return;
@@ -307,6 +338,12 @@ void recordkey(int key) {
     *history_ptr = '\0';
 }
 #endif
+
+void ktbdev_debug(int x, int y, char *str) {
+    //vdp_cursor_tab(x,y);
+    //printf("%s",str);
+}
+
 // end of debugging junk.
 
 // Key event handler for Agon VDP
