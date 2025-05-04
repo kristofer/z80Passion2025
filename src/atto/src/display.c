@@ -1,6 +1,6 @@
 /* display.c, Atto Emacs, Public Domain, Hugh Barney, 2016, Derived from: Anthony's Editor January 93 */
 
-#include "header.h"
+#include "headers.h"
 #include "ktbox.h"
 
 /* Reverse scan for start of logical line containing offset */

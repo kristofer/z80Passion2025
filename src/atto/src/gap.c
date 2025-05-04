@@ -1,14 +1,14 @@
 /* gap.c, Atto Emacs, Public Domain, Hugh Barney, 2016, Derived from: Anthony's Editor January 93 */
 
 //#include <sys/stat.h>
-#include "header.h"
+#include "headers.h"
 
 /* Enlarge gap by n chars, position of gap cannot change */
 int growgap(buffer_t *bp, point_t n)
 {
 	char_t *new;
 	point_t buflen, newlen, xgap, xegap;
-		
+
 	assert(bp->b_buf <= bp->b_gap);
 	assert(bp->b_gap <= bp->b_egap);
 	assert(bp->b_egap <= bp->b_ebuf);
@@ -16,7 +16,7 @@ int growgap(buffer_t *bp, point_t n)
 	xgap = bp->b_gap - bp->b_buf;
 	xegap = bp->b_egap - bp->b_buf;
 	buflen = bp->b_ebuf - bp->b_buf;
-    
+
 	/* reduce number of reallocs by growing by a minimum amount */
 	n = (n < MIN_GAP_EXPAND ? MIN_GAP_EXPAND : n);
 	newlen = buflen + n * sizeof (char_t);
@@ -25,7 +25,7 @@ int growgap(buffer_t *bp, point_t n)
 		if (newlen < 0 || MAX_SIZE_T < newlen)
 			fatal("%s: Failed to allocate required memory.\n");
 		new = (char_t*) malloc((size_t) newlen);
-		if (new == NULL)			
+		if (new == NULL)
 			fatal("%s: Failed to allocate required memory.\n");	/* Cannot edit a file without a buffer. */
 	} else {
 		if (newlen < 0 || MAX_SIZE_T < newlen) {
@@ -43,7 +43,7 @@ int growgap(buffer_t *bp, point_t n)
 	 * extension to the end of the gap.
 	 */
 	bp->b_buf = new;
-	bp->b_gap = bp->b_buf + xgap;      
+	bp->b_gap = bp->b_buf + xgap;
 	bp->b_ebuf = bp->b_buf + buflen;
 	bp->b_egap = bp->b_buf + newlen;
 	while (xegap < buflen--)
@@ -101,7 +101,7 @@ int save(char *fn)
 {
 	FILE *fp;
 	point_t length;
-		
+
 	if (!posix_file(fn)) {
 		msg("Not a portable POSIX file name.");
 		return (FALSE);
@@ -175,14 +175,14 @@ int insert_file(char *fn) {
     FILINFO fno;        // FatFS file information
     FRESULT fr;         // FatFS result code
     uint24_t bytes_read;    // Bytes actually read
-    
+
     // Get file information instead of using stat()
     fr = ffs_stat(&fno, fn);
     if (fr != FR_OK) {
         msg("Failed to find file \"%s\". Error: %d", fn, fr);
 		return (FALSE);
 	}
-	
+
     // Check if file is too big
     if (MAX_SIZE_T < fno.fsize) {
         msg("File \"%s\" is too big to load.", fn);
@@ -190,10 +190,10 @@ int insert_file(char *fn) {
 	}
 
     // Ensure gap is large enough
-    if (curbp->b_egap - curbp->b_gap < fno.fsize * sizeof(char_t) && 
+    if (curbp->b_egap - curbp->b_gap < fno.fsize * sizeof(char_t) &&
         !growgap(curbp, fno.fsize))
         return (false);
-    
+
     // Open file using FatFS
     fr = ffs_fopen(&fp, fn, FA_READ);
     if (fr != FR_OK) {
@@ -203,7 +203,7 @@ int insert_file(char *fn) {
 
     // Position gap at current point
     curbp->b_point = movegap(curbp, curbp->b_point);
-    
+
     // Read file content into gap
     bytes_read = ffs_fread(&fp, curbp->b_gap, fno.fsize);
     if (fr != FR_OK) {
@@ -211,10 +211,10 @@ int insert_file(char *fn) {
         msg("Failed to read file \"%s\". Error: %d", fn, fr);
 		return (FALSE);
     }
-    
+
     // Update gap pointer
     curbp->b_gap += bytes_read;
-    
+
     // Close file
     fr = ffs_fclose(&fp);
     if (fr != FR_OK) {
@@ -236,7 +236,7 @@ point_t line_to_point(int ln)
 		if ( *(ptr(curbp, p)) == '\n') {
 			if (--ln == 0)
 				return start;
-			if (p + 1 < end_p) 
+			if (p + 1 < end_p)
 				start = p + 1;
 		}
 	}
@@ -249,20 +249,20 @@ void get_line_stats(int *curline, int *lastline)
 	point_t end_p = pos(curbp, curbp->b_ebuf);
 	point_t p;
 	int line;
-    
+
 	*curline = -1;
-    
+
 	for (p=0, line=0; p < end_p; p++) {
 		line += (*(ptr(curbp,p)) == '\n') ? 1 : 0;
 		*lastline = line;
-        
+
 		if (*curline == -1 && p == curbp->b_point) {
 			*curline = (*(ptr(curbp,p)) == '\n') ? line : line + 1;
 		}
 	}
 
 	*lastline = *lastline + 1;
-	
+
 	if (curbp->b_point == end_p)
 		*curline = *lastline;
 }

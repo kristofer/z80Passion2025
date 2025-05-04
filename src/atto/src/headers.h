@@ -1,30 +1,24 @@
-/* header.h, Atto Emacs, Public Domain, Hugh Barney, 2016, Derived from: Anthony's Editor January 93 */
-//#define _XOPEN_SOURCE
-//#include <locale.h>
+/* headers.h, Atto Emacs, Public Domain, Hugh Barney, 2016, Derived from: Anthony's Editor January 93 */
+
+
 #include <stdlib.h>
 #include <stdarg.h>
 #include <assert.h>
-//#include <curses.h>
+
 #include <stdio.h>
 #include <stdbool.h>
-//#include <sys/types.h>
+
 #include <ctype.h>
 #include <limits.h>
 #include <string.h>
-//#include <unistd.h>
+
 #include <wchar.h>
 
 
-// #ifndef __ACURSES_H
-// #define __ACURSES_H
-
-//#include "acurses.h"
 #include "ktbox.h"
 
 #define LINES 60
 #define COLS 80
-
-//#endif
 
 int mkstemp(char *);
 
@@ -58,7 +52,8 @@ int mkstemp(char *);
 #define FALSE false
 #define MAX_FNAME       64
 #define NAME_MAX        64
-extern KTBox *box;
+
+extern KTBox *box; // the "terminal"
 
 typedef unsigned char char_t;
 typedef long point_t;

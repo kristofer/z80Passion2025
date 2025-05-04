@@ -1,7 +1,6 @@
 /* replace.c, Atto Emacs, Hugh Barney, Public Domain, 2016 */
 
-#include <string.h>
-#include "header.h"
+#include "headers.h"
 
 /*search for a string and replace it with another string */
 void query_replace(void)

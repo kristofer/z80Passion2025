@@ -1,6 +1,6 @@
 /* hlite.c, generic syntax highlighting, Atto Emacs, Hugh Barney, Public Domain, 2016 */
 
-#include "header.h"
+#include "headers.h"
 
 int state = ID_DEFAULT;
 int next_state = ID_DEFAULT;

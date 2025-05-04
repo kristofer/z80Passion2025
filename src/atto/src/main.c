@@ -1,6 +1,6 @@
 /* main.c, Atto Emacs, Public Domain, Hugh Barney, 2016, Kristofer Younger, 2025 (AGON), Derived from: Anthony's Editor January 93 */
 
-#include "header.h"
+#include "headers.h"
 
 int done;
 point_t nscrap;

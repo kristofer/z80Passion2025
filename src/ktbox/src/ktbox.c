@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "ktbox.h"
 #include <agon/vdp_vdu.h>
 #include <agon/vdp_key.h>
+
+#include "ktbox.h"
 
 
 // This is a buffered implementation of a "terminal"

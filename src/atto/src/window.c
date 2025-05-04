@@ -1,20 +1,20 @@
 /* window.c, Atto Emacs, Hugh Barney, Public Domain, 2015 */
 
-#include "header.h"
+#include "headers.h"
 
 int win_cnt = 0;
 
 window_t* new_window()
 {
 	window_t *wp = (window_t *)malloc(sizeof(window_t));
-	
+
 	assert(wp != NULL); /* call fatal instead XXX */
 	wp->w_next = NULL;
 	wp->w_bufp = NULL;
 	wp->w_point = 0;
 	wp->w_mark = NOMARK;
-	wp->w_top = 0;	
-	wp->w_rows = 0;	
+	wp->w_top = 0;
+	wp->w_rows = 0;
 	wp->w_update = FALSE;
 	sprintf(wp->w_name, "W%d", ++win_cnt);
 	return wp;
@@ -36,11 +36,11 @@ void split_window()
 		msg("Cannot split a %d line window", curwp->w_rows);
 		return;
 	}
-	
-	wp = new_window();	
+
+	wp = new_window();
 	associate_b2w(curwp->w_bufp,wp);
 	b2w(wp); /* inherit buffer settings */
-  
+
 	ntru = (curwp->w_rows - 1) / 2; /* Upper size */
 	ntrl = (curwp->w_rows - 1) - ntru; /* Lower size */
 
@@ -60,7 +60,7 @@ void next_window() {
 	curwp->w_update = TRUE; /* make sure modeline gets updated */
 	curwp = (curwp->w_next == NULL ? wheadp : curwp->w_next);
 	curbp = curwp->w_bufp;
-	
+
 	if (curbp->b_cnt > 1)
 		w2b(curwp); /* push win vars to buffer */
 }
@@ -73,7 +73,7 @@ void delete_other_windows()
 	}
 	free_other_windows(curwp);
 }
-	
+
 void free_other_windows(window_t *winp)
 {
 	window_t *wp, *next;
@@ -85,7 +85,7 @@ void free_other_windows(window_t *winp)
 			free(wp);
 		}
 	}
-	
+
 	wheadp = curwp = winp;
 	one_window(winp);
 }

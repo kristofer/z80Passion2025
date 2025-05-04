@@ -2,7 +2,7 @@
 
 #include <assert.h>
 #include <string.h>
-#include "header.h"
+#include "headers.h"
 
 void buffer_init(buffer_t *bp)
 {
@@ -13,7 +13,7 @@ void buffer_init(buffer_t *bp)
 	bp->b_epage = 0;
 	bp->b_reframe = 0;
 	bp->b_size = 0;
-	bp->b_psize = 0;	
+	bp->b_psize = 0;
 	bp->b_flags = 0;
 	bp->b_cnt = 0;
 	bp->b_buf = NULL;
@@ -29,7 +29,7 @@ buffer_t* find_buffer (char *fname, int cflag)
 {
 	buffer_t *bp = NULL;
 	buffer_t *sb = NULL;
-	
+
 	bp = bheadp;
 	while (bp != NULL) {
 		if (strcmp (fname, bp->b_fname) == 0 || strcmp(fname, bp->b_bname) == 0) {
@@ -44,7 +44,7 @@ buffer_t* find_buffer (char *fname, int cflag)
 
 		buffer_init(bp);
 		assert(bp != NULL);
-		
+
 		/* find the place in the list to insert this buffer */
 		if (bheadp == NULL) {
 			bheadp = bp;
@@ -56,7 +56,7 @@ buffer_t* find_buffer (char *fname, int cflag)
 			for (sb = bheadp; sb->b_next != NULL; sb = sb->b_next)
 				if (strcmp (sb->b_next->b_fname, fname) > 0)
 					break;
-			
+
 			/* and insert it */
 			bp->b_next = sb->b_next;
 			sb->b_next = bp;
@@ -72,7 +72,7 @@ int delete_buffer (buffer_t *bp)
 
 	/* we must have switched to a different buffer first */
 	assert(bp != curbp);
-	
+
 	/* if buffer is the head buffer */
 	if (bp == bheadp) {
 		bheadp = bp->b_next;
@@ -94,7 +94,7 @@ void next_buffer()
 {
 	assert(curbp != NULL);
 	assert(bheadp != NULL);
-	disassociate_b(curwp);	
+	disassociate_b(curwp);
 	curbp = (curbp->b_next != NULL ? curbp->b_next : bheadp);
 	associate_b2w(curbp,curwp);
 }
