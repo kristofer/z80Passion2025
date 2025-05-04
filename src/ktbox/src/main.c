@@ -17,28 +17,30 @@ void update_status(KTBox *box, const char *message) {
     ktbox_puts(box, 1, STATUS_LINE, message);
 }
 
-void process_key(KTBox *box, int key) {
+void display_msg(KTBox *box, int key) {
     char status[64];
-    if (key == '\x06') {
+    sprintf(status, "(0x%02x) moved to (%d,%d)", key, box->cursor_x, box->cursor_y);
+    update_status(box, status);
+}
+void process_key(KTBox *box, int key) {
+    if (key == '\x06' || key == '\x0C') { // fwd, right
         ktbox_move_cursor(box, box->cursor_x+1, box->cursor_y);
-        sprintf(status, "fwd %02x to (%d,%d)", key, box->cursor_x, box->cursor_y);
-        update_status(box, status);
     }
-    if (key == '\x02') {
+    if (key == '\x02' || key == '\x08' || key == KTBOX_KEY_BACKSPACE) { // back, left
         ktbox_move_cursor(box, box->cursor_x-1, box->cursor_y);
-        sprintf(status, "back %02x to (%d,%d)", key, box->cursor_x, box->cursor_y);
-        update_status(box, status);
     }
-    if (key == '\x0E') {
+    if (key == '\x0E' || key == '\x0a') { // down
         ktbox_move_cursor(box, box->cursor_x, box->cursor_y+1);
-        sprintf(status, "down %02x to (%d,%d)", key, box->cursor_x, box->cursor_y);
-        update_status(box, status);
     }
-    if (key == '\x10') {
+    if (key == '\x10' || key == '\x0b') { // up
         ktbox_move_cursor(box, box->cursor_x, box->cursor_y-1);
-        sprintf(status, "up %02x to (%d,%d)", key, box->cursor_x, box->cursor_y);
-        update_status(box, status);
     }
+
+    if (key == '\x15') { // HACK on emul Mac fwd, right
+        ktbox_move_cursor(box, box->cursor_x+1, box->cursor_y);
+    } // I wonder if this is a bug in the emulator
+
+    display_msg(box, key);
 }
 
 int main() {
@@ -56,17 +58,17 @@ int main() {
         return 1;
     }
 
-    // Draw a border
-    ktbox_fill_region(box, 0, 0, box->cols-1, 0, '-');          // Top
+    // // Draw a border
+    // ktbox_fill_region(box, 0, 0, box->cols-1, 0, '-');          // Top
     ktbox_fill_region(box, 0, box->rows-1, box->cols-1, box->rows-1, '-'); // Bottom
-    ktbox_fill_region(box, 0, 0, 0, box->rows-1, '|');          // Left
-    ktbox_fill_region(box, box->cols-1, 0, box->cols-1, box->rows-1, '|'); // Right
+    // ktbox_fill_region(box, 0, 0, 0, box->rows-1, '|');          // Left
+    // ktbox_fill_region(box, box->cols-1, 0, box->cols-1, box->rows-1, '|'); // Right
 
-    // Put corner characters
-    ktbox_putchar(box, 0, 0, '+');
-    ktbox_putchar(box, box->cols-1, 0, '+');
-    ktbox_putchar(box, 0, box->rows-1, '+');
-    ktbox_putchar(box, box->cols-1, box->rows-1, '+');
+    // // Put corner characters
+    // ktbox_putchar(box, 0, 0, '+');
+    // ktbox_putchar(box, box->cols-1, 0, '+');
+    // ktbox_putchar(box, 0, box->rows-1, '+');
+    // ktbox_putchar(box, box->cols-1, box->rows-1, '+');
 
     // Add some text
     ktbox_puts(box, 0, 1, "Welcome to KTBox on Agon VDP!");
@@ -81,11 +83,14 @@ int main() {
     // Display initial status
     update_status(box, "Ready. Type to add characters, ESC or Backspace to exit.");
 
-    // Initial cursor position
-    ktdev_home(box);
     // Initial render
     ktbox_render(box);
-    ktbox_move_cursor(box, 10, 10);
+    // Initial cursor position
+    ktdev_home(box); // set both cursors to 0,0
+    ktbox_move_cursor(box, 0, 0);
+
+    // ktdev_delay(box, 5);
+    // update_status(box, "waiting 5 seconds.");
 
     // Main loop
     bool running = true;
@@ -95,7 +100,7 @@ int main() {
             int key = ktbox_read_key();
             char status[80];
 
-            if (key == KTBOX_KEY_ESC || key == KTBOX_KEY_BACKSPACE) {
+            if (key == KTBOX_KEY_ESC || key == KTBOX_KEY_CRTL_C) {
                 running = false;
             } else if (key >= 32 && key <= 126) {  // Printable ASCII
                 ktbox_putchar(box, box->cursor_x, box->cursor_y, (char)key);
@@ -107,7 +112,7 @@ int main() {
                 update_status(box, status);
             } else {
                 if (key != 0) {
-                    sprintf(status, "Key pressed: code %02x", key);
+                    sprintf(status, "Key pressed: code 0x%02x", key);
                     update_status(box, status);
                     process_key(box, key);
                 }
@@ -124,7 +129,7 @@ int main() {
     ktbox_free(box);
 
     printf("\nok\n\n");
-    printf("\n>>(%d) %s %d\n", kevs, history, strlen(history));
+    //printf("\n>>(%d) %s %d\n", kevs, history, strlen(history));
 
     return 0;
 }

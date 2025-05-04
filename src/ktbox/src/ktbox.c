@@ -96,53 +96,53 @@ char  *ktdev_init(int *maxc, int *maxr) {
 void ktdev_deinit(KTBox *box) {}
 
 // Resize the buffer to new dimensions
-bool ktbox_resize(KTBox *box, int cols, int rows) {
-    if (!box || !box->initialized) return false;
-    if (cols <= 0 || rows <= 0) return false;
+// bool ktbox_resize(KTBox *box, int cols, int rows) {
+//     if (!box || !box->initialized) return false;
+//     if (cols <= 0 || rows <= 0) return false;
 
-    // Create a new buffer with the new dimensions
-    char **new_buffer = (char**)malloc(rows * sizeof(char*));
-    if (!new_buffer) return false;
+//     // Create a new buffer with the new dimensions
+//     char **new_buffer = (char**)malloc(rows * sizeof(char*));
+//     if (!new_buffer) return false;
 
-    for (int i = 0; i < rows; i++) {
-        new_buffer[i] = (char*)malloc((cols + 1) * sizeof(char));
-        if (!new_buffer[i]) {
-            // Clean up if allocation fails
-            for (int j = 0; j < i; j++) {
-                free(new_buffer[j]);
-            }
-            free(new_buffer);
-            return false;
-        }
+//     for (int i = 0; i < rows; i++) {
+//         new_buffer[i] = (char*)malloc((cols + 1) * sizeof(char));
+//         if (!new_buffer[i]) {
+//             // Clean up if allocation fails
+//             for (int j = 0; j < i; j++) {
+//                 free(new_buffer[j]);
+//             }
+//             free(new_buffer);
+//             return false;
+//         }
 
-        // Fill with spaces by default
-        memset(new_buffer[i], ' ', cols);
-        new_buffer[i][cols] = '\0';
+//         // Fill with spaces by default
+//         memset(new_buffer[i], ' ', cols);
+//         new_buffer[i][cols] = '\0';
 
-        // Copy data from old buffer if it exists
-        if (i < box->rows) {
-            int copy_cols = (cols < box->cols) ? cols : box->cols;
-            memcpy(new_buffer[i], box->buffer[i], copy_cols);
-        }
-    }
+//         // Copy data from old buffer if it exists
+//         if (i < box->rows) {
+//             int copy_cols = (cols < box->cols) ? cols : box->cols;
+//             memcpy(new_buffer[i], box->buffer[i], copy_cols);
+//         }
+//     }
 
-    // Free old buffer
-    for (int i = 0; i < box->rows; i++) {
-        free(box->buffer[i]);
-    }
-    free(box->buffer);
+//     // Free old buffer
+//     for (int i = 0; i < box->rows; i++) {
+//         free(box->buffer[i]);
+//     }
+//     free(box->buffer);
 
-    // Update with new buffer
-    box->buffer = new_buffer;
-    box->cols = cols;
-    box->rows = rows;
+//     // Update with new buffer
+//     box->buffer = new_buffer;
+//     box->cols = cols;
+//     box->rows = rows;
 
-    // Adjust cursor if it's now outside boundaries
-    if (box->cursor_x >= cols) box->cursor_x = cols - 1;
-    if (box->cursor_y >= rows) box->cursor_y = rows - 1;
+//     // Adjust cursor if it's now outside boundaries
+//     if (box->cursor_x >= cols) box->cursor_x = cols - 1;
+//     if (box->cursor_y >= rows) box->cursor_y = rows - 1;
 
-    return true;
-}
+//     return true;
+// }
 
 // Clear the screen buffer
 void ktbox_clear(KTBox *box) {
@@ -223,49 +223,32 @@ void ktbox_get_cursor(KTBox *box, int *x, int *y) {
     if (y) *y = box->cursor_y;
 }
 
-// Render the buffer to the terminal
+/*
+ * RENDER
+ * Render the buffer to the terminal
+ */
 void ktbox_render(KTBox *box) {
     if (!box || !box->initialized) return;
 
-    // Position the cursor at the top-left
-    //ktdev_home(box); // Move cursor to home position
     ktbox_cursor_hide(true);
-    ktdev_blank(box); // Move cursor to home position
+    ktdev_blank(box); // clear screen buffer
     // Print the buffer
     for (int r = 0; r < box->rows; r++) {
         for (int c = 0; c < box->cols; c++) {
             printf("%c", box->buffer[r][c]);
         }
-        //printf("%.*s\r\n", box->cols, box->buffer[i]);
     }
 
-    // Position the cursor
     ktbox_cursor_hide(false);
     fflush(stdout);
 }
 
 void ktdev_home(KTBox *box) {
-    box->cursor_x = 0;
-    box->cursor_y = 0;
     vdp_cursor_tab( 0, 0);
 }
 
 void ktdev_blank(KTBox *box) {
     vdp_clear_screen();
-}
-
-void ktdev_delay(KTBox *box, int seconds) {
-    //sleep(seconds);
-    char ch = -1;
-    ch = ktbox_getchar(box, 10, 10);
-    for (int i = 0; i < seconds * 10; i++) {
-        ktbox_putchar(box, i % 10, 10, 'X');
-        ktbox_render(box);
-
-        ktbox_putchar(box, i % 10, 10, ch);
-        ktbox_render(box);
-    }
-    ktbox_putchar(box, 10, 10, ch);
 }
 
 void ktbox_cursor_hide(bool hide){
@@ -278,17 +261,31 @@ void ktbox_cursor_hide(bool hide){
 	}
 }
 
-void ktdev_position_cursor(KTBox *box, int x, int y){
-    vdp_cursor_tab(x, y);
-}
+
+// void ktdev_position_cursor(KTBox *box, int x, int y){
+//     vdp_cursor_tab(x, y);
+// }
+
+// set the screen cursor to the ktbox cursor
 void ktdev_set_cursor(KTBox *box) {
     ktbox_move_cursor(box, box->cursor_x, box->cursor_y);
     vdp_cursor_tab(box->cursor_x, box->cursor_y);
 }
+
+void ktdev_delay(KTBox *box, int seconds) {
+    //sleep(seconds);
+    for (int i = 0; i < seconds; i++) {
+        for (int j = 0; j < 50; j++) waitvblank(); // 20ms(?)
+    }
+} // this appears to work! :-)
+
 // Global variables for key handling
 static KEY_EVENT prev_key_event = { 0 };
 static volatile int _current_key = -1;
 // this all for debugging.
+#define DEBUG 0
+
+#ifdef DEBUG
 char history[80];
 char *history_ptr = 0;
 int kevs = 0;
@@ -309,6 +306,7 @@ void recordkey(int key) {
     *history_ptr++ = key;
     *history_ptr = '\0';
 }
+#endif
 // end of debugging junk.
 
 // Key event handler for Agon VDP
@@ -322,7 +320,9 @@ static void ktbox_key_event_handler(KEY_EVENT key_event) {
         prev_key_event = key_event;
         if (key_event.down != 0) {
             _current_key = key_event.ascii;
+#ifdef DEBUG
             recordkey(_current_key);
+#endif
         } else {
             _current_key = -1;
         }
@@ -361,7 +361,6 @@ void ktbox_cleanup_input(KTBox *box) {
 int ktbox_read_key(void) {
     int key = -1;
     while (key == -1) {
-        //vdp_update_key_state(); //was dropping everyother key
         key = _current_key;
         waitvblank();
     }
@@ -380,6 +379,7 @@ bool ktbox_key_available(void) {
 }
 
 // Map Agon key codes to our internal constants if needed
+// this could map Agon to vt52/vt100/ANSI keys
 int ktbox_map_key(int key_code) {
     // This mapping depends on the specific key codes provided by the Agon keyboard system
     // You'll need to adjust this based on the actual key codes

@@ -13,3 +13,6 @@ LDHAS_EXIT_HANDLER = 0
 # ----------------------------
 #
 include $(shell agondev-config --makefile)
+
+# cp bin/main.c.bin ../../sdcard/ADL/bin/ktsample.bin
+# to copy the binary to the SD card

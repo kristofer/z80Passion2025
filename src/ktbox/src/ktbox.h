@@ -1,6 +1,9 @@
 //# KTBox: A Simple Terminal Screen Buffer Library
 
-// Let's build a simple screen buffer library called KTBox for terminal applications like vi and emacs. This will provide basic functionality for managing a character-based terminal display.
+// A simple screen buffer library called
+// KTBox for terminal applications like vi and emacs.
+// This will provide basic functionality for managing a
+// character-based terminal display.
 
 //## ktbox.h
 #ifndef KTBOX_H
@@ -15,12 +18,16 @@
 #define KTBOX_DEFAULT_COLS 80
 #define KTBOX_DEFAULT_ROWS 24
 
-// Key codes for special keys (preserving our previous defines for compatibility)
+// Key codes for special keys
 #define KTBOX_KEY_ESC       0x1B
 #define KTBOX_KEY_ENTER     0x0A
 #define KTBOX_KEY_BACKSPACE 0x7F
 #define KTBOX_KEY_TAB       0x09
+#define KTBOX_KEY_CRTL_C    0x03
+#define KTBOX_KEY_CRTL_Q    0x11
 
+// Agon Keys are different
+//
 // Special key identifiers (for function keys, arrow keys, etc.)
 #define KTBOX_KEY_UP        1001
 #define KTBOX_KEY_DOWN      1002
@@ -96,7 +103,7 @@ void ktdev_home(KTBox *box);
 void ktdev_blank(KTBox *box);
 void ktdev_fill_region(KTBox *box, int x1, int y1, int x2, int y2, char c);
 void ktdev_render_buffer(KTBox *box);
-void ktdev_position_cursor(KTBox *box, int x, int y);
+//void ktdev_position_cursor(KTBox *box, int x, int y);
 void ktdev_set_cursor(KTBox *box);
 
 // debugging junk.
