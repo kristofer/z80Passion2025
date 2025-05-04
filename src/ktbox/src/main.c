@@ -42,12 +42,6 @@ void process_key(KTBox *box, int key) {
 }
 
 int main() {
-    // Create our screen buffer (80x24)
-    // int maxc = 0;
-    // int maxr = 0;
-
-
-    // char *screensized = ktdev_init(&maxc, &maxr);
 
     KTBox *box = ktbox_init(MAXCOLS, MAXROWS);
     if (!box) {
@@ -122,8 +116,6 @@ int main() {
             // Render the updated screen
             ktbox_render(box);
             ktdev_set_cursor(box);
-            //vdp_cursor_tab(10, 10);
-
         }
     }
 
