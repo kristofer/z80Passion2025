@@ -8,6 +8,7 @@
 *.so
 *.dylib
 
+
 # Test binary, built with `go test -c`
 *.test
 
@@ -34,3 +35,5 @@ go.work.sum
 *.swp
 # MacOS
 # Thumbnails
+
+obj/ # agon objs
