@@ -25,6 +25,7 @@
 #define KTBOX_KEY_TAB       0x09
 #define KTBOX_KEY_CRTL_C    0x03
 #define KTBOX_KEY_CRTL_Q    0x11
+#define KTBOX_KEY_CRTL_Z    0x1A
 
 // Agon Keys are different
 //
@@ -114,13 +115,6 @@ void ktdev_debug(int x, int y, char *str);
 // debugging junk.
 extern char history[];
 extern int kevs;
-
-void flushinp(void)
-{
-    // discard any escape sequence without writing in buffer
-    //vdp_cursor_tab(10,10);
-    //printf("(**flushinp called**)");
-}
 
 //
 

@@ -7,6 +7,15 @@
 #include "ktbox.h"
 
 
+// still working to get something useful here.
+// void flushinp(void)
+// {
+//     // discard any escape sequence without writing in buffer
+//     vdp_cursor_tab(10,10);
+//     printf("(**flushinp called**)");
+// }
+
+
 // This is a buffered implementation of a "terminal"
 // I will go thru and redo with all Agon VDU commands
 // to cut down on screen flashing.
@@ -315,7 +324,7 @@ void ktdev_delay(KTBox *box, int seconds) {
 static KEY_EVENT prev_key_event = { 0 };
 static volatile int _current_key = -1;
 // this all for debugging.
-#define DEBUG 0
+#define DEBUG 1
 
 #ifdef DEBUG
 char history[80];
@@ -360,7 +369,11 @@ static void ktbox_key_event_handler(KEY_EVENT key_event) {
             _current_key = key_event.ascii;
 #ifdef DEBUG
             recordkey(_current_key);
+            if (_current_key == KTBOX_KEY_CRTL_Z) {
+                printf("forced exiting\n");
+                exit(2);
 #endif
+            }
         } else {
             _current_key = -1;
         }
@@ -381,6 +394,7 @@ bool ktbox_init_input(KTBox *box) {
     }
 
     // Set our key event handler
+    printf("setting input handler\n");
     vdp_set_key_event_handler(ktbox_key_event_handler);
 
     box->input_initialized = true;
@@ -405,6 +419,7 @@ int ktbox_read_key(void) {
 
     // Reset _current_key to prevent repeating
     _current_key = -1;
+    vdp_update_key_state();
 
     // Map the key to our constants if needed
     return ktbox_map_key(key);

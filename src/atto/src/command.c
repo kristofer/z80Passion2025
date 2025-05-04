@@ -163,8 +163,7 @@ void backsp()
 	curbp->b_point = pos(curbp, curbp->b_egap);
 }
 
-void delete()
-{
+void deletefwdch() {
 	curbp->b_point = movegap(curbp, curbp->b_point);
 	if (curbp->b_egap < curbp->b_ebuf) {
 		curbp->b_egap += utf8_size(*curbp->b_egap);
@@ -288,7 +287,7 @@ void killtoeol()
         if (curbp->b_point == pos(curbp, curbp->b_ebuf))
 		return; /* do nothing if at end of file */
 	if (*(ptr(curbp, curbp->b_point)) == 0xa) {
-		delete(); /* delete CR if at start of empty line */
+		deletefwdch(); /* delete CR if at start of empty line */
 	} else {
 		curbp->b_mark = curbp->b_point;
 		lnend();

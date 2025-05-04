@@ -52,6 +52,7 @@ int mkstemp(char *);
 #define FALSE false
 #define MAX_FNAME       64
 #define NAME_MAX        64
+#define KBUG
 
 extern KTBox *box; // the "terminal"
 
@@ -163,7 +164,7 @@ extern void bottom(void);
 extern void cut(void);
 extern void copy(void);
 extern void copy_cut(int);
-extern void delete(void);
+extern void deletefwdch(void);
 extern void toggle_overwrite_mode(void);
 extern void down(void);
 extern void insert(void);

@@ -6,7 +6,7 @@
 keymap_t keymap[] = {
 	{"C-a beginning-of-line    ", "\x01", lnbegin },
 	{"C-b backward-char        ", "\x02", left },
-	{"C-d delete               ", "\x04", delete },
+	{"C-d delete               ", "\x04", deletefwdch },
 	{"C-e end-of-line          ", "\x05", lnend },
 	{"C-f foward-char          ", "\x06", right },
 	{"C-h backspace            ", "\x08", backsp },
@@ -49,7 +49,7 @@ keymap_t keymap[] = {
 //	{"esc esc show-version     ", "\x1B\x1B", version },
 	{"esc esc cancel           ", "\x1B\x1B", cancel },
 	{"ins toggle-overwrite-mode", "\x1B\x5B\x32\x7E", toggle_overwrite_mode }, /* Ins key */
-	{"del forward-delete-char  ", "\x1B\x5B\x33\x7E", delete }, /* Del key */
+	{"del forward-delete-char  ", "\x1B\x5B\x33\x7E", deletefwdch }, /* Del key */
 	{"backspace delete-left    ", "\x7f", backsp },
 	// {"up previous-line         ", "\x1B\x5B\x41", up },
 	// {"down next-line           ", "\x1B\x5B\x42", down },
@@ -81,6 +81,11 @@ char_t *get_key(keymap_t *keys, keymap_t **key_return)
 	static char_t *record = buffer;
 
 	*key_return = NULL;
+
+#ifdef KBUG
+    printf("get_key()\n");
+    ktdev_delay(box, 2);
+#endif
 
 	/* if recorded bytes remain, return next recorded byte. */
 	if (*record != '\0') {
@@ -118,6 +123,11 @@ char_t *get_key(keymap_t *keys, keymap_t **key_return)
 	} while (submatch);
 	/* nothing matched, return recorded bytes. */
 	record = buffer;
+#ifdef KBUG
+    printf("some chars %s\n", buffer);
+    ktdev_delay(box, 2);
+#endif
+
 	return (record++);
 }
 

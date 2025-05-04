@@ -33,23 +33,22 @@ void ashex(char_t *str) {
 // atto
 int main(int argc, char **argv)
 {
-	// if (initscr() == NULL) fatal("%s: Failed to initialize the screen.\n");
+    // if (initscr() == NULL) fatal("%s: Failed to initialize the screen.\n");
 	// initVDP();
 	//
 	//
 	KTBox *box = ktbox_init(KTBOX_DEFAULT_COLS, KTBOX_DEFAULT_ROWS);
     if (!box) {
-        fprintf(stderr, "Failed to initialize KTBox\n");
+        printf("Failed to initialize KTBox\n");
         return 1;
     }
 
     // Initialize input handling
     if (!ktbox_init_input(box)) {
-        fprintf(stderr, "Failed to initialize input system\n");
+        printf("Failed to initialize input system\n");
         ktbox_free(box);
         return 1;
     }
-
 //	start_color();
 	// init_pair(ID_DEFAULT, COLOR_CYAN, COLOR_BLACK);          /* alpha */
 	// init_pair(ID_SYMBOL, COLOR_WHITE, COLOR_BLACK);          /* non alpha, non digit */
@@ -66,6 +65,10 @@ int main(int argc, char **argv)
 		/* Save filename regardless of load() success. */
 		strncpy(curbp->b_fname, argv[1], NAME_MAX);
 		curbp->b_fname[NAME_MAX] = '\0'; /* force truncation */
+#ifdef KBUG
+    printf("loaded file %s\n", argv[1]);
+    ktdev_delay(box, 2);
+#endif
 	} else {
 		curbp = find_buffer("*scratch*", TRUE);
 		strncpy(curbp->b_bname, "*scratch*", STRBUF_S);
@@ -78,10 +81,26 @@ int main(int argc, char **argv)
 	if (!growgap(curbp, CHUNK)) fatal("%s: Failed to allocate required memory.\n");
 	key_map = keymap;
 
+#ifdef KBUG
+    printf("entering while(!done)\n");
+    ktdev_delay(box, 1);
+#endif
+ktbox_render(box);
+// Initial cursor position
+ktdev_home(box); // set both cursors to 0,0
+ktbox_move_cursor(box, 0, 0);
+
 	while (!done) {
 		update_display();
+		ktbox_render(box);
+		ktdev_set_cursor(box);
+
 		input = get_key(key_map, &key_return);
 		if (key_return != NULL) {
+#ifdef KBUG
+    printf("found a func on input\n");
+    ktdev_delay(box, 1);
+#endif
 			(key_return->func)();
 		} else {
 			/* allow TAB and NEWLINE, otherwise any Control Char is 'Not bound' */
@@ -92,7 +111,16 @@ int main(int argc, char **argv)
 				msg("Not bound (0x%02x)",input);
 			}
 		}
+#ifdef KBUG
+    printf("bottom of while\n");
+    ktdev_delay(box, 1);
+#endif
 	}
+
+#ifdef KBUG
+    printf("exting while(!done)\n");
+    ktdev_delay(box, 2);
+#endif
 
 	if (scrap != NULL) free(scrap);
 	// move(LINES-1, 0);
@@ -105,14 +133,8 @@ int main(int argc, char **argv)
 
 void fatal(char *msg)
 {
-//	if (curscr != NULL) {
-		//move(LINES-1, 0);
-		//refresh();
-		//noraw();
-		//endscr();
-		putchar('\n');
-//	}
-	printf(msg, PROG_NAME);
+    printf("\n\nFATAL:\n");
+    printf(msg);
 	exit(1);
 }
 

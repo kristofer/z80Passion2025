@@ -255,6 +255,10 @@ void update_display()
 
 	bp = curwp->w_bufp;
 	bp->b_cpoint = bp->b_point; /* cpoint only ever set here */
+#ifdef KBUG
+    printf("update_display()\n");
+    ktdev_delay(box, 2);
+#endif
 
 	/* only one window */
 	if (wheadp->w_next == NULL) {
