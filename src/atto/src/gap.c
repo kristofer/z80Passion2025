@@ -206,6 +206,9 @@ int insert_file(char *fn) {
 
     // Read file content into gap
     bytes_read = ffs_fread(&fp, curbp->b_gap, fno.fsize);
+#ifdef KBUG
+printf("file %s bytes %d\n", fn, bytes_read);
+#endif
     if (fr != FR_OK) {
         ffs_fclose(&fp);
         msg("Failed to read file \"%s\". Error: %d", fn, fr);

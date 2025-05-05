@@ -49,6 +49,7 @@ int main(int argc, char **argv)
         ktbox_free(box);
         return 1;
     }
+    printf("kbd init'd\n");
 //	start_color();
 	// init_pair(ID_DEFAULT, COLOR_CYAN, COLOR_BLACK);          /* alpha */
 	// init_pair(ID_SYMBOL, COLOR_WHITE, COLOR_BLACK);          /* non alpha, non digit */
@@ -67,6 +68,8 @@ int main(int argc, char **argv)
 		curbp->b_fname[NAME_MAX] = '\0'; /* force truncation */
 #ifdef KBUG
     printf("loaded file %s\n", argv[1]);
+    // print first line of buffer
+    printf(".. %c\n", box->buffer[0][0]);
     ktdev_delay(box, 2);
 #endif
 	} else {
@@ -85,15 +88,19 @@ int main(int argc, char **argv)
     printf("entering while(!done)\n");
     ktdev_delay(box, 1);
 #endif
-ktbox_render(box);
-// Initial cursor position
-ktdev_home(box); // set both cursors to 0,0
-ktbox_move_cursor(box, 0, 0);
+    ktbox_render(box);
+    // Initial cursor position
+    ktdev_home(box); // set both cursors to 0,0
+    ktbox_move_cursor(box, 0, 0);
 
 	while (!done) {
 		update_display();
 		ktbox_render(box);
 		ktdev_set_cursor(box);
+#ifdef KBUG
+    printf("should see file\n");
+    ktdev_delay(box, 1);
+#endif
 
 		input = get_key(key_map, &key_return);
 		if (key_return != NULL) {
@@ -140,9 +147,13 @@ void fatal(char *msg)
 
 void msg(char *msg, ...)
 {
-	va_list args;
-	va_start(args, msg);
-	(void)vsprintf(msgline, msg, args);
-	va_end(args);
+    va_list args;
+    va_start(args, msg); // Initialize va_list
+    printf(msg, args); // Pass va_list to func2
+    va_end(args); // Clean up va_list
+	// va_list args;
+	// va_start(args, msg);
+	// (void)vsprintf(msgline, msg, args);
+	// va_end(args);
 	msgflag = TRUE;
 }

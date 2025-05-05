@@ -275,9 +275,12 @@ void ktbox_render(KTBox *box) {
     ktdev_blank(box); // clear screen buffer
     // Print the buffer
     for (int r = 0; r < box->rows; r++) {
-        for (int c = 0; c < box->cols; c++) {
-            printf("%c", box->buffer[r][c]);
-        }
+        // for (int c = 0; c < box->cols; c++) {
+        //     printf("%c", box->buffer[r][c]);
+        // }
+        //
+        // NOTE THE PIPE and the ADJ to COLS
+        printf("%.*s|", box->cols-1, box->buffer[r]);
     }
 
     ktbox_cursor_hide(false);
@@ -360,6 +363,7 @@ void ktbdev_debug(int x, int y, char *str) {
 // this is a callback function, invoked whenever a key event occurs
 // MANY 0 key_events
 static void ktbox_key_event_handler(KEY_EVENT key_event) {
+    printf(";");
     if (key_event.key_data == prev_key_event.key_data) {
         _current_key = -1;
         return;
@@ -368,7 +372,7 @@ static void ktbox_key_event_handler(KEY_EVENT key_event) {
         if (key_event.down != 0) {
             _current_key = key_event.ascii;
 #ifdef DEBUG
-            recordkey(_current_key);
+            //recordkey(_current_key);
             if (_current_key == KTBOX_KEY_CRTL_Z) {
                 printf("forced exiting\n");
                 exit(2);
