@@ -208,6 +208,7 @@ int insert_file(char *fn) {
     bytes_read = ffs_fread(&fp, curbp->b_gap, fno.fsize);
 #ifdef KBUG
 printf("file %s bytes %d\n", fn, bytes_read);
+ktdev_delay(box, 2);
 #endif
     if (fr != FR_OK) {
         ffs_fclose(&fp);

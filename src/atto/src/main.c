@@ -67,9 +67,9 @@ int main(int argc, char **argv)
 		strncpy(curbp->b_fname, argv[1], NAME_MAX);
 		curbp->b_fname[NAME_MAX] = '\0'; /* force truncation */
 #ifdef KBUG
-    printf("loaded file %s\n", argv[1]);
+    msg("loaded file %s\n", argv[1]);
     // print first line of buffer
-    printf(".. %c\n", box->buffer[0][0]);
+    printf("char at 1,1 %c\n", box->buffer[1][1]);
     ktdev_delay(box, 2);
 #endif
 	} else {
