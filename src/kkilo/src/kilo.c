@@ -124,6 +124,7 @@ enum KEY_ACTION{
         CTRL_S = 19,        /* Ctrl-s */
         CTRL_U = 21,        /* Ctrl-u */
         // will add Crtl-K, Ctrl-A, Ctrl-E, ...
+        // need to get the AGON arrow keys and the return key.
         ESC = 27,           /* Escape */
         BACKSPACE =  127,   /* Backspace */
         /* The following are just soft codes, not really reported by the
@@ -146,6 +147,8 @@ void cleanup(void);
 #define CLRIBLACK 8
 #define CLRWHITE 7
 #define CLRIWHITE 15
+
+
 /* =========================== Syntax highlights DB =========================
  *
  * In order to add a new syntax, define two arrays with a list of file name
@@ -168,96 +171,51 @@ void cleanup(void);
  * There is no support to highlight patterns currently. */
 
 /* C / C++ */
-char *C_HL_extensions[] = {".c",".h",".cpp",".hpp",".cc",NULL};
-char *C_HL_keywords[] = {
-	/* C Keywords */
-	"auto","break","case","continue","default","do","else","enum",
-	"extern","for","goto","if","register","return","sizeof","static",
-	"struct","switch","typedef","union","volatile","while","NULL",
+// char *C_HL_extensions[] = {".c",".h",".cpp",".hpp",".cc",NULL};
+// char *C_HL_keywords[] = {
+// 	/* C Keywords */
+// 	"auto","break","case","continue","default","do","else","enum",
+// 	"extern","for","goto","if","register","return","sizeof","static",
+// 	"struct","switch","typedef","union","volatile","while","NULL",
 
-	/* C++ Keywords */
-	"alignas","alignof","and","and_eq","asm","bitand","bitor","class",
-	"compl","constexpr","const_cast","deltype","delete","dynamic_cast",
-	"explicit","export","false","friend","inline","mutable","namespace",
-	"new","noexcept","not","not_eq","nullptr","operator","or","or_eq",
-	"private","protected","public","reinterpret_cast","static_assert",
-	"static_cast","template","this","thread_local","throw","true","try",
-	"typeid","typename","virtual","xor","xor_eq",
+// 	/* C++ Keywords */
+// 	"alignas","alignof","and","and_eq","asm","bitand","bitor","class",
+// 	"compl","constexpr","const_cast","deltype","delete","dynamic_cast",
+// 	"explicit","export","false","friend","inline","mutable","namespace",
+// 	"new","noexcept","not","not_eq","nullptr","operator","or","or_eq",
+// 	"private","protected","public","reinterpret_cast","static_assert",
+// 	"static_cast","template","this","thread_local","throw","true","try",
+// 	"typeid","typename","virtual","xor","xor_eq",
 
-	/* C types */
-        "int|","long|","double|","float|","char|","unsigned|","signed|",
-        "void|","short|","auto|","const|","bool|",NULL
-};
+// 	/* C types */
+//         "int|","long|","double|","float|","char|","unsigned|","signed|",
+//         "void|","short|","auto|","const|","bool|",NULL
+// };
 
 /* Here we define an array of syntax highlights by extensions, keywords,
  * comments delimiters and flags. */
-struct editorSyntax HLDB[] = {
-    {
-        /* C / C++ */
-        C_HL_extensions,
-        C_HL_keywords,
-        "//","/*","*/",
-        HL_HIGHLIGHT_STRINGS | HL_HIGHLIGHT_NUMBERS
-    }
-};
+// struct editorSyntax HLDB[] = {
+//     {
+//         /* C / C++ */
+//         C_HL_extensions,
+//         C_HL_keywords,
+//         "//","/*","*/",
+//         HL_HIGHLIGHT_STRINGS | HL_HIGHLIGHT_NUMBERS
+//     }
+// };
 
-#define HLDB_ENTRIES (sizeof(HLDB)/sizeof(HLDB[0]))
+// #define HLDB_ENTRIES (sizeof(HLDB)/sizeof(HLDB[0]))
 
 /* ======================= Low level terminal handling ====================== */
 
-//static struct termios orig_termios; /* In order to restore at exit.*/
-
-// void disableRawMode(int fd) {
-//     /* Don't even check the return value as it's too late. */
-//     if (E.rawmode) {
-//         tcsetattr(fd,TCSAFLUSH,&orig_termios);
-//         E.rawmode = 0;
-//     }
-// }
-
 /* Called at exit to avoid remaining in raw mode. */
 void editorAtExit(void) {
-    // disableRawMode(STDIN_FILENO);
 }
 
 void set_colours(int fg, int bg) {
     vdp_set_text_colour(fg);
     vdp_set_text_colour(bg+128);
 }
-
-// /* Raw mode: 1960 magic shit. */
-// int enableRawMode(int fd) {
-//     // struct termios raw;
-
-//     // if (E.rawmode) return 0; /* Already enabled. */
-//     // if (!isatty(STDIN_FILENO)) goto fatal;
-//     // atexit(editorAtExit);
-//     // if (tcgetattr(fd,&orig_termios) == -1) goto fatal;
-
-//     // raw = orig_termios;  /* modify the original mode */
-//     // /* input modes: no break, no CR to NL, no parity check, no strip char,
-//     //  * no start/stop output control. */
-//     // raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
-//     // /* output modes - disable post processing */
-//     // raw.c_oflag &= ~(OPOST);
-//     // /* control modes - set 8 bit chars */
-//     // raw.c_cflag |= (CS8);
-//     // /* local modes - choing off, canonical off, no extended functions,
-//     //  * no signal chars (^Z,^C) */
-//     // raw.c_lflag &= ~(ECHO | ICANON | IEXTEN | ISIG);
-//     // /* control chars - set return condition: min number of bytes and timer. */
-//     // raw.c_cc[VMIN] = 0; /* Return each byte, or zero for timeout. */
-//     // raw.c_cc[VTIME] = 1; /* 100 ms timeout (unit is tens of second). */
-
-//     // /* put terminal in raw mode after flushing */
-//     // if (tcsetattr(fd,TCSAFLUSH,&raw) < 0) goto fatal;
-//     E.rawmode = 1;
-//     return 0;
-
-// fatal:
-//     errno = -3; //ENOTTY;
-//     return -1;
-// }
 
 /* Read a key from the terminal put in raw mode, trying to handle
  * escape sequences. */
@@ -319,254 +277,200 @@ int editorReadKey(FILE *fd) {//int fd) {
     }
 }
 
-/* Use the ESC [6n escape sequence to query the horizontal cursor position
- * and return it. On error -1 is returned, on success the position of the
- * cursor is stored at *rows and *cols and 0 is returned. */
-int getCursorPosition(int ifd, int ofd, int *rows, int *cols) {
-    char buf[32];
-    unsigned int i = 0;
-
-    /* Report cursor location */
-//    if (write(ofd, "\x1b[6n", 4) != 4) return -1;
-
-    /* Read the response: ESC [ rows ; cols R */
-    // while (i < sizeof(buf)-1) {
-    //     if (read(ifd,buf+i,1) != 1) break;
-    //     if (buf[i] == 'R') break;
-    //     i++;
-    // }
-    buf[i] = '\0';
-
-    /* Parse it. */
-    if (buf[0] != ESC || buf[1] != '[') return -1;
-    if (sscanf(buf+2,"%d;%d",rows,cols) != 2) return -1;
-    return 0;
-}
-
-/* Try to get the number of columns in the current terminal. If the ioctl()
- * call fails the function will try to query the terminal itself.
- * Returns 0 on success, -1 on error. */
 int getWindowSize(int ifd, int ofd, int *rows, int *cols) {
-    //struct winsize ws;
-
-    // if (ioctl(1, TIOCGWINSZ, &ws) == -1 || ws.ws_col == 0) {
-    //     /* ioctl() failed. Try to query the terminal itself. */
-    //     int orig_row, orig_col, retval;
-
-    //     /* Get the initial position so we can restore it later. */
-    //     retval = getCursorPosition(ifd,ofd,&orig_row,&orig_col);
-    //     if (retval == -1) goto failed;
-
-    //     /* Go to right/bottom margin and get position. */
-    //     if (write(ofd,"\x1b[999C\x1b[999B",12) != 12) goto failed;
-    //     retval = getCursorPosition(ifd,ofd,rows,cols);
-    //     if (retval == -1) goto failed;
-
-    //     /* Restore position. */
-    //     char seq[32];
-    //     snprintf(seq,32,"\x1b[%d;%dH",orig_row,orig_col);
-    //     if (write(ofd,seq,strlen(seq)) == -1) {
-    //         /* Can't recover... */
-    //     }
-    //     return 0;
-    // } else {
         *cols = 80; //ws.ws_col;
         *rows = 59; //ws.ws_row;
         return 0;
-    // }
-
-failed:
-    return -1;
 }
 
 /* ====================== Syntax highlight color scheme  ==================== */
 
-int is_separator(int c) {
-    return c == '\0' || isspace(c) || strchr(",.()+-/*=~%[];",c) != NULL;
-}
+// int is_separator(int c) {
+//     return c == '\0' || isspace(c) || strchr(",.()+-/*=~%[];",c) != NULL;
+// }
 
-/* Return true if the specified row last char is part of a multi line comment
- * that starts at this row or at one before, and does not end at the end
- * of the row but spawns to the next row. */
-int editorRowHasOpenComment(erow *row) {
-    if (row->hl && row->rsize && row->hl[row->rsize-1] == HL_MLCOMMENT &&
-        (row->rsize < 2 || (row->render[row->rsize-2] != '*' ||
-                            row->render[row->rsize-1] != '/'))) return 1;
-    return 0;
-}
+// /* Return true if the specified row last char is part of a multi line comment
+//  * that starts at this row or at one before, and does not end at the end
+//  * of the row but spawns to the next row. */
+// int editorRowHasOpenComment(erow *row) {
+//     if (row->hl && row->rsize && row->hl[row->rsize-1] == HL_MLCOMMENT &&
+//         (row->rsize < 2 || (row->render[row->rsize-2] != '*' ||
+//                             row->render[row->rsize-1] != '/'))) return 1;
+//     return 0;
+// }
 
 /* Set every byte of row->hl (that corresponds to every character in the line)
  * to the right syntax highlight type (HL_* defines). */
-void editorUpdateSyntax(erow *row) {
-    row->hl = realloc(row->hl,row->rsize);
-    memset(row->hl,HL_NORMAL,row->rsize);
+// void editorUpdateSyntax(erow *row) {
+//     row->hl = realloc(row->hl,row->rsize);
+//     memset(row->hl,HL_NORMAL,row->rsize);
 
-    if (E.syntax == NULL) return; /* No syntax, everything is HL_NORMAL. */
+//     if (E.syntax == NULL) return; /* No syntax, everything is HL_NORMAL. */
 
-    int i, prev_sep, in_string, in_comment;
-    char *p;
-    char **keywords = E.syntax->keywords;
-    char *scs = E.syntax->singleline_comment_start;
-    char *mcs = E.syntax->multiline_comment_start;
-    char *mce = E.syntax->multiline_comment_end;
+//     int i, prev_sep, in_string, in_comment;
+//     char *p;
+//     char **keywords = E.syntax->keywords;
+//     char *scs = E.syntax->singleline_comment_start;
+//     char *mcs = E.syntax->multiline_comment_start;
+//     char *mce = E.syntax->multiline_comment_end;
 
-    /* Point to the first non-space char. */
-    p = row->render;
-    i = 0; /* Current char offset */
-    while(*p && isspace(*p)) {
-        p++;
-        i++;
-    }
-    prev_sep = 1; /* Tell the parser if 'i' points to start of word. */
-    in_string = 0; /* Are we inside "" or '' ? */
-    in_comment = 0; /* Are we inside multi-line comment? */
+//     /* Point to the first non-space char. */
+//     p = row->render;
+//     i = 0; /* Current char offset */
+//     while(*p && isspace(*p)) {
+//         p++;
+//         i++;
+//     }
+//     prev_sep = 1; /* Tell the parser if 'i' points to start of word. */
+//     in_string = 0; /* Are we inside "" or '' ? */
+//     in_comment = 0; /* Are we inside multi-line comment? */
 
-    /* If the previous line has an open comment, this line starts
-     * with an open comment state. */
-    if (row->idx > 0 && editorRowHasOpenComment(&E.row[row->idx-1]))
-        in_comment = 1;
+//     /* If the previous line has an open comment, this line starts
+//      * with an open comment state. */
+//     if (row->idx > 0 && editorRowHasOpenComment(&E.row[row->idx-1]))
+//         in_comment = 1;
 
-    while(*p) {
-        /* Handle // comments. */
-        if (prev_sep && *p == scs[0] && *(p+1) == scs[1]) {
-            /* From here to end is a comment */
-            memset(row->hl+i,HL_COMMENT,row->size-i);
-            return;
-        }
+//     while(*p) {
+//         /* Handle // comments. */
+//         if (prev_sep && *p == scs[0] && *(p+1) == scs[1]) {
+//             /* From here to end is a comment */
+//             memset(row->hl+i,HL_COMMENT,row->size-i);
+//             return;
+//         }
 
-        /* Handle multi line comments. */
-        if (in_comment) {
-            row->hl[i] = HL_MLCOMMENT;
-            if (*p == mce[0] && *(p+1) == mce[1]) {
-                row->hl[i+1] = HL_MLCOMMENT;
-                p += 2; i += 2;
-                in_comment = 0;
-                prev_sep = 1;
-                continue;
-            } else {
-                prev_sep = 0;
-                p++; i++;
-                continue;
-            }
-        } else if (*p == mcs[0] && *(p+1) == mcs[1]) {
-            row->hl[i] = HL_MLCOMMENT;
-            row->hl[i+1] = HL_MLCOMMENT;
-            p += 2; i += 2;
-            in_comment = 1;
-            prev_sep = 0;
-            continue;
-        }
+//         /* Handle multi line comments. */
+//         if (in_comment) {
+//             row->hl[i] = HL_MLCOMMENT;
+//             if (*p == mce[0] && *(p+1) == mce[1]) {
+//                 row->hl[i+1] = HL_MLCOMMENT;
+//                 p += 2; i += 2;
+//                 in_comment = 0;
+//                 prev_sep = 1;
+//                 continue;
+//             } else {
+//                 prev_sep = 0;
+//                 p++; i++;
+//                 continue;
+//             }
+//         } else if (*p == mcs[0] && *(p+1) == mcs[1]) {
+//             row->hl[i] = HL_MLCOMMENT;
+//             row->hl[i+1] = HL_MLCOMMENT;
+//             p += 2; i += 2;
+//             in_comment = 1;
+//             prev_sep = 0;
+//             continue;
+//         }
 
-        /* Handle "" and '' */
-        if (in_string) {
-            row->hl[i] = HL_STRING;
-            if (*p == '\\') {
-                row->hl[i+1] = HL_STRING;
-                p += 2; i += 2;
-                prev_sep = 0;
-                continue;
-            }
-            if (*p == in_string) in_string = 0;
-            p++; i++;
-            continue;
-        } else {
-            if (*p == '"' || *p == '\'') {
-                in_string = *p;
-                row->hl[i] = HL_STRING;
-                p++; i++;
-                prev_sep = 0;
-                continue;
-            }
-        }
+//         /* Handle "" and '' */
+//         if (in_string) {
+//             row->hl[i] = HL_STRING;
+//             if (*p == '\\') {
+//                 row->hl[i+1] = HL_STRING;
+//                 p += 2; i += 2;
+//                 prev_sep = 0;
+//                 continue;
+//             }
+//             if (*p == in_string) in_string = 0;
+//             p++; i++;
+//             continue;
+//         } else {
+//             if (*p == '"' || *p == '\'') {
+//                 in_string = *p;
+//                 row->hl[i] = HL_STRING;
+//                 p++; i++;
+//                 prev_sep = 0;
+//                 continue;
+//             }
+//         }
 
-        /* Handle non printable chars. */
-        if (!isprint(*p)) {
-            row->hl[i] = HL_NONPRINT;
-            p++; i++;
-            prev_sep = 0;
-            continue;
-        }
+//         /* Handle non printable chars. */
+//         if (!isprint(*p)) {
+//             row->hl[i] = HL_NONPRINT;
+//             p++; i++;
+//             prev_sep = 0;
+//             continue;
+//         }
 
-        /* Handle numbers */
-        if ((isdigit(*p) && (prev_sep || row->hl[i-1] == HL_NUMBER)) ||
-            (*p == '.' && i >0 && row->hl[i-1] == HL_NUMBER)) {
-            row->hl[i] = HL_NUMBER;
-            p++; i++;
-            prev_sep = 0;
-            continue;
-        }
+//         /* Handle numbers */
+//         if ((isdigit(*p) && (prev_sep || row->hl[i-1] == HL_NUMBER)) ||
+//             (*p == '.' && i >0 && row->hl[i-1] == HL_NUMBER)) {
+//             row->hl[i] = HL_NUMBER;
+//             p++; i++;
+//             prev_sep = 0;
+//             continue;
+//         }
 
-        /* Handle keywords and lib calls */
-        if (prev_sep) {
-            int j;
-            for (j = 0; keywords[j]; j++) {
-                int klen = strlen(keywords[j]);
-                int kw2 = keywords[j][klen-1] == '|';
-                if (kw2) klen--;
+//         /* Handle keywords and lib calls */
+//         if (prev_sep) {
+//             int j;
+//             for (j = 0; keywords[j]; j++) {
+//                 int klen = strlen(keywords[j]);
+//                 int kw2 = keywords[j][klen-1] == '|';
+//                 if (kw2) klen--;
 
-                if (!memcmp(p,keywords[j],klen) &&
-                    is_separator(*(p+klen)))
-                {
-                    /* Keyword */
-                    memset(row->hl+i,kw2 ? HL_KEYWORD2 : HL_KEYWORD1,klen);
-                    p += klen;
-                    i += klen;
-                    break;
-                }
-            }
-            if (keywords[j] != NULL) {
-                prev_sep = 0;
-                continue; /* We had a keyword match */
-            }
-        }
+//                 if (!memcmp(p,keywords[j],klen) &&
+//                     is_separator(*(p+klen)))
+//                 {
+//                     /* Keyword */
+//                     memset(row->hl+i,kw2 ? HL_KEYWORD2 : HL_KEYWORD1,klen);
+//                     p += klen;
+//                     i += klen;
+//                     break;
+//                 }
+//             }
+//             if (keywords[j] != NULL) {
+//                 prev_sep = 0;
+//                 continue; /* We had a keyword match */
+//             }
+//         }
 
-        /* Not special chars */
-        prev_sep = is_separator(*p);
-        p++; i++;
-    }
+//         /* Not special chars */
+//         prev_sep = is_separator(*p);
+//         p++; i++;
+//     }
 
-    /* Propagate syntax change to the next row if the open commen
-     * state changed. This may recursively affect all the following rows
-     * in the file. */
-    int oc = editorRowHasOpenComment(row);
-    if (row->hl_oc != oc && row->idx+1 < E.numrows)
-        editorUpdateSyntax(&E.row[row->idx+1]);
-    row->hl_oc = oc;
-}
+//     /* Propagate syntax change to the next row if the open commen
+//      * state changed. This may recursively affect all the following rows
+//      * in the file. */
+//     int oc = editorRowHasOpenComment(row);
+//     if (row->hl_oc != oc && row->idx+1 < E.numrows)
+//         editorUpdateSyntax(&E.row[row->idx+1]);
+//     row->hl_oc = oc;
+// }
 
-/* Maps syntax highlight token types to terminal colors. */
-int editorSyntaxToColor(int hl) {
-    switch(hl) {
-    case HL_COMMENT:
-    case HL_MLCOMMENT: return 143;//36;     /* cyan */
-    case HL_KEYWORD1: return 143;//33;    /* yellow */
-    case HL_KEYWORD2: return 143;//32;    /* green */
-    case HL_STRING: return 143;//35;      /* magenta */
-    case HL_NUMBER: return 143;//31;      /* red */
-    case HL_MATCH: return 143;//34;      /* blu */
-    default: return 143;//37;             /* white */
-    }
-}
+// /* Maps syntax highlight token types to terminal colors. */
+// int editorSyntaxToColor(int hl) {
+//     switch(hl) {
+//     case HL_COMMENT:
+//     case HL_MLCOMMENT: return 143;//36;     /* cyan */
+//     case HL_KEYWORD1: return 143;//33;    /* yellow */
+//     case HL_KEYWORD2: return 143;//32;    /* green */
+//     case HL_STRING: return 143;//35;      /* magenta */
+//     case HL_NUMBER: return 143;//31;      /* red */
+//     case HL_MATCH: return 143;//34;      /* blu */
+//     default: return 143;//37;             /* white */
+//     }
+// }
 
-/* Select the syntax highlight scheme depending on the filename,
- * setting it in the global state E.syntax. */
-void editorSelectSyntaxHighlight(char *filename) {
-    for (unsigned int j = 0; j < HLDB_ENTRIES; j++) {
-        struct editorSyntax *s = HLDB+j;
-        unsigned int i = 0;
-        while(s->filematch[i]) {
-            char *p;
-            int patlen = strlen(s->filematch[i]);
-            if ((p = strstr(filename,s->filematch[i])) != NULL) {
-                if (s->filematch[i][0] != '.' || p[patlen] == '\0') {
-                    E.syntax = s;
-                    return;
-                }
-            }
-            i++;
-        }
-    }
-}
+// /* Select the syntax highlight scheme depending on the filename,
+//  * setting it in the global state E.syntax. */
+// void editorSelectSyntaxHighlight(char *filename) {
+//     for (unsigned int j = 0; j < HLDB_ENTRIES; j++) {
+//         struct editorSyntax *s = HLDB+j;
+//         unsigned int i = 0;
+//         while(s->filematch[i]) {
+//             char *p;
+//             int patlen = strlen(s->filematch[i]);
+//             if ((p = strstr(filename,s->filematch[i])) != NULL) {
+//                 if (s->filematch[i][0] != '.' || p[patlen] == '\0') {
+//                     E.syntax = s;
+//                     return;
+//                 }
+//             }
+//             i++;
+//         }
+//     }
+// }
 
 /* ======================= Editor rows implementation ======================= */
 
@@ -602,7 +506,7 @@ void editorUpdateRow(erow *row) {
     row->render[idx] = '\0';
 
     /* Update the syntax highlighting attributes of the row. */
-    editorUpdateSyntax(row);
+    //editorUpdateSyntax(row);
 }
 
 /* Insert a row at the specified position, shifting the other rows on the bottom
@@ -975,9 +879,9 @@ void editorRefreshScreen(void) {
 
     vdp_clear_screen();
     /* Hide cursor. */
-    vdp_cursor_enable( false );
+    vdp_cursor_enable(false);
     /* Go home. */
-    vdp_cursor_tab( 0, 0);
+    vdp_cursor_tab(0, 0);
     set_colours(CLRIWHITE, CLRBLACK);
 
     for (y = 0; y < E.screenrows; y++) {
@@ -1031,7 +935,7 @@ void editorRefreshScreen(void) {
                     }
                     abAppend(&ab,c+j,1);
                 } else {
-                    int color = editorSyntaxToColor(hl[j]);
+                    //int color = editorSyntaxToColor(hl[j]);
                     // color setting for syntax
                     // if (color != current_color) {
                     //     char buf[16];
@@ -1414,7 +1318,7 @@ int main(int argc, char **argv) {
     }
 
     initEditor();
-    editorSelectSyntaxHighlight(argv[1]);
+    //editorSelectSyntaxHighlight(argv[1]);
     editorOpen(argv[1]);
 //    enableRawMode(STDIN_FILENO);
     editorSetStatusMessage("HELP: Ctrl-S = save | Ctrl-Q = quit | Ctrl-F = find");
