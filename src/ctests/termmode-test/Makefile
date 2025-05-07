@@ -2,7 +2,7 @@
 # Makefile Options
 # ----------------------------
 
-NAME=main.c
+NAME=termmode-test
 
 # Select option for Argument Processing at 'int main( int argc, char* argv[] )'
 # 0: Simple Command Line Processing

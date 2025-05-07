@@ -2,7 +2,7 @@
 # Makefile Options
 # ----------------------------
 
-NAME=amacs.c
+NAME=amacs
 
 # Select option for Argument Processing at 'int main( int argc, char* argv[] )'
 # 0: Simple Command Line Processing
@@ -13,4 +13,3 @@ LDHAS_EXIT_HANDLER = 0
 # ----------------------------
 #
 include $(shell agondev-config --makefile)
-
