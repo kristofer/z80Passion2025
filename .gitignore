@@ -37,3 +37,7 @@ go.work.sum
 # Thumbnails
 
 obj/ # agon objs
+bin/
+
+
+**/.claude/settings.local.json

@@ -2,7 +2,7 @@
 # Makefile Options
 # ----------------------------
 
-NAME=kilo
+NAME=akt
 
 # Select option for Argument Processing at 'int main( int argc, char* argv[] )'
 # 0: Simple Command Line Processing
@@ -14,5 +14,5 @@ LDHAS_EXIT_HANDLER = 0
 #
 include $(shell agondev-config --makefile)
 
-# cp bin/main.c.bin ../../sdcard/ADL/bin/ktsample.bin
+# cp bin/akt.bin ../../sdcard/ADL/bin/akt.bin
 # to copy the binary to the SD card
