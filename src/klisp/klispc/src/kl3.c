@@ -89,6 +89,12 @@ Cell *mul(Cell *args);
 Cell *div_func(Cell *args);
 Cell *sqrt_func(Cell *args);
 
+// Comparison functions
+Cell *lt_func(Cell *args);  // Less than
+Cell *lte_func(Cell *args); // Less than or equal
+Cell *gt_func(Cell *args);  // Greater than
+Cell *gte_func(Cell *args); // Greater than or equal
+
 // StringReader functions
 StringReader create_string_reader(const char *input) {
     StringReader reader;
@@ -169,6 +175,12 @@ void init_lisp() {
     env = bind(make_atom("MUL"), make_atom("MUL"), env);
     env = bind(make_atom("DIV"), make_atom("DIV"), env);
     env = bind(make_atom("SQRT"), make_atom("SQRT"), env);
+    
+    // Register comparison functions
+    env = bind(make_atom("LT"), make_atom("LT"), env);   // Less than
+    env = bind(make_atom("LTE"), make_atom("LTE"), env); // Less than or equal
+    env = bind(make_atom("GT"), make_atom("GT"), env);   // Greater than
+    env = bind(make_atom("GTE"), make_atom("GTE"), env); // Greater than or equal
 }
 
 // Clean up LISP environment (basic - not handling all memory)
@@ -511,6 +523,106 @@ Cell *sqrt_func(Cell *args) {
     }
 
     return make_number(i);
+}
+
+// LT: Less than function (a < b)
+Cell *lt_func(Cell *args) {
+    // Check if we have exactly two arguments
+    if (args == NIL || cdr(args) == NIL || cdr(cdr(args)) != NIL) {
+        set_error(ERR_INVALID_ARGUMENT, "LT requires exactly two arguments");
+        return NIL;
+    }
+
+    Cell *a = car(args);
+    Cell *b = car(cdr(args));
+
+    // Make sure both arguments are numbers
+    if (a->type != CELL_NUMBER || b->type != CELL_NUMBER) {
+        set_error(ERR_TYPE_MISMATCH, "LT requires numeric arguments");
+        return NIL;
+    }
+
+    // Perform the comparison
+    if (a->value.number < b->value.number) {
+        return T;
+    } else {
+        return NIL;
+    }
+}
+
+// LTE: Less than or equal function (a <= b)
+Cell *lte_func(Cell *args) {
+    // Check if we have exactly two arguments
+    if (args == NIL || cdr(args) == NIL || cdr(cdr(args)) != NIL) {
+        set_error(ERR_INVALID_ARGUMENT, "LTE requires exactly two arguments");
+        return NIL;
+    }
+
+    Cell *a = car(args);
+    Cell *b = car(cdr(args));
+
+    // Make sure both arguments are numbers
+    if (a->type != CELL_NUMBER || b->type != CELL_NUMBER) {
+        set_error(ERR_TYPE_MISMATCH, "LTE requires numeric arguments");
+        return NIL;
+    }
+
+    // Perform the comparison
+    if (a->value.number <= b->value.number) {
+        return T;
+    } else {
+        return NIL;
+    }
+}
+
+// GT: Greater than function (a > b)
+Cell *gt_func(Cell *args) {
+    // Check if we have exactly two arguments
+    if (args == NIL || cdr(args) == NIL || cdr(cdr(args)) != NIL) {
+        set_error(ERR_INVALID_ARGUMENT, "GT requires exactly two arguments");
+        return NIL;
+    }
+
+    Cell *a = car(args);
+    Cell *b = car(cdr(args));
+
+    // Make sure both arguments are numbers
+    if (a->type != CELL_NUMBER || b->type != CELL_NUMBER) {
+        set_error(ERR_TYPE_MISMATCH, "GT requires numeric arguments");
+        return NIL;
+    }
+
+    // Perform the comparison
+    if (a->value.number > b->value.number) {
+        return T;
+    } else {
+        return NIL;
+    }
+}
+
+// GTE: Greater than or equal function (a >= b)
+Cell *gte_func(Cell *args) {
+    // Check if we have exactly two arguments
+    if (args == NIL || cdr(args) == NIL || cdr(cdr(args)) != NIL) {
+        set_error(ERR_INVALID_ARGUMENT, "GTE requires exactly two arguments");
+        return NIL;
+    }
+
+    Cell *a = car(args);
+    Cell *b = car(cdr(args));
+
+    // Make sure both arguments are numbers
+    if (a->type != CELL_NUMBER || b->type != CELL_NUMBER) {
+        set_error(ERR_TYPE_MISMATCH, "GTE requires numeric arguments");
+        return NIL;
+    }
+
+    // Perform the comparison
+    if (a->value.number >= b->value.number) {
+        return T;
+    } else {
+        return NIL;
+    }
 }
 
 // Parser
@@ -1085,6 +1197,23 @@ Cell *apply(Cell *fn, Cell *args, Cell *env) {
 
         if (strcmp(fn->value.atom, "DEBUG") == 0) {
             return debug(args);
+        }
+        
+        // Comparison functions
+        if (strcmp(fn->value.atom, "LT") == 0) {
+            return lt_func(args);
+        }
+        
+        if (strcmp(fn->value.atom, "LTE") == 0) {
+            return lte_func(args);
+        }
+        
+        if (strcmp(fn->value.atom, "GT") == 0) {
+            return gt_func(args);
+        }
+        
+        if (strcmp(fn->value.atom, "GTE") == 0) {
+            return gte_func(args);
         }
 
         char error_msg[256];
