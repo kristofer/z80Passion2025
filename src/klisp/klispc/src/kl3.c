@@ -19,6 +19,7 @@ typedef enum {
 ErrorType error_type = ERR_NONE;
 char error_message[256];
 jmp_buf error_jmp_buf;
+int _debug = 0;
 
 // Cell type definitions
 typedef enum {
@@ -65,6 +66,7 @@ Cell *cons(Cell *car, Cell *cdr);
 Cell *car(Cell *cell);
 Cell *cdr(Cell *cell);
 Cell *atom(Cell *cell);
+Cell *debug(Cell *cell);
 Cell *eq(Cell *a, Cell *b);
 Cell *make_atom(const char *name);
 Cell *make_number(int n);
@@ -155,6 +157,7 @@ void init_lisp() {
     env = bind(make_atom("CDR"), make_atom("CDR"), env);
     env = bind(make_atom("ATOM"), make_atom("ATOM"), env);
     env = bind(make_atom("EQ"), make_atom("EQ"), env);
+    env = bind(make_atom("DEBUG"), make_atom("DEBUG"), env);
 
     // Register arithmetic functions
     env = bind(make_atom("ADD"), make_atom("ADD"), env);
@@ -216,6 +219,36 @@ Cell *atom(Cell *cell) {
         return T;
     }
     return NIL;
+}
+
+// DEBUG: Test if a cell is an atom
+Cell *debug(Cell *args) {
+    // Check if we have at least one argument
+    if (args == NIL) {
+        if (_debug == 0)
+            return NIL;
+        else return T;
+    }
+
+    Cell *current = args;
+
+    while (current != NIL) {
+        Cell *arg = car(current);
+
+        // Make sure the argument is a number
+        if (arg->type != CELL_NUMBER) {
+            set_error(ERR_TYPE_MISMATCH, "DEBUG requires numeric arguments (1==On, 0==Off)");
+            return NIL;
+        }
+
+        _debug = arg->value.number;
+        current = cdr(current);
+    }
+
+    if (_debug == 0)
+        return NIL;
+    else return T;
+
 }
 
 // EQ: Test if two cells are equal
@@ -857,6 +890,10 @@ Cell *apply(Cell *fn, Cell *args, Cell *env) {
             return sqrt_func(args);
         }
 
+        if (strcmp(fn->value.atom, "DEBUG") == 0) {
+            return debug(args);
+        }
+
         char error_msg[256];
         sprintf(error_msg, "Unknown function: %s", fn->value.atom);
         set_error(ERR_UNBOUND_SYMBOL, error_msg);
@@ -972,11 +1009,13 @@ void repl() {
                 Cell *expr = read_expr(&reader);
 
                 if (expr) {
-                    printf("** expr\n");
-                    print_expr(expr);
-                    printf("\n** env \n");
-                    print_expr(env);
-                    printf("\n** result\n");
+                    if (_debug == 1) {
+                        printf("** s-expr:\n");
+                        print_expr(expr);
+                        printf("\n** environment: \n");
+                        print_expr(env);
+                        printf("\n** result:\n");
+                    }
                     Cell *result = eval(expr, env);
                     print_expr(result);
                     printf("\n");                                    }
@@ -1103,7 +1142,6 @@ void run_file(const char *filename) {
 int main(int argc, char *argv[]) {
     // Initialize error handling
     clear_error();
-    run_tests();
 
     // Initialize LISP environment
     if (setjmp(error_jmp_buf) == 0) {
@@ -1115,8 +1153,9 @@ int main(int argc, char *argv[]) {
         } else {
             // No file specified, run tests and start REPL
             run_tests();
-            repl();
         }
+        repl();
+
     } else {
         fprintf(stderr, "Fatal error during initialization: %s\n", error_message);
     }
