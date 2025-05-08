@@ -1,5 +1,5 @@
 #include <stdio.h>
-//#include <stdlib.h>
+#include <stdlib.h>
 #include <string.h>
 #include <agon/vdp_vdu.h>
 #include <agon/vdp_key.h>
@@ -119,6 +119,9 @@ int main() {
         history[i].mapped_code = 0;
         history[i].description[0] = '\0';
     }
+    
+    // Initialize VDP key handling
+    vdp_key_init();
 
     vdp_clear_screen();
     printf("Arrow Key Test Utility\n");
@@ -134,12 +137,24 @@ int main() {
     fprintf(log, "RAW | MAPPED | DESCRIPTION\n");
     fclose(log);
 
+    // Open log file for appending
+    log = fopen("arrow_key_log.txt", "a");
+    if (!log) {
+        printf("Error opening log file. Continuing without logging.\n");
+    }
+    
     while(1) {
         vdp_cursor_tab(0, 7);
         printf("Waiting for keypress...                       \n");
 
         c = getchar();
         add_to_history(c);
+        
+        // Check for exit condition
+        if (c == '\x03') { // Ctrl+C
+            printf("Exiting program...\n");
+            break;
+        }
 
         map_key_code(c, &mapped_code, key_desc);
 
@@ -150,9 +165,16 @@ int main() {
 
         display_history();
 
-        // Log to file
-        log = fopen("arrow_key_log.txt", "a");
-        fprintf(log, "0x%02X | 0x%04X | %s\n", c, mapped_code, key_desc);
+        // Log to file if open
+        if (log) {
+            fprintf(log, "0x%02X | 0x%04X | %s\n", c, mapped_code, key_desc);
+            fflush(log); // Ensure data is written immediately
+        }
+    }
+    
+    // Close log file at the end
+    if (log) {
+        fprintf(log, "=== Arrow Key Test Ended ===\n");
         fclose(log);
     }
 

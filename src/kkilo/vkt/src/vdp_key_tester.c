@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
 #include <agon/vdp_vdu.h>
 #include <agon/vdp_key.h>
 
@@ -28,52 +27,37 @@ void display_key_state() {
 int main() {
     int c;
     char key_name[32];
-    FILE *log = NULL;
-    bool running = true;
-    
+    FILE *log;
+
     vdp_clear_screen();
     printf("VDP Key Input Tester\n");
     printf("====================\n\n");
     printf("This program tests both standard input and VDP key events\n");
     printf("Press keys to see their detailed info (Ctrl+C to exit)\n\n");
-    
+
     // Initialize the VDP key handling system
     vdp_key_init();
-    
+
     // Set up the event handler
     vdp_set_key_event_handler(key_event_handler);
-    
+
     // Create/clear the log file
     log = fopen("vdp_key_log.txt", "w");
-    if (log) {
-        fprintf(log, "=== VDP Key Test Started ===\n");
-        fprintf(log, "Raw | ASCII | MODS | CODE | DOWN | NAME\n");
-        fclose(log);
-    } else {
-        printf("Warning: Could not create log file\n");
-    }
-    
-    // Open log file for appending
-    log = fopen("vdp_key_log.txt", "a");
-    
-    while(running) {
+    fprintf(log, "=== VDP Key Test Started ===\n");
+    fprintf(log, "Raw | ASCII | MODS | CODE | DOWN | NAME\n");
+    fclose(log);
+
+    while(1) {
         // Standard input test
         vdp_cursor_tab(0, 6);
         printf("Awaiting key input via stdio...    \n");
-        
+
         c = getchar();
-        
-        // Check for exit condition
-        if (c == 3) { // Ctrl+C
-            printf("Exiting program...\n");
-            running = false;
-            break;
-        }
-        
+
         vdp_cursor_tab(0, 7);
         printf("Standard Input:                    \n");
-        printf("Hex: 0x%02X  Dec: %3d              \n", c, c);
-        
+        printf("Hex: 0x%02x  Dec: %3d              \n", c, c);
+
         // Determine key name
         if (c >= 32 && c <= 126) {
             sprintf(key_name, "ASCII '%c'", c);
@@ -97,24 +81,19 @@ int main() {
             }
         }
         printf("Key: %s                          \n\n", key_name);
-        
+
         // Update key state display
         vdp_update_key_state();
         display_key_state();
-        
-        // Log the key info if log file is open
-        if (log) {
-            fprintf(log, "0x%02X | 0x%02X | - | - | - | %s\n", 
-                    c, c, key_name);
-            fflush(log);
-        }
-    }
-    
-    // Clean up
-    if (log) {
-        fprintf(log, "\n=== VDP Key Test Ended ===\n");
+
+        // Log the key info
+        log = fopen("vdp_key_log.txt", "a");
+        fprintf(log, "0x%02X | 0x%02X | - | - | - | %s\n",
+                c, c, key_name);
         fclose(log);
+
+        if (c == '\x03') break;
     }
-    
+
     return 0;
 }

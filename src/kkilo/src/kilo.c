@@ -166,81 +166,29 @@ void set_colours(int fg, int bg) {
 
 /* Read a key from the terminal put in raw mode, trying to handle
  * escape sequences. */
-int editorReadKey(FILE *fd) {//int fd) {
+int editorReadKey(FILE *fd) {
     int nread = 0;
-    char c, seq[3];
-    //ky we will try to use stdio first
-    //while ((nread = read(fd,&c,1)) == 0);
+    char c;
+    
+    // Read a single character from input
     while ((nread = fread(&c, 1, 1, fd)) == 0);
-    //c = getchar();
     if (nread == -1) exit(1);
-
-    while(1) {
-        printf("editorReadKey: %02x", c);
-        switch(c) {
-            case '\x0b': return ARROW_UP;
-            case '\x0a': return ARROW_DOWN;
-            case '\x0c': return ARROW_RIGHT;
-            case '\x08': return ARROW_LEFT;
-            case 'H': return HOME_KEY;
-            case 'F': return END_KEY;
-            case '3': return DEL_KEY;
-            case '5': return PAGE_UP;
-            case '6': return PAGE_DOWN;
-            case ESC:    /* escape sequence */
-            break;
+    
+    // Map Agon key codes to editor key actions
+    switch(c) {
+        case '\x0b': return ARROW_UP;
+        case '\x0a': return ARROW_DOWN;
+        case '\x0c': return ARROW_RIGHT;
+        case '\x08': return ARROW_LEFT;
+        case 'H': return HOME_KEY;
+        case 'F': return END_KEY;
+        case '3': return DEL_KEY;
+        case '5': return PAGE_UP;
+        case '6': return PAGE_DOWN;
+        case ESC:    /* escape sequence */
+            return ESC;
         default:
-                return c;
-
-        // case ESC:    /* escape sequence */
-        //     /* If this is just an ESC, we'll timeout here. */
-        //     // if (read(fd,seq,1) == 0) return ESC;
-        //     // if (read(fd,seq+1,1) == 0) return ESC;
-        //     if (fread(seq, 1, 1, fd) == 0) return ESC;
-        //     if (fread(seq+1, 1, 1, fd) == 0) return ESC;
-
-        //     /* ESC [ sequences. */
-            // if (seq[0] == '[') {
-            //     if (seq[1] >= '0' && seq[1] <= '9') {
-            //         /* Extended escape, read additional byte. */
-            //         //if (read(fd,seq+2,1) == 0) return ESC;
-            //         if (fread(seq+2, 1, 1, fd) == 0) return ESC;
-
-            //         if (seq[2] == '~') {
-            //             switch(seq[1]) {
-            //             case '3': return DEL_KEY;
-            //             case '5': return PAGE_UP;
-            //             case '6': return PAGE_DOWN;
-            //             }
-            //         }
-            //     } else {
-                //     switch(seq[1]) {
-                //     case 'A': return ARROW_UP;
-                //     case 'B': return ARROW_DOWN;
-                //     case 'C': return ARROW_RIGHT;
-                //     case 'D': return ARROW_LEFT;
-                //     case 'H': return HOME_KEY;
-                //     case 'F': return END_KEY;
-                //     case '3': return DEL_KEY;
-                //     case '5': return PAGE_UP;
-                //     case '6': return PAGE_DOWN;
-                //     default:
-                //         return c;
-                //     }
-                // }
-            }
-
-        //     // /* ESC O sequences. */
-        //     // else if (seq[0] == 'O') {
-        //     //     switch(seq[1]) {
-        //     //     case 'H': return HOME_KEY;
-        //     //     case 'F': return END_KEY;
-        //     //     }
-        //     // }
-        //     // break;
-        // default:
-        //     return c;
-        // }
+            return c;
     }
 }
 
@@ -1080,6 +1028,10 @@ void initEditor(void) {
     E.dirty = 0;
     E.filename = NULL;
     E.syntax = NULL;
+    
+    // Initialize VDP key handling
+    vdp_key_init();
+    
     updateWindowSize();
 }
 

@@ -4,6 +4,7 @@
 #include <time.h>
 #include <agon/vdp_vdu.h>
 #include <agon/vdp_key.h>
+#include <stdbool.h>
 
 #define MAX_KEYS 100
 
@@ -18,16 +19,42 @@ int main() {
     int c;
     time_t start_time;
     char timestamp_buf[20];
+    FILE *log = NULL;
+    bool running = true;
+    
+    // Initialize VDP key handling
+    vdp_key_init();
     
     vdp_clear_screen();
     printf("Key Event Tester\n");
     printf("Records timing and sequence of keypresses\n");
     printf("Press keys to test (Ctrl+C to exit, Ctrl+P to print report)\n\n");
     
+    // Create/clear the log file
+    log = fopen("key_event_log.txt", "w");
+    if (log) {
+        fprintf(log, "=== Key Event Test Started ===\n");
+        fprintf(log, "Index | Key Code | Time (sec)\n");
+        fprintf(log, "-----------------------------\n");
+        fclose(log);
+    } else {
+        printf("Warning: Could not create log file\n");
+    }
+    
+    // Open log file for appending
+    log = fopen("key_event_log.txt", "a");
+    
     start_time = time(NULL);
     
-    while(1) {
+    while(running) {
         c = getchar();
+        
+        // Check for exit command (Ctrl+C)
+        if (c == 3) {
+            printf("Exiting program...\n");
+            running = false;
+            break;
+        }
         
         // Check for print report command
         if (c == 16) { // Ctrl+P
@@ -58,6 +85,16 @@ int main() {
         if (event_count < MAX_KEYS) {
             events[event_count].key_code = c;
             events[event_count].timestamp = time(NULL);
+            
+            // Log to file if open
+            if (log) {
+                fprintf(log, "%-10d 0x%-8X %-15ld\n", 
+                       event_count + 1, 
+                       events[event_count].key_code,
+                       events[event_count].timestamp - start_time);
+                fflush(log);
+            }
+            
             event_count++;
         }
         
@@ -85,6 +122,12 @@ int main() {
         } else {
             printf("Special key     \n");
         }
+    }
+    
+    // Clean up
+    if (log) {
+        fprintf(log, "\n=== Key Event Test Ended ===\n");
+        fclose(log);
     }
     
     return 0;

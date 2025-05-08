@@ -23,6 +23,7 @@ jmp_buf error_jmp_buf;
 // Cell type definitions
 typedef enum {
     CELL_ATOM,
+    CELL_NUMBER,
     CELL_PAIR,
     CELL_FUNCTION,
     CELL_SPECIAL    // For special forms like QUOTE, LAMBDA, etc.
@@ -32,6 +33,7 @@ typedef struct Cell {
     CellType type;
     union {
         char *atom;          // For atoms
+        int number;          // For numbers (16-bit integers)
         struct {
             struct Cell *car;
             struct Cell *cdr;
@@ -65,6 +67,7 @@ Cell *cdr(Cell *cell);
 Cell *atom(Cell *cell);
 Cell *eq(Cell *a, Cell *b);
 Cell *make_atom(const char *name);
+Cell *make_number(int n);
 Cell *eval(Cell *expr, Cell *env);
 Cell *apply(Cell *fn, Cell *args, Cell *env);
 Cell *read_expr(StringReader *reader);
@@ -74,6 +77,13 @@ void cleanup_lisp();
 Cell *bind(Cell *sym, Cell *val, Cell *env);
 Cell *lookup(Cell *sym, Cell *env);
 Cell *list_of_values(Cell *list, Cell *env);
+
+// Arithmetic functions
+Cell *add(Cell *args);
+Cell *sub(Cell *args);
+Cell *mul(Cell *args);
+Cell *div_func(Cell *args);
+Cell *sqrt_func(Cell *args);
 
 // StringReader functions
 StringReader create_string_reader(const char *input) {
@@ -117,19 +127,19 @@ void init_lisp() {
     if (!NIL) set_error(ERR_OUT_OF_MEMORY, "Failed to allocate NIL");
     NIL->type = CELL_ATOM;
     NIL->value.atom = strdup("NIL");
-    
+
     // Create T as a special atom
     T = (Cell*)malloc(sizeof(Cell));
     if (!T) set_error(ERR_OUT_OF_MEMORY, "Failed to allocate T");
     T->type = CELL_ATOM;
     T->value.atom = strdup("T");
-    
+
     // Create special symbols
     QUOTE_SYM = make_atom("QUOTE");
     LAMBDA_SYM = make_atom("LAMBDA");
     COND_SYM = make_atom("COND");
     LABEL_SYM = make_atom("LABEL");
-    
+
     // Initialize environment with built-in functions
     env = NIL;
     env = bind(make_atom("T"), T, env);   // Add this line
@@ -145,6 +155,13 @@ void init_lisp() {
     env = bind(make_atom("CDR"), make_atom("CDR"), env);
     env = bind(make_atom("ATOM"), make_atom("ATOM"), env);
     env = bind(make_atom("EQ"), make_atom("EQ"), env);
+    
+    // Register arithmetic functions
+    env = bind(make_atom("ADD"), make_atom("ADD"), env);
+    env = bind(make_atom("SUB"), make_atom("SUB"), env);
+    env = bind(make_atom("MUL"), make_atom("MUL"), env);
+    env = bind(make_atom("DIV"), make_atom("DIV"), env);
+    env = bind(make_atom("SQRT"), make_atom("SQRT"), env);
 }
 
 // Clean up LISP environment (basic - not handling all memory)
@@ -160,7 +177,7 @@ void cleanup_lisp() {
 Cell *cons(Cell *car_val, Cell *cdr_val) {
     Cell *cell = (Cell*)malloc(sizeof(Cell));
     if (!cell) set_error(ERR_OUT_OF_MEMORY, "Failed to allocate cons cell");
-    
+
     cell->type = CELL_PAIR;
     cell->value.pair.car = car_val;
     cell->value.pair.cdr = cdr_val;
@@ -172,11 +189,11 @@ Cell *car(Cell *cell) {
     if (cell == NIL) {
         return NIL;
     }
-    
+
     if (cell->type != CELL_PAIR) {
         set_error(ERR_TYPE_MISMATCH, "CAR: Expected a pair");
     }
-    
+
     return cell->value.pair.car;
 }
 
@@ -185,11 +202,11 @@ Cell *cdr(Cell *cell) {
     if (cell == NIL) {
         return NIL;
     }
-    
+
     if (cell->type != CELL_PAIR) {
         set_error(ERR_TYPE_MISMATCH, "CDR: Expected a pair");
     }
-    
+
     return cell->value.pair.cdr;
 }
 
@@ -207,14 +224,14 @@ Cell *eq(Cell *a, Cell *b) {
     if (a == b) {
         return T;
     }
-    
+
     // If both are atoms, compare their names
     if (a != NIL && b != NIL && a->type == CELL_ATOM && b->type == CELL_ATOM) {
         if (strcmp(a->value.atom, b->value.atom) == 0) {
             return T;
         }
     }
-    
+
     return NIL;
 }
 
@@ -224,21 +241,201 @@ Cell *make_atom(const char *name) {
     if (strcmp(name, "NIL") == 0) {
         return NIL;
     }
-    
+
     // Check for T
     if (strcmp(name, "T") == 0) {
         return T;
     }
-    
+
     // Create a new atom
     Cell *atom = (Cell*)malloc(sizeof(Cell));
     if (!atom) set_error(ERR_OUT_OF_MEMORY, "Failed to allocate atom");
-    
+
     atom->type = CELL_ATOM;
     atom->value.atom = strdup(name);
     if (!atom->value.atom) set_error(ERR_OUT_OF_MEMORY, "Failed to allocate atom name");
-    
+
     return atom;
+}
+
+// Create a new number cell
+Cell *make_number(int n) {
+    Cell *cell = (Cell*)malloc(sizeof(Cell));
+    if (!cell) set_error(ERR_OUT_OF_MEMORY, "Failed to allocate number");
+    
+    cell->type = CELL_NUMBER;
+    cell->value.number = n;
+    
+    return cell;
+}
+
+// Arithmetic functions
+Cell *add(Cell *args) {
+    // Check if we have at least one argument
+    if (args == NIL) {
+        return make_number(0); // Adding nothing gives 0
+    }
+    
+    int result = 0;
+    Cell *current = args;
+    
+    while (current != NIL) {
+        Cell *arg = car(current);
+        
+        // Make sure the argument is a number
+        if (arg->type != CELL_NUMBER) {
+            set_error(ERR_TYPE_MISMATCH, "ADD requires numeric arguments");
+            return NIL;
+        }
+        
+        result += arg->value.number;
+        current = cdr(current);
+    }
+    
+    return make_number(result);
+}
+
+Cell *sub(Cell *args) {
+    // Check if we have at least one argument
+    if (args == NIL) {
+        set_error(ERR_INVALID_ARGUMENT, "SUB requires at least one argument");
+        return NIL;
+    }
+    
+    Cell *first = car(args);
+    // Make sure the first argument is a number
+    if (first->type != CELL_NUMBER) {
+        set_error(ERR_TYPE_MISMATCH, "SUB requires numeric arguments");
+        return NIL;
+    }
+    
+    int result = first->value.number;
+    Cell *rest = cdr(args);
+    
+    // If only one argument, negate it
+    if (rest == NIL) {
+        return make_number(-result);
+    }
+    
+    // Otherwise, subtract all remaining arguments
+    while (rest != NIL) {
+        Cell *arg = car(rest);
+        
+        // Make sure the argument is a number
+        if (arg->type != CELL_NUMBER) {
+            set_error(ERR_TYPE_MISMATCH, "SUB requires numeric arguments");
+            return NIL;
+        }
+        
+        result -= arg->value.number;
+        rest = cdr(rest);
+    }
+    
+    return make_number(result);
+}
+
+Cell *mul(Cell *args) {
+    // Check if we have at least one argument
+    if (args == NIL) {
+        return make_number(1); // Multiplying nothing gives 1
+    }
+    
+    int result = 1;
+    Cell *current = args;
+    
+    while (current != NIL) {
+        Cell *arg = car(current);
+        
+        // Make sure the argument is a number
+        if (arg->type != CELL_NUMBER) {
+            set_error(ERR_TYPE_MISMATCH, "MUL requires numeric arguments");
+            return NIL;
+        }
+        
+        result *= arg->value.number;
+        current = cdr(current);
+    }
+    
+    return make_number(result);
+}
+
+Cell *div_func(Cell *args) {
+    // Check if we have at least one argument
+    if (args == NIL) {
+        set_error(ERR_INVALID_ARGUMENT, "DIV requires at least one argument");
+        return NIL;
+    }
+    
+    Cell *first = car(args);
+    // Make sure the first argument is a number
+    if (first->type != CELL_NUMBER) {
+        set_error(ERR_TYPE_MISMATCH, "DIV requires numeric arguments");
+        return NIL;
+    }
+    
+    int result = first->value.number;
+    Cell *rest = cdr(args);
+    
+    // If only one argument, return 1/n
+    if (rest == NIL) {
+        if (result == 0) {
+            set_error(ERR_INVALID_ARGUMENT, "DIV: Division by zero");
+            return NIL;
+        }
+        return make_number(1 / result);
+    }
+    
+    // Otherwise, divide by all remaining arguments
+    while (rest != NIL) {
+        Cell *arg = car(rest);
+        
+        // Make sure the argument is a number
+        if (arg->type != CELL_NUMBER) {
+            set_error(ERR_TYPE_MISMATCH, "DIV requires numeric arguments");
+            return NIL;
+        }
+        
+        if (arg->value.number == 0) {
+            set_error(ERR_INVALID_ARGUMENT, "DIV: Division by zero");
+            return NIL;
+        }
+        
+        result /= arg->value.number;
+        rest = cdr(rest);
+    }
+    
+    return make_number(result);
+}
+
+Cell *sqrt_func(Cell *args) {
+    // Check if we have exactly one argument
+    if (args == NIL || cdr(args) != NIL) {
+        set_error(ERR_INVALID_ARGUMENT, "SQRT requires exactly one argument");
+        return NIL;
+    }
+    
+    Cell *arg = car(args);
+    
+    // Make sure the argument is a number
+    if (arg->type != CELL_NUMBER) {
+        set_error(ERR_TYPE_MISMATCH, "SQRT requires a numeric argument");
+        return NIL;
+    }
+    
+    // Check for negative input
+    if (arg->value.number < 0) {
+        set_error(ERR_INVALID_ARGUMENT, "SQRT: Cannot compute square root of negative number");
+        return NIL;
+    }
+    
+    // Simple integer square root - find largest integer whose square is <= n
+    int n = arg->value.number;
+    int i = 0;
+    while ((i+1) * (i+1) <= n) {
+        i++;
+    }
+    
+    return make_number(i);
 }
 
 // Parser
@@ -246,23 +443,23 @@ Cell *read_expr(StringReader *reader) {
     int c;
     char token[256];
     int token_len = 0;
-    
+
      // Skip whitespace and comments
      while (1) {
         c = reader_getc(reader);
         if (c == EOF) {
             return NULL;
         }
-        
+
         // Check for comments (;; to end of line)
         if (c == ';' && reader->pos < reader->len && reader->input[reader->pos] == ';') {
             // Skip the second semicolon
             reader_getc(reader);
-            
+
             // Collect comment text for display
             char comment[1024] = {0};
             int comment_len = 0;
-            
+
             // Read until end of line
             while ((c = reader_getc(reader)) != EOF && c != '\n' && c != '\r') {
                 if (comment_len < sizeof(comment) - 1) {
@@ -270,49 +467,49 @@ Cell *read_expr(StringReader *reader) {
                 }
             }
             comment[comment_len] = '\0';
-            
+
             // Print the comment
             printf(";; %s\n", comment);
-            
+
             // Continue skipping whitespace or finding more comments
             continue;
         }
-        
+
         // If not a comment or whitespace, break out
         if (!isspace(c)) {
             break;
         }
     }
-   
+
     // Check for list syntax
     if (c == '(') {
         // Read list elements
         Cell *head = NIL;
         Cell *tail = NIL;
-        
+
         // Skip whitespace after open paren
         while ((c = reader_getc(reader)) != EOF && isspace(c)) {
             // Skip
         }
-        
+
         // Check for empty list
         if (c == ')') {
             return NIL;
         }
-        
+
         // Put back the non-whitespace character
         reader_ungetc(reader);
-        
+
         // Read elements until closing paren
         while (1) {
             Cell *elem = read_expr(reader);
             if (!elem && error_type != ERR_NONE) {
                 return NULL;
             }
-            
+
             // Create list node
             Cell *node = cons(elem, NIL);
-            
+
             if (head == NIL) {
                 head = node;
                 tail = node;
@@ -320,12 +517,12 @@ Cell *read_expr(StringReader *reader) {
                 tail->value.pair.cdr = node;
                 tail = node;
             }
-            
+
             // Skip whitespace
             while ((c = reader_getc(reader)) != EOF && isspace(c)) {
                 // Skip
             }
-            
+
             if (c == ')') {
                 break;
             } else if (c == '.') {
@@ -334,26 +531,26 @@ Cell *read_expr(StringReader *reader) {
                 if (!last && error_type != ERR_NONE) {
                     return NULL;
                 }
-                
+
                 tail->value.pair.cdr = last;
-                
+
                 // Expect closing paren
                 while ((c = reader_getc(reader)) != EOF && isspace(c)) {
                     // Skip
                 }
-                
+
                 if (c != ')') {
                     set_error(ERR_SYNTAX, "Expected ')' after dotted pair");
                     return NULL;
                 }
-                
+
                 break;
             } else {
                 // Put back the non-whitespace character for next element
                 reader_ungetc(reader);
             }
         }
-        
+
         return head;
     } else if (c == '\'') {
         // Handle quoted expressions: 'expr -> (QUOTE expr)
@@ -361,13 +558,13 @@ Cell *read_expr(StringReader *reader) {
         if (!quoted && error_type != ERR_NONE) {
             return NULL;
         }
-        
+
         return cons(QUOTE_SYM, cons(quoted, NIL));
     } else {
         // Read atom
         token[0] = c;
         token_len = 1;
-        
+
         while ((c = reader_getc(reader)) != EOF && !isspace(c) && c != '(' && c != ')') {
             if (token_len < sizeof(token) - 1) {
                 token[token_len++] = c;
@@ -376,27 +573,39 @@ Cell *read_expr(StringReader *reader) {
                 return NULL;
             }
         }
-        
+
         // Put back the terminating character
         if (c != EOF) {
             reader_ungetc(reader);
         }
-        
+
         // Null-terminate the token
         token[token_len] = '\0';
-        
+
         // Check if it's a number (simplified - just integers)
         bool is_number = true;
-        for (int i = 0; i < token_len; i++) {
+        // Check if it's a negative number
+        int start_idx = 0;
+        if (token_len > 0 && token[0] == '-') {
+            start_idx = 1;
+        }
+        
+        for (int i = start_idx; i < token_len; i++) {
             if (!isdigit(token[i])) {
                 is_number = false;
                 break;
             }
         }
-        
-        if (is_number) {
-            // For now, we'll just treat numbers as special atoms
-            return make_atom(token);
+
+        if (is_number && token_len > start_idx) {
+            // It's a number, create a number cell
+            Cell *cell = (Cell*)malloc(sizeof(Cell));
+            if (!cell) set_error(ERR_OUT_OF_MEMORY, "Failed to allocate number");
+            
+            cell->type = CELL_NUMBER;
+            cell->value.number = atoi(token);
+            
+            return cell;
         } else {
             // It's a symbol
             return make_atom(token);
@@ -404,32 +613,37 @@ Cell *read_expr(StringReader *reader) {
     }
 }
 
-// // Print a LISP expression
+// Print a LISP expression
 void print_expr(Cell *expr) {
     if (expr == NIL) {
         printf("NIL");
         return;
     }
-    
+
     if (expr->type == CELL_ATOM) {
         printf("%s", expr->value.atom);
         return;
     }
     
+    if (expr->type == CELL_NUMBER) {
+        printf("%d", expr->value.number);
+        return;
+    }
+
     if (expr->type == CELL_FUNCTION) {
         printf("<FUNCTION>");
         return;
     }
-    
+
     if (expr->type == CELL_SPECIAL) {
         printf("<SPECIAL>");
         return;
     }
-    
+
     // Print a list: (a b c)
     printf("(");
     print_expr(car(expr));
-    
+
     // Print the rest of the list
     Cell *rest = cdr(expr);
     while (rest != NIL && rest->type == CELL_PAIR) {
@@ -437,13 +651,13 @@ void print_expr(Cell *expr) {
         print_expr(car(rest));
         rest = cdr(rest);
     }
-    
+
     // Handle dotted pairs: (a . b)
     if (rest != NIL) {
         printf(" . ");
         print_expr(rest);
     }
-    
+
     printf(")");
 }
 
@@ -460,7 +674,7 @@ Cell *lookup(Cell *sym, Cell *env) {
         }
         env = cdr(env);
     }
-    
+
     char error_msg[256];
     sprintf(error_msg, "Unbound symbol: %s", sym->value.atom);
     set_error(ERR_UNBOUND_SYMBOL, error_msg);
@@ -472,26 +686,26 @@ Cell *list_of_values(Cell *list, Cell *env) {
     if (list == NIL) {
         return NIL;
     }
-    
+
     return cons(eval(car(list), env), list_of_values(cdr(list), env));
 }
 
 // Evaluate a LISP expression
 Cell *eval(Cell *expr, Cell *env) {
     // Self-evaluating expressions
-    if (expr == NIL || expr->type == CELL_FUNCTION || expr->type == CELL_SPECIAL) {
+    if (expr == NIL || expr->type == CELL_FUNCTION || expr->type == CELL_SPECIAL || expr->type == CELL_NUMBER) {
         return expr;
     }
-    
+
     // Atoms evaluate to their value in the environment
     if (expr->type == CELL_ATOM) {
         return lookup(expr, env);
     }
-    
+
     // Lists are evaluated as function applications or special forms
     Cell *op = car(expr);
     Cell *args = cdr(expr);
-    
+
     // Special forms
     if (op->type == CELL_ATOM) {
         // QUOTE: (QUOTE expr) -> expr
@@ -501,84 +715,84 @@ Cell *eval(Cell *expr, Cell *env) {
             }
             return car(args);
         }
-        
+
         // LAMBDA: (LAMBDA (args) body)
         if (eq(op, LAMBDA_SYM) == T) {
             // Create a proper closure by capturing the current environment
-            return cons(LAMBDA_SYM, 
+            return cons(LAMBDA_SYM,
                         cons(car(cdr(expr)),        // parameters
                             cons(car(cdr(cdr(expr))),  // body
                                 cons(env, NIL)))); // current environment
-        }        
+        }
 
         // COND: (COND (test1 expr1) (test2 expr2) ...)
         if (eq(op, COND_SYM) == T) {
             Cell *clauses = args;
-            
+
             while (clauses != NIL) {
                 Cell *clause = car(clauses);
-                
+
                 if (clause->type != CELL_PAIR) {
                     set_error(ERR_INVALID_ARGUMENT, "COND: clause must be a list");
                 }
-                
+
                 Cell *test = car(clause);
                 Cell *result = eval(test, env);
-                
+
                 // If test evaluates to non-NIL, evaluate the consequent
                 if (result != NIL) {
                     // Special case for one-element clauses (return the test result)
                     if (cdr(clause) == NIL) {
                         return result;
                     }
-                    
+
                     Cell *expr = car(cdr(clause));
                     return eval(expr, env);
                 }
 
                 clauses = cdr(clauses);
             }
-            
+
             // No matching clause
             return NIL;
         }
     }
-    
+
     // LABEL: (LABEL name (LAMBDA (args) body))
     if (eq(op, LABEL_SYM) == T) {
         if (args == NIL || cdr(args) == NIL || cdr(cdr(args)) != NIL) {
             set_error(ERR_INVALID_ARGUMENT, "LABEL requires exactly two arguments");
         }
-        
+
         Cell *name = car(args);
         Cell *lambda_expr = car(cdr(args));
-        
+
         // Ensure the name is an atom
         if (name->type != CELL_ATOM) {
             set_error(ERR_TYPE_MISMATCH, "LABEL: First argument must be a symbol");
         }
-        
+
         // Ensure second argument is a lambda expression
-        if (lambda_expr->type != CELL_PAIR || 
+        if (lambda_expr->type != CELL_PAIR ||
             eq(car(lambda_expr), LAMBDA_SYM) != T) {
             set_error(ERR_TYPE_MISMATCH, "LABEL: Second argument must be a LAMBDA expression");
         }
-        
+
         // Create a new environment with the recursive binding
         Cell *recursive_env = bind(name, lambda_expr, env);
-        
+
         // Return a lambda that will use this recursive environment
-        // We essentially transform (LABEL f (LAMBDA (...) ...)) 
+        // We essentially transform (LABEL f (LAMBDA (...) ...))
         // into a lambda that has f in its environment
-        return cons(LAMBDA_SYM, 
+        return cons(LAMBDA_SYM,
                     cons(car(cdr(lambda_expr)),     // parameters
                         cons(car(cdr(cdr(lambda_expr))),  // body
                             cons(recursive_env, NIL)))); // environment
-    }    
+    }
     // Function application
     Cell *function = eval(op, env);
     Cell *evaluated_args = list_of_values(args, env);
-    
+
     return apply(function, evaluated_args, env);
     //return function; // Placeholder for now
 }
@@ -593,28 +807,28 @@ Cell *apply(Cell *fn, Cell *args, Cell *env) {
             }
             return cons(car(args), car(cdr(args)));
         }
-        
+
         if (strcmp(fn->value.atom, "CAR") == 0) {
             if (args == NIL || cdr(args) != NIL) {
                 set_error(ERR_INVALID_ARGUMENT, "CAR requires exactly one argument");
             }
             return car(car(args));
         }
-        
+
         if (strcmp(fn->value.atom, "CDR") == 0) {
             if (args == NIL || cdr(args) != NIL) {
                 set_error(ERR_INVALID_ARGUMENT, "CDR requires exactly one argument");
             }
             return cdr(car(args));
         }
-        
+
         if (strcmp(fn->value.atom, "ATOM") == 0) {
             if (args == NIL || cdr(args) != NIL) {
                 set_error(ERR_INVALID_ARGUMENT, "ATOM requires exactly one argument");
             }
             return atom(car(args));
         }
-        
+
         if (strcmp(fn->value.atom, "EQ") == 0) {
             if (args == NIL || cdr(args) == NIL || cdr(cdr(args)) != NIL) {
                 set_error(ERR_INVALID_ARGUMENT, "EQ requires exactly two arguments");
@@ -622,12 +836,33 @@ Cell *apply(Cell *fn, Cell *args, Cell *env) {
             return eq(car(args), car(cdr(args)));
         }
         
+        // Arithmetic functions
+        if (strcmp(fn->value.atom, "ADD") == 0) {
+            return add(args);
+        }
+        
+        if (strcmp(fn->value.atom, "SUB") == 0) {
+            return sub(args);
+        }
+        
+        if (strcmp(fn->value.atom, "MUL") == 0) {
+            return mul(args);
+        }
+        
+        if (strcmp(fn->value.atom, "DIV") == 0) {
+            return div_func(args);
+        }
+        
+        if (strcmp(fn->value.atom, "SQRT") == 0) {
+            return sqrt_func(args);
+        }
+
         char error_msg[256];
         sprintf(error_msg, "Unknown function: %s", fn->value.atom);
         set_error(ERR_UNBOUND_SYMBOL, error_msg);
         return NIL;
     }
-    
+
     // Lambda expressions: (LAMBDA (params) body)
     if (fn->type == CELL_PAIR && eq(car(fn), LAMBDA_SYM) == T) {
         Cell *params = car(cdr(fn));
@@ -636,30 +871,30 @@ Cell *apply(Cell *fn, Cell *args, Cell *env) {
         // Check if this lambda has a closure environment (from LABEL)
         Cell *closure_env = cdr(cdr(cdr(fn)));
         Cell *base_env = (closure_env != NIL) ? car(closure_env) : env;
-                
+
         // Create new environment with args bound to params
         Cell *new_env = base_env;
         Cell *param = params;
         Cell *arg = args;
-        
+
         while (param != NIL && arg != NIL) {
             new_env = bind(car(param), car(arg), new_env);
             param = cdr(param);
             arg = cdr(arg);
         }
-        
+
         if (param != NIL) {
             set_error(ERR_INVALID_ARGUMENT, "Too few arguments for lambda");
         }
-        
+
         if (arg != NIL) {
             set_error(ERR_INVALID_ARGUMENT, "Too many arguments for lambda");
         }
-        
+
         // Evaluate body in new environment
         return eval(body, new_env);
     }
-    
+
     set_error(ERR_TYPE_MISMATCH, "Object is not a function");
     return NIL;
 }
@@ -669,7 +904,7 @@ int is_balanced(const char *input) {
     int balance = 0;
     bool in_string = false;
     bool escaped = false;
-    
+
     for (int i = 0; input[i] != '\0'; i++) {
         if (in_string) {
             if (escaped) {
@@ -681,7 +916,7 @@ int is_balanced(const char *input) {
             }
             continue;
         }
-        
+
         if (input[i] == '"') {
             in_string = true;
         } else if (input[i] == '(') {
@@ -691,7 +926,7 @@ int is_balanced(const char *input) {
             if (balance < 0) return -1;  // Unmatched closing paren
         }
     }
-    
+
     return balance;  // 0 = balanced, >0 = needs more closing parens
 }
 
@@ -700,10 +935,10 @@ void repl() {
     char input_buffer[4096] = {0};  // Larger buffer to accumulate input
     char line[1024];
     int len = 0;
-    
+
     printf("KLISP Interpreter\n");
     printf("Type expressions or 'exit' to quit\n");
-    
+
     while (1) {
         // Show appropriate prompt based on input state
         if (len == 0) {
@@ -712,30 +947,30 @@ void repl() {
             printf("... ");  // Continuation prompt
         }
         fflush(stdout);
-        
+
         // Read a line
         if (!fgets(line, sizeof(line), stdin)) {
             break;
         }
-        
+
         // Check for exit command
         if (len == 0 && strncmp(line, "exit", 4) == 0) {
             break;
         }
-        
+
         // Append to existing input
         strncat(input_buffer + len, line, sizeof(input_buffer) - len - 1);
         len = strlen(input_buffer);
-        
+
         // Check if we have a complete expression
         int balance = is_balanced(input_buffer);
-        
+
         if (balance == 0) {
             // Complete expression - process it
             if (setjmp(error_jmp_buf) == 0) {
                 StringReader reader = create_string_reader(input_buffer);
                 Cell *expr = read_expr(&reader);
-                
+
                 if (expr) {
                     printf("** expr\n");
                     print_expr(expr);
@@ -750,7 +985,7 @@ void repl() {
                 printf("Error: %s\n", error_message);
                 clear_error();
             }
-            
+
             // Reset buffer for next input
             input_buffer[0] = '\0';
             len = 0;
@@ -773,41 +1008,41 @@ void run_tests() {
     printf("CONS test: ");
     print_expr(pair);
     printf("\n");
-    
+
     // Test CAR
     printf("CAR test: ");
     print_expr(car(pair));
     printf("\n");
-    
+
     // Test CDR
     printf("CDR test: ");
     print_expr(cdr(pair));
     printf("\n");
-    
+
     // Test ATOM
     printf("ATOM test on atom: ");
     print_expr(atom(a));
     printf("\n");
-    
+
     printf("ATOM test on pair: ");
     print_expr(atom(pair));
     printf("\n");
-    
+
     // Test EQ
     printf("EQ test on same atom: ");
     print_expr(eq(a, a));
     printf("\n");
-    
+
     printf("EQ test on different atoms: ");
     print_expr(eq(a, b));
     printf("\n");
-    
+
     // Create a small list (A B C)
     Cell *list = cons(a, cons(b, cons(c, NIL)));
     printf("List test: ");
     print_expr(list);
     printf("\n");
-    
+
     printf("** End Tests\n\n");
 }
 // Function to run a LISP file
@@ -817,29 +1052,29 @@ void run_file(const char *filename) {
         printf("Error: Could not open file '%s'\n", filename);
         return;
     }
-    
+
     // Read the entire file into memory
     fseek(file, 0, SEEK_END);
     long file_size = ftell(file);
     fseek(file, 0, SEEK_SET);
-    
+
     char *buffer = (char*)malloc(file_size + 1);
     if (!buffer) {
         printf("Error: Out of memory\n");
         fclose(file);
         return;
     }
-    
+
     printf("running file: %s\n", filename);
     size_t bytes_read = fread(buffer, 1, file_size, file);
     buffer[bytes_read] = '\0';
     fclose(file);
-    
+
     // Process the file contents
     if (setjmp(error_jmp_buf) == 0) {
         StringReader reader = create_string_reader(buffer);
         Cell *expr;
-        
+
         // Execute each expression in the file
         while ((expr = read_expr(&reader)) != NULL) {
             Cell *result = eval(expr, env);
@@ -858,7 +1093,7 @@ void run_file(const char *filename) {
         printf("Error: %s\n", error_message);
         clear_error();
     }
-    
+
     free(buffer);
     printf("Done: %s\n", filename);
 
@@ -873,7 +1108,7 @@ int main(int argc, char *argv[]) {
     // Initialize LISP environment
     if (setjmp(error_jmp_buf) == 0) {
         init_lisp();
-        
+
         if (argc > 1) {
             // Run the specified file
             run_file(argv[1]);
@@ -885,9 +1120,9 @@ int main(int argc, char *argv[]) {
     } else {
         fprintf(stderr, "Fatal error during initialization: %s\n", error_message);
     }
-    
+
     // Clean up
     cleanup_lisp();
-    
+
     return 0;
 }

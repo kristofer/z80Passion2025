@@ -2,7 +2,7 @@
 # Makefile Options
 # ----------------------------
 
-NAME=kl3
+NAME=vkt
 
 # Select option for Argument Processing at 'int main( int argc, char* argv[] )'
 # 0: Simple Command Line Processing
@@ -13,3 +13,6 @@ LDHAS_EXIT_HANDLER = 0
 # ----------------------------
 #
 include $(shell agondev-config --makefile)
+
+# cp bin/akt.bin ../../sdcard/ADL/bin/akt.bin
+# to copy the binary to the SD card
