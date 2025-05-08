@@ -57,6 +57,7 @@ Cell *QUOTE_SYM;
 Cell *LAMBDA_SYM;
 Cell *COND_SYM;
 Cell *LABEL_SYM;
+Cell *DEFINE_SYM;
 
 // Environment - a simple association list
 Cell *env = NULL;
@@ -77,6 +78,7 @@ void print_expr(Cell *expr);
 void init_lisp();
 void cleanup_lisp();
 Cell *bind(Cell *sym, Cell *val, Cell *env);
+Cell *define(Cell *sym, Cell *val);
 Cell *lookup(Cell *sym, Cell *env);
 Cell *list_of_values(Cell *list, Cell *env);
 
@@ -141,6 +143,7 @@ void init_lisp() {
     LAMBDA_SYM = make_atom("LAMBDA");
     COND_SYM = make_atom("COND");
     LABEL_SYM = make_atom("LABEL");
+    DEFINE_SYM = make_atom("DEFINE");
 
     // Initialize environment with built-in functions
     env = NIL;
@@ -151,6 +154,7 @@ void init_lisp() {
     env = bind(make_atom("LAMBDA"), LAMBDA_SYM, env);
     env = bind(make_atom("COND"), COND_SYM, env);
     env = bind(make_atom("LABEL"), LABEL_SYM, env);
+    env = bind(make_atom("DEFINE"), DEFINE_SYM, env);
     //maybe?
     env = bind(make_atom("CONS"), make_atom("CONS"), env);
     env = bind(make_atom("CAR"), make_atom("CAR"), env);
@@ -189,12 +193,25 @@ Cell *cons(Cell *car_val, Cell *cdr_val) {
 
 // CAR: Get the first element of a pair
 Cell *car(Cell *cell) {
+    // Safety check for NULL pointer
+    if (cell == NULL) {
+        set_error(ERR_INVALID_ARGUMENT, "CAR: NULL pointer");
+        return NIL;
+    }
+    
     if (cell == NIL) {
         return NIL;
     }
 
     if (cell->type != CELL_PAIR) {
         set_error(ERR_TYPE_MISMATCH, "CAR: Expected a pair");
+        return NIL;
+    }
+
+    // Safety check for NULL car
+    if (cell->value.pair.car == NULL) {
+        set_error(ERR_INVALID_ARGUMENT, "CAR: NULL car pointer");
+        return NIL;
     }
 
     return cell->value.pair.car;
@@ -202,12 +219,25 @@ Cell *car(Cell *cell) {
 
 // CDR: Get the rest of a pair
 Cell *cdr(Cell *cell) {
+    // Safety check for NULL pointer
+    if (cell == NULL) {
+        set_error(ERR_INVALID_ARGUMENT, "CDR: NULL pointer");
+        return NIL;
+    }
+    
     if (cell == NIL) {
         return NIL;
     }
 
     if (cell->type != CELL_PAIR) {
         set_error(ERR_TYPE_MISMATCH, "CDR: Expected a pair");
+        return NIL;
+    }
+
+    // Safety check for NULL cdr
+    if (cell->value.pair.cdr == NULL) {
+        set_error(ERR_INVALID_ARGUMENT, "CDR: NULL cdr pointer");
+        return NIL;
     }
 
     return cell->value.pair.cdr;
@@ -253,6 +283,11 @@ Cell *debug(Cell *args) {
 
 // EQ: Test if two cells are equal
 Cell *eq(Cell *a, Cell *b) {
+    // Safety checks
+    if (a == NULL || b == NULL) {
+        return NIL;
+    }
+    
     // If both are the same object, they're equal
     if (a == b) {
         return T;
@@ -261,6 +296,13 @@ Cell *eq(Cell *a, Cell *b) {
     // If both are atoms, compare their names
     if (a != NIL && b != NIL && a->type == CELL_ATOM && b->type == CELL_ATOM) {
         if (strcmp(a->value.atom, b->value.atom) == 0) {
+            return T;
+        }
+    }
+    
+    // If both are numbers, compare their values
+    if (a != NIL && b != NIL && a->type == CELL_NUMBER && b->type == CELL_NUMBER) {
+        if (a->value.number == b->value.number) {
             return T;
         }
     }
@@ -699,9 +741,64 @@ Cell *bind(Cell *sym, Cell *val, Cell *env) {
     return cons(cons(sym, val), env);
 }
 
+// Define function - adds a binding to the global environment
+Cell *define(Cell *sym, Cell *val) {
+    // Safety checks
+    if (sym == NULL) {
+        set_error(ERR_INVALID_ARGUMENT, "DEFINE: NULL symbol");
+        return NIL;
+    }
+    
+    if (val == NULL) {
+        set_error(ERR_INVALID_ARGUMENT, "DEFINE: NULL value");
+        return NIL;
+    }
+    
+    // Find if the symbol is already defined
+    Cell *current = env;
+    while (current != NIL) {
+        Cell *binding = car(current);
+        if (eq(car(binding), sym) == T) {
+            // Update the existing binding
+            binding->value.pair.cdr = val;
+            return val;
+        }
+        current = cdr(current);
+    }
+    
+    // For debugging
+    if (_debug) {
+        printf("Defining: ");
+        print_expr(sym);
+        printf(" as: ");
+        print_expr(val);
+        printf("\n");
+    }
+    
+    // Add new binding to global environment
+    env = bind(sym, val, env);
+    return val;
+}
+
 Cell *lookup(Cell *sym, Cell *env) {
+    // Safety check - avoid segfaults
+    if (env == NULL) {
+        char error_msg[256];
+        sprintf(error_msg, "Internal error: NULL environment when looking up symbol: %s", 
+                sym ? (sym->type == CELL_ATOM ? sym->value.atom : "<non-atom>") : "<null>");
+        set_error(ERR_INVALID_ARGUMENT, error_msg);
+        return NIL;
+    }
+    
     while (env != NIL) {
         Cell *binding = car(env);
+        
+        // Safety check for malformed bindings
+        if (binding == NULL || binding->type != CELL_PAIR) {
+            env = cdr(env);
+            continue;
+        }
+        
         if (eq(car(binding), sym) == T) {
             return cdr(binding);
         }
@@ -709,7 +806,8 @@ Cell *lookup(Cell *sym, Cell *env) {
     }
 
     char error_msg[256];
-    sprintf(error_msg, "Unbound symbol: %s", sym->value.atom);
+    sprintf(error_msg, "Unbound symbol: %s", 
+            sym ? (sym->type == CELL_ATOM ? sym->value.atom : "<non-atom>") : "<null>");
     set_error(ERR_UNBOUND_SYMBOL, error_msg);
     return NIL;
 }
@@ -725,6 +823,18 @@ Cell *list_of_values(Cell *list, Cell *env) {
 
 // Evaluate a LISP expression
 Cell *eval(Cell *expr, Cell *env) {
+    // Safety check
+    if (expr == NULL) {
+        set_error(ERR_INVALID_ARGUMENT, "EVAL: NULL expression");
+        return NIL;
+    }
+    
+    // Safety check
+    if (env == NULL) {
+        set_error(ERR_INVALID_ARGUMENT, "EVAL: NULL environment");
+        return NIL;
+    }
+    
     // Self-evaluating expressions
     if (expr == NIL || expr->type == CELL_FUNCTION || expr->type == CELL_SPECIAL || expr->type == CELL_NUMBER) {
         return expr;
@@ -735,8 +845,19 @@ Cell *eval(Cell *expr, Cell *env) {
         return lookup(expr, env);
     }
 
+    // Check that expression is a list
+    if (expr->type != CELL_PAIR) {
+        set_error(ERR_TYPE_MISMATCH, "EVAL: Expected a list for evaluation");
+        return NIL;
+    }
+    
     // Lists are evaluated as function applications or special forms
     Cell *op = car(expr);
+    if (op == NULL) {
+        set_error(ERR_INVALID_ARGUMENT, "EVAL: NULL operator in expression");
+        return NIL;
+    }
+    
     Cell *args = cdr(expr);
 
     // Special forms
@@ -747,6 +868,77 @@ Cell *eval(Cell *expr, Cell *env) {
                 set_error(ERR_INVALID_ARGUMENT, "QUOTE requires exactly one argument");
             }
             return car(args);
+        }
+
+        // DEFINE: (DEFINE 'symbol value)
+        // or (DEFINE 'function-name (params) body)
+        if (eq(op, DEFINE_SYM) == T) {
+            if (args == NIL) {
+                set_error(ERR_INVALID_ARGUMENT, "DEFINE requires at least two arguments");
+                return NIL;
+            }
+            
+            // Get the symbol name (first argument)
+            Cell *name_arg = car(args);
+            
+            // The name should be quoted
+            if (name_arg->type != CELL_PAIR || 
+                car(name_arg) != QUOTE_SYM ||
+                cdr(name_arg) == NIL) {
+                set_error(ERR_TYPE_MISMATCH, "DEFINE: First argument must be a quoted symbol");
+                return NIL;
+            }
+            
+            Cell *sym = car(cdr(name_arg));
+            
+            if (sym->type != CELL_ATOM) {
+                set_error(ERR_TYPE_MISMATCH, "DEFINE: Symbol name must be an atom");
+                return NIL;
+            }
+            
+            if (_debug) {
+                printf("Defining symbol: ");
+                print_expr(sym);
+                printf("\n");
+            }
+            
+            // Get the value or function definition (remaining arguments)
+            Cell *val_args = cdr(args);
+            
+            // Check if it's a function definition (more than one argument after the symbol)
+            if (cdr(val_args) != NIL) {
+                // Format: (DEFINE 'name (params) body)
+                Cell *params = car(val_args);
+                Cell *body = car(cdr(val_args));
+                
+                if (_debug) {
+                    printf("Function definition with params: ");
+                    print_expr(params);
+                    printf(" and body: ");
+                    print_expr(body);
+                    printf("\n");
+                }
+                
+                // Create a lambda expression for the function
+                Cell *lambda = cons(LAMBDA_SYM, 
+                                    cons(params, 
+                                         cons(body, NIL)));
+                
+                // Define it globally
+                return define(sym, lambda);
+            } else {
+                // Format: (DEFINE 'name value)
+                Cell *val = eval(car(val_args), env);
+                
+                if (_debug) {
+                    printf("Value definition, evaluated to: ");
+                    print_expr(val);
+                    printf("\n");
+                }
+                
+                // Define it in the global environment
+                return define(sym, val);
+            }
         }
 
         // LAMBDA: (LAMBDA (args) body)
@@ -811,16 +1003,11 @@ Cell *eval(Cell *expr, Cell *env) {
             set_error(ERR_TYPE_MISMATCH, "LABEL: Second argument must be a LAMBDA expression");
         }
 
-        // Create a new environment with the recursive binding
-        Cell *recursive_env = bind(name, lambda_expr, env);
-
-        // Return a lambda that will use this recursive environment
-        // We essentially transform (LABEL f (LAMBDA (...) ...))
-        // into a lambda that has f in its environment
-        return cons(LAMBDA_SYM,
-                    cons(car(cdr(lambda_expr)),     // parameters
-                        cons(car(cdr(cdr(lambda_expr))),  // body
-                            cons(recursive_env, NIL)))); // environment
+        // Add function to environment for recursive calls - use global env for simplicity
+        Cell *result = define(name, lambda_expr);
+        
+        // Return the lambda expression
+        return lambda_expr;
     }
     // Function application
     Cell *function = eval(op, env);
@@ -832,6 +1019,12 @@ Cell *eval(Cell *expr, Cell *env) {
 
 // Apply a function to arguments
 Cell *apply(Cell *fn, Cell *args, Cell *env) {
+    // Safety check
+    if (fn == NULL) {
+        set_error(ERR_INVALID_ARGUMENT, "APPLY: NULL function");
+        return NIL;
+    }
+    
     // Built-in functions
     if (fn->type == CELL_ATOM) {
         if (strcmp(fn->value.atom, "CONS") == 0) {
@@ -904,18 +1097,38 @@ Cell *apply(Cell *fn, Cell *args, Cell *env) {
     if (fn->type == CELL_PAIR && eq(car(fn), LAMBDA_SYM) == T) {
         Cell *params = car(cdr(fn));
         Cell *body = car(cdr(cdr(fn)));
-
-        // Check if this lambda has a closure environment (from LABEL)
-        Cell *closure_env = cdr(cdr(cdr(fn)));
-        Cell *base_env = (closure_env != NIL) ? car(closure_env) : env;
-
-        // Create new environment with args bound to params
-        Cell *new_env = base_env;
+        
+        if (_debug) {
+            printf("Applying lambda with params: ");
+            print_expr(params);
+            printf(" and body: ");
+            print_expr(body);
+            printf(" to args: ");
+            print_expr(args);
+            printf("\n");
+        }
+        
+        // Create a NEW environment for this function call
+        // Importantly, we extend the CURRENT environment, not just the global environment
+        // This ensures functions have access to the variables in scope when the function is called
+        Cell *new_env = env;
         Cell *param = params;
         Cell *arg = args;
-
+        
+        // Bind arguments to parameters
         while (param != NIL && arg != NIL) {
-            new_env = bind(car(param), car(arg), new_env);
+            Cell *param_name = car(param);
+            Cell *arg_value = car(arg);
+            
+            if (_debug) {
+                printf("Binding param: ");
+                print_expr(param_name);
+                printf(" to value: ");
+                print_expr(arg_value);
+                printf("\n");
+            }
+            
+            new_env = bind(param_name, arg_value, new_env);
             param = cdr(param);
             arg = cdr(arg);
         }
@@ -928,8 +1141,24 @@ Cell *apply(Cell *fn, Cell *args, Cell *env) {
             set_error(ERR_INVALID_ARGUMENT, "Too many arguments for lambda");
         }
 
+        if (_debug) {
+            printf("Evaluating lambda body: ");
+            print_expr(body);
+            printf(" in env: ");
+            print_expr(new_env);
+            printf("\n");
+        }
+        
         // Evaluate body in new environment
-        return eval(body, new_env);
+        Cell *result = eval(body, new_env);
+        
+        if (_debug) {
+            printf("Lambda result: ");
+            print_expr(result);
+            printf("\n");
+        }
+        
+        return result;
     }
 
     set_error(ERR_TYPE_MISMATCH, "Object is not a function");
