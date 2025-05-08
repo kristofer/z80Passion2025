@@ -175,7 +175,7 @@ void init_lisp() {
     env = bind(make_atom("MUL"), make_atom("MUL"), env);
     env = bind(make_atom("DIV"), make_atom("DIV"), env);
     env = bind(make_atom("SQRT"), make_atom("SQRT"), env);
-    
+
     // Register comparison functions
     env = bind(make_atom("LT"), make_atom("LT"), env);   // Less than
     env = bind(make_atom("LTE"), make_atom("LTE"), env); // Less than or equal
@@ -210,7 +210,7 @@ Cell *car(Cell *cell) {
         set_error(ERR_INVALID_ARGUMENT, "CAR: NULL pointer");
         return NIL;
     }
-    
+
     if (cell == NIL) {
         return NIL;
     }
@@ -236,7 +236,7 @@ Cell *cdr(Cell *cell) {
         set_error(ERR_INVALID_ARGUMENT, "CDR: NULL pointer");
         return NIL;
     }
-    
+
     if (cell == NIL) {
         return NIL;
     }
@@ -299,7 +299,7 @@ Cell *eq(Cell *a, Cell *b) {
     if (a == NULL || b == NULL) {
         return NIL;
     }
-    
+
     // If both are the same object, they're equal
     if (a == b) {
         return T;
@@ -311,7 +311,7 @@ Cell *eq(Cell *a, Cell *b) {
             return T;
         }
     }
-    
+
     // If both are numbers, compare their values
     if (a != NIL && b != NIL && a->type == CELL_NUMBER && b->type == CELL_NUMBER) {
         if (a->value.number == b->value.number) {
@@ -739,7 +739,7 @@ Cell *read_expr(StringReader *reader) {
         }
 
         return head;
-    } else if (c == '\'') {
+    } else if (c == '\'' || c == '\`') {
         // Handle quoted expressions: 'expr -> (QUOTE expr)
         Cell *quoted = read_expr(reader);
         if (!quoted && error_type != ERR_NONE) {
@@ -860,12 +860,12 @@ Cell *define(Cell *sym, Cell *val) {
         set_error(ERR_INVALID_ARGUMENT, "DEFINE: NULL symbol");
         return NIL;
     }
-    
+
     if (val == NULL) {
         set_error(ERR_INVALID_ARGUMENT, "DEFINE: NULL value");
         return NIL;
     }
-    
+
     // Find if the symbol is already defined
     Cell *current = env;
     while (current != NIL) {
@@ -877,7 +877,7 @@ Cell *define(Cell *sym, Cell *val) {
         }
         current = cdr(current);
     }
-    
+
     // For debugging
     if (_debug) {
         printf("Defining: ");
@@ -886,7 +886,7 @@ Cell *define(Cell *sym, Cell *val) {
         print_expr(val);
         printf("\n");
     }
-    
+
     // Add new binding to global environment
     env = bind(sym, val, env);
     return val;
@@ -896,21 +896,21 @@ Cell *lookup(Cell *sym, Cell *env) {
     // Safety check - avoid segfaults
     if (env == NULL) {
         char error_msg[256];
-        sprintf(error_msg, "Internal error: NULL environment when looking up symbol: %s", 
+        sprintf(error_msg, "Internal error: NULL environment when looking up symbol: %s",
                 sym ? (sym->type == CELL_ATOM ? sym->value.atom : "<non-atom>") : "<null>");
         set_error(ERR_INVALID_ARGUMENT, error_msg);
         return NIL;
     }
-    
+
     while (env != NIL) {
         Cell *binding = car(env);
-        
+
         // Safety check for malformed bindings
         if (binding == NULL || binding->type != CELL_PAIR) {
             env = cdr(env);
             continue;
         }
-        
+
         if (eq(car(binding), sym) == T) {
             return cdr(binding);
         }
@@ -918,7 +918,7 @@ Cell *lookup(Cell *sym, Cell *env) {
     }
 
     char error_msg[256];
-    sprintf(error_msg, "Unbound symbol: %s", 
+    sprintf(error_msg, "Unbound symbol: %s",
             sym ? (sym->type == CELL_ATOM ? sym->value.atom : "<non-atom>") : "<null>");
     set_error(ERR_UNBOUND_SYMBOL, error_msg);
     return NIL;
@@ -940,13 +940,13 @@ Cell *eval(Cell *expr, Cell *env) {
         set_error(ERR_INVALID_ARGUMENT, "EVAL: NULL expression");
         return NIL;
     }
-    
+
     // Safety check
     if (env == NULL) {
         set_error(ERR_INVALID_ARGUMENT, "EVAL: NULL environment");
         return NIL;
     }
-    
+
     // Self-evaluating expressions
     if (expr == NIL || expr->type == CELL_FUNCTION || expr->type == CELL_SPECIAL || expr->type == CELL_NUMBER) {
         return expr;
@@ -962,14 +962,14 @@ Cell *eval(Cell *expr, Cell *env) {
         set_error(ERR_TYPE_MISMATCH, "EVAL: Expected a list for evaluation");
         return NIL;
     }
-    
+
     // Lists are evaluated as function applications or special forms
     Cell *op = car(expr);
     if (op == NULL) {
         set_error(ERR_INVALID_ARGUMENT, "EVAL: NULL operator in expression");
         return NIL;
     }
-    
+
     Cell *args = cdr(expr);
 
     // Special forms
@@ -989,40 +989,40 @@ Cell *eval(Cell *expr, Cell *env) {
                 set_error(ERR_INVALID_ARGUMENT, "DEFINE requires at least two arguments");
                 return NIL;
             }
-            
+
             // Get the symbol name (first argument)
             Cell *name_arg = car(args);
-            
+
             // The name should be quoted
-            if (name_arg->type != CELL_PAIR || 
+            if (name_arg->type != CELL_PAIR ||
                 car(name_arg) != QUOTE_SYM ||
                 cdr(name_arg) == NIL) {
                 set_error(ERR_TYPE_MISMATCH, "DEFINE: First argument must be a quoted symbol");
                 return NIL;
             }
-            
+
             Cell *sym = car(cdr(name_arg));
-            
+
             if (sym->type != CELL_ATOM) {
                 set_error(ERR_TYPE_MISMATCH, "DEFINE: Symbol name must be an atom");
                 return NIL;
             }
-            
+
             if (_debug) {
                 printf("Defining symbol: ");
                 print_expr(sym);
                 printf("\n");
             }
-            
+
             // Get the value or function definition (remaining arguments)
             Cell *val_args = cdr(args);
-            
+
             // Check if it's a function definition (more than one argument after the symbol)
             if (cdr(val_args) != NIL) {
                 // Format: (DEFINE 'name (params) body)
                 Cell *params = car(val_args);
                 Cell *body = car(cdr(val_args));
-                
+
                 if (_debug) {
                     printf("Function definition with params: ");
                     print_expr(params);
@@ -1030,24 +1030,24 @@ Cell *eval(Cell *expr, Cell *env) {
                     print_expr(body);
                     printf("\n");
                 }
-                
+
                 // Create a lambda expression for the function
-                Cell *lambda = cons(LAMBDA_SYM, 
-                                    cons(params, 
+                Cell *lambda = cons(LAMBDA_SYM,
+                                    cons(params,
                                          cons(body, NIL)));
-                
+
                 // Define it globally
                 return define(sym, lambda);
             } else {
                 // Format: (DEFINE 'name value)
                 Cell *val = eval(car(val_args), env);
-                
+
                 if (_debug) {
                     printf("Value definition, evaluated to: ");
                     print_expr(val);
                     printf("\n");
                 }
-                
+
                 // Define it in the global environment
                 return define(sym, val);
             }
@@ -1117,7 +1117,7 @@ Cell *eval(Cell *expr, Cell *env) {
 
         // Add function to environment for recursive calls - use global env for simplicity
         Cell *result = define(name, lambda_expr);
-        
+
         // Return the lambda expression
         return lambda_expr;
     }
@@ -1136,7 +1136,7 @@ Cell *apply(Cell *fn, Cell *args, Cell *env) {
         set_error(ERR_INVALID_ARGUMENT, "APPLY: NULL function");
         return NIL;
     }
-    
+
     // Built-in functions
     if (fn->type == CELL_ATOM) {
         if (strcmp(fn->value.atom, "CONS") == 0) {
@@ -1198,20 +1198,20 @@ Cell *apply(Cell *fn, Cell *args, Cell *env) {
         if (strcmp(fn->value.atom, "DEBUG") == 0) {
             return debug(args);
         }
-        
+
         // Comparison functions
         if (strcmp(fn->value.atom, "LT") == 0) {
             return lt_func(args);
         }
-        
+
         if (strcmp(fn->value.atom, "LTE") == 0) {
             return lte_func(args);
         }
-        
+
         if (strcmp(fn->value.atom, "GT") == 0) {
             return gt_func(args);
         }
-        
+
         if (strcmp(fn->value.atom, "GTE") == 0) {
             return gte_func(args);
         }
@@ -1226,7 +1226,7 @@ Cell *apply(Cell *fn, Cell *args, Cell *env) {
     if (fn->type == CELL_PAIR && eq(car(fn), LAMBDA_SYM) == T) {
         Cell *params = car(cdr(fn));
         Cell *body = car(cdr(cdr(fn)));
-        
+
         if (_debug) {
             printf("Applying lambda with params: ");
             print_expr(params);
@@ -1236,19 +1236,19 @@ Cell *apply(Cell *fn, Cell *args, Cell *env) {
             print_expr(args);
             printf("\n");
         }
-        
+
         // Create a NEW environment for this function call
         // Importantly, we extend the CURRENT environment, not just the global environment
         // This ensures functions have access to the variables in scope when the function is called
         Cell *new_env = env;
         Cell *param = params;
         Cell *arg = args;
-        
+
         // Bind arguments to parameters
         while (param != NIL && arg != NIL) {
             Cell *param_name = car(param);
             Cell *arg_value = car(arg);
-            
+
             if (_debug) {
                 printf("Binding param: ");
                 print_expr(param_name);
@@ -1256,7 +1256,7 @@ Cell *apply(Cell *fn, Cell *args, Cell *env) {
                 print_expr(arg_value);
                 printf("\n");
             }
-            
+
             new_env = bind(param_name, arg_value, new_env);
             param = cdr(param);
             arg = cdr(arg);
@@ -1277,16 +1277,16 @@ Cell *apply(Cell *fn, Cell *args, Cell *env) {
             print_expr(new_env);
             printf("\n");
         }
-        
+
         // Evaluate body in new environment
         Cell *result = eval(body, new_env);
-        
+
         if (_debug) {
             printf("Lambda result: ");
             print_expr(result);
             printf("\n");
         }
-        
+
         return result;
     }
 
