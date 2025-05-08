@@ -155,7 +155,7 @@ void init_lisp() {
     env = bind(make_atom("CDR"), make_atom("CDR"), env);
     env = bind(make_atom("ATOM"), make_atom("ATOM"), env);
     env = bind(make_atom("EQ"), make_atom("EQ"), env);
-    
+
     // Register arithmetic functions
     env = bind(make_atom("ADD"), make_atom("ADD"), env);
     env = bind(make_atom("SUB"), make_atom("SUB"), env);
@@ -262,10 +262,10 @@ Cell *make_atom(const char *name) {
 Cell *make_number(int n) {
     Cell *cell = (Cell*)malloc(sizeof(Cell));
     if (!cell) set_error(ERR_OUT_OF_MEMORY, "Failed to allocate number");
-    
+
     cell->type = CELL_NUMBER;
     cell->value.number = n;
-    
+
     return cell;
 }
 
@@ -275,23 +275,23 @@ Cell *add(Cell *args) {
     if (args == NIL) {
         return make_number(0); // Adding nothing gives 0
     }
-    
+
     int result = 0;
     Cell *current = args;
-    
+
     while (current != NIL) {
         Cell *arg = car(current);
-        
+
         // Make sure the argument is a number
         if (arg->type != CELL_NUMBER) {
             set_error(ERR_TYPE_MISMATCH, "ADD requires numeric arguments");
             return NIL;
         }
-        
+
         result += arg->value.number;
         current = cdr(current);
     }
-    
+
     return make_number(result);
 }
 
@@ -301,36 +301,36 @@ Cell *sub(Cell *args) {
         set_error(ERR_INVALID_ARGUMENT, "SUB requires at least one argument");
         return NIL;
     }
-    
+
     Cell *first = car(args);
     // Make sure the first argument is a number
     if (first->type != CELL_NUMBER) {
         set_error(ERR_TYPE_MISMATCH, "SUB requires numeric arguments");
         return NIL;
     }
-    
+
     int result = first->value.number;
     Cell *rest = cdr(args);
-    
+
     // If only one argument, negate it
     if (rest == NIL) {
         return make_number(-result);
     }
-    
+
     // Otherwise, subtract all remaining arguments
     while (rest != NIL) {
         Cell *arg = car(rest);
-        
+
         // Make sure the argument is a number
         if (arg->type != CELL_NUMBER) {
             set_error(ERR_TYPE_MISMATCH, "SUB requires numeric arguments");
             return NIL;
         }
-        
+
         result -= arg->value.number;
         rest = cdr(rest);
     }
-    
+
     return make_number(result);
 }
 
@@ -339,23 +339,23 @@ Cell *mul(Cell *args) {
     if (args == NIL) {
         return make_number(1); // Multiplying nothing gives 1
     }
-    
+
     int result = 1;
     Cell *current = args;
-    
+
     while (current != NIL) {
         Cell *arg = car(current);
-        
+
         // Make sure the argument is a number
         if (arg->type != CELL_NUMBER) {
             set_error(ERR_TYPE_MISMATCH, "MUL requires numeric arguments");
             return NIL;
         }
-        
+
         result *= arg->value.number;
         current = cdr(current);
     }
-    
+
     return make_number(result);
 }
 
@@ -365,17 +365,17 @@ Cell *div_func(Cell *args) {
         set_error(ERR_INVALID_ARGUMENT, "DIV requires at least one argument");
         return NIL;
     }
-    
+
     Cell *first = car(args);
     // Make sure the first argument is a number
     if (first->type != CELL_NUMBER) {
         set_error(ERR_TYPE_MISMATCH, "DIV requires numeric arguments");
         return NIL;
     }
-    
+
     int result = first->value.number;
     Cell *rest = cdr(args);
-    
+
     // If only one argument, return 1/n
     if (rest == NIL) {
         if (result == 0) {
@@ -384,26 +384,26 @@ Cell *div_func(Cell *args) {
         }
         return make_number(1 / result);
     }
-    
+
     // Otherwise, divide by all remaining arguments
     while (rest != NIL) {
         Cell *arg = car(rest);
-        
+
         // Make sure the argument is a number
         if (arg->type != CELL_NUMBER) {
             set_error(ERR_TYPE_MISMATCH, "DIV requires numeric arguments");
             return NIL;
         }
-        
+
         if (arg->value.number == 0) {
             set_error(ERR_INVALID_ARGUMENT, "DIV: Division by zero");
             return NIL;
         }
-        
+
         result /= arg->value.number;
         rest = cdr(rest);
     }
-    
+
     return make_number(result);
 }
 
@@ -413,28 +413,28 @@ Cell *sqrt_func(Cell *args) {
         set_error(ERR_INVALID_ARGUMENT, "SQRT requires exactly one argument");
         return NIL;
     }
-    
+
     Cell *arg = car(args);
-    
+
     // Make sure the argument is a number
     if (arg->type != CELL_NUMBER) {
         set_error(ERR_TYPE_MISMATCH, "SQRT requires a numeric argument");
         return NIL;
     }
-    
+
     // Check for negative input
     if (arg->value.number < 0) {
         set_error(ERR_INVALID_ARGUMENT, "SQRT: Cannot compute square root of negative number");
         return NIL;
     }
-    
+
     // Simple integer square root - find largest integer whose square is <= n
     int n = arg->value.number;
     int i = 0;
     while ((i+1) * (i+1) <= n) {
         i++;
     }
-    
+
     return make_number(i);
 }
 
@@ -589,7 +589,7 @@ Cell *read_expr(StringReader *reader) {
         if (token_len > 0 && token[0] == '-') {
             start_idx = 1;
         }
-        
+
         for (int i = start_idx; i < token_len; i++) {
             if (!isdigit(token[i])) {
                 is_number = false;
@@ -601,10 +601,10 @@ Cell *read_expr(StringReader *reader) {
             // It's a number, create a number cell
             Cell *cell = (Cell*)malloc(sizeof(Cell));
             if (!cell) set_error(ERR_OUT_OF_MEMORY, "Failed to allocate number");
-            
+
             cell->type = CELL_NUMBER;
             cell->value.number = atoi(token);
-            
+
             return cell;
         } else {
             // It's a symbol
@@ -624,7 +624,7 @@ void print_expr(Cell *expr) {
         printf("%s", expr->value.atom);
         return;
     }
-    
+
     if (expr->type == CELL_NUMBER) {
         printf("%d", expr->value.number);
         return;
@@ -835,24 +835,24 @@ Cell *apply(Cell *fn, Cell *args, Cell *env) {
             }
             return eq(car(args), car(cdr(args)));
         }
-        
+
         // Arithmetic functions
         if (strcmp(fn->value.atom, "ADD") == 0) {
             return add(args);
         }
-        
+
         if (strcmp(fn->value.atom, "SUB") == 0) {
             return sub(args);
         }
-        
+
         if (strcmp(fn->value.atom, "MUL") == 0) {
             return mul(args);
         }
-        
+
         if (strcmp(fn->value.atom, "DIV") == 0) {
             return div_func(args);
         }
-        
+
         if (strcmp(fn->value.atom, "SQRT") == 0) {
             return sqrt_func(args);
         }
@@ -996,7 +996,7 @@ void repl() {
 
 
 void run_tests() {
-    printf("** UNIT Tests: \n");
+    printf("\n** Very Simple UNIT Tests: \n");
     // Create some atoms
     Cell *a = make_atom("A");
     Cell *b = make_atom("B");
