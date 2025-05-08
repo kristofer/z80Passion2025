@@ -739,7 +739,7 @@ Cell *read_expr(StringReader *reader) {
         }
 
         return head;
-    } else if (c == '\'' || c == '\`') {
+    } else if (c == '\'') {
         // Handle quoted expressions: 'expr -> (QUOTE expr)
         Cell *quoted = read_expr(reader);
         if (!quoted && error_type != ERR_NONE) {
