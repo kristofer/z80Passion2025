@@ -7,6 +7,7 @@
 #define MAXCOLS 80
 #define STATUS_LINE (MAXROWS-2) // Position for status line
 
+
 void update_status(KTBox *box, const char *message) {
     // Clear the status line
     for (int i = 0; i < box->cols; i++) {
@@ -43,6 +44,8 @@ void process_key(KTBox *box, int key) {
     display_msg(box, key);
 }
 
+static RingBuffer rbuf;
+
 int main() {
 
     KTBox *box = ktbox_init(MAXCOLS, MAXROWS);
@@ -58,6 +61,38 @@ int main() {
         return 1;
     }
 
+    init_ring_buffer(&rbuf);
+    appendchar(&rbuf, 'X');
+    appendchar(&rbuf, '1');
+    appendchar(&rbuf, '2');
+    appendchar(&rbuf, '3');
+
+    while (charReady(&rbuf)) {
+        char c0 = headchar(&rbuf);
+        printf("buffer %c\n", c0);
+    }
+
+    ktdev_delay(box, 2);
+    char c0 = 'a';
+    appendchar(&rbuf, c0);
+
+    vdp_update_key_state();
+
+    while (c0 != 'q') {
+        printf("not q %c\n", c0);
+        printf("many? %d\n", rbuf.count);
+        ktdev_delay(box, 1);
+        while (rbuf.count > 0) {
+//            printf("many? %cd\n", bufc.count);
+            c0 = headchar(&rbuf);
+            printf("ktbox key %02x %c\n", c0, c0);
+        }
+        waitvblank();
+        vdp_update_key_state();
+    }
+    ktdev_delay(box, 2);
+
+    exit(0);
     // // Draw a border
     // ktbox_fill_region(box, 0, 0, box->cols-1, 0, '-');          // Top
     ktbox_fill_region(box, 0, box->rows-1, box->cols-1, box->rows-1, '-'); // Bottom
@@ -96,8 +131,9 @@ int main() {
     bool running = true;
     while (running) {
         // Check for key input
-        if (ktbox_key_available()) {
-            int key = ktbox_read_key();
+        //if (ktbox_key_available()) {
+        if (charReady(&bufc) == true) {
+            char key = ktbox_read_key();
             char status[80];
 
             if (key == KTBOX_KEY_ESC || key == KTBOX_KEY_CRTL_C) {

@@ -138,7 +138,9 @@ int main() {
         vdp_cursor_tab(0, 7);
         printf("Waiting for keypress...                       \n");
 
-        c = getchar();
+        //c = getchar();
+        c = getsysvar_keyascii();
+
         add_to_history(c);
 
         map_key_code(c, &mapped_code, key_desc);

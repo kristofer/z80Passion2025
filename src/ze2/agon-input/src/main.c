@@ -1,6 +1,6 @@
 /**
  * Agon Light Keyboard Input Sample
- * 
+ *
  * This program demonstrates how to capture and display keyboard input
  * on the Agon Light, including special control characters.
  */
@@ -14,34 +14,34 @@
  // Agon VDP control codes
  #define VDP_CLS         0x0C    // Clear screen
  #define VDP_TEXTCOLOR   0x1B    // ESC followed by command
- 
+
  // Keyboard input port - may need adjustment based on actual hardware
  #define KEYBOARD_DATA_PORT      0x08
  #define KEYBOARD_STATUS_PORT    0x09
- 
+
  // Status flags
  #define KB_STATUS_DATA_READY    0x01
- 
+
  /**
   * Wait for and read a character from keyboard
   */
-//  int getch(void) {
-//      // Wait until a key is available
-//      while (!(inp(KEYBOARD_STATUS_PORT) & KB_STATUS_DATA_READY)) {
-//          // Wait loop
-//      }
-     
-//      // Read the key
-//      return inp(KEYBOARD_DATA_PORT);
-//  }
- 
+ int kgetch(void) {
+     // Wait until a key is available
+     while (!(inp(KEYBOARD_STATUS_PORT) & KB_STATUS_DATA_READY)) {
+         // Wait loop
+     }
+
+     // Read the key
+     return inp(KEYBOARD_DATA_PORT);
+ }
+
  /**
   * Display character name for control characters
   */
  void print_char_info(int ch) {
      // Display the character code
      printf("ASCII: %d (0x%02X) ", ch, ch);
-     
+
      // Display character name for control characters
      if (ch < 32) {
          printf("- Control character: ");
@@ -85,10 +85,10 @@
      } else {
          printf("- Character: '%c'", ch);
      }
-     
+
      printf("\n");
  }
- 
+
  /**
   * Display a key visually, including control characters
   */
@@ -105,33 +105,33 @@
      vdp_set_text_colour( COLOR_WHITE );
 
  }
- 
+
  /**
   * Clear the screen and move cursor to home position
   */
  void clear_screen(void) {
      putchar(VDP_CLS);
  }
- 
+
  /**
   * Main program
   */
  int main() {
      int ch;
      int exit_flag = 0;
-     
+
      clear_screen();
      printf("Agon Light Keyboard Input Sample\n");
      printf("-------------------------------\n");
      printf("Press keys to see their codes and representation.\n");
      printf("Press ESC three times to exit.\n\n");
-     
+
      int esc_count = 0;
-     
+
      while (!exit_flag) {
          // Get character from keyboard
-         ch = getchar();
-         
+         ch = kgetch();
+
          // Check for triple ESC to exit
          if (ch == 27) {
              esc_count++;
@@ -142,7 +142,7 @@
          } else {
              esc_count = 0;
          }
-         
+
          // Display the key pressed
          printf("Key pressed: ");
          display_key(ch);
@@ -150,7 +150,7 @@
          print_char_info(ch);
          printf("\n");
      }
-     
+
      printf("\nProgram terminated.\n");
      return 0;
  }

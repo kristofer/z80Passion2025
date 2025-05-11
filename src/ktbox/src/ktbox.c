@@ -1,3 +1,4 @@
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -6,6 +7,56 @@
 
 #include "ktbox.h"
 
+
+/* start ring buffer */
+RingBuffer bufc;
+
+// Initialize the buffer
+void init_ring_buffer(RingBuffer *buffer) {
+    printf("init_buffer\n");
+    buffer->head = 0;
+    buffer->tail = 0;
+    buffer->count = 0;
+}
+
+bool charReady(RingBuffer *buffer) {
+    return buffer->count != 0;
+}
+// Add a character to the buffer (called from interrupt handler)
+void appendchar(RingBuffer *buffer, char c) {
+    // If buffer is full, overwrite oldest data
+    if (buffer->count == RING_BUFFER_SIZE) {
+        printf("> appendchar buffer overflow\n");
+        buffer->head = (buffer->head + 1) % RING_BUFFER_SIZE; // Move head forward
+        buffer->count--; // Make room for new char
+    }
+
+    // Add the new character
+    buffer->data[buffer->tail] = c;
+    buffer->tail = (buffer->tail + 1) % RING_BUFFER_SIZE;
+    buffer->count++;
+    printf("> appendchar %d\n",buffer->count);
+}
+
+// Get the character at the head of the buffer (busy-waits if empty)
+char headchar(RingBuffer *buffer) {
+    //printf("< headchar\n");
+    // Wait until there's at least one character
+    while (buffer->count == 0) {
+        // Busy wait
+        //waitvblank();
+        printf("+");
+    }
+
+    // Get the character
+    char c = buffer->data[buffer->head];
+    buffer->head = (buffer->head + 1) % RING_BUFFER_SIZE;
+    buffer->count--;
+    printf("< headchar %d\n",buffer->count);
+
+    return c;
+}
+/* end ring buffer */
 
 // still working to get something useful here.
 // void flushinp(void)
@@ -361,28 +412,33 @@ void ktbdev_debug(int x, int y, char *str) {
 
 // Key event handler for Agon VDP
 // this is a callback function, invoked whenever a key event occurs
+// #ifdef DEBUG
+//         //recordkey(_current_key);
+//         if (c == KTBOX_KEY_CRTL_Z) {
+//             printf("forced exiting\n");
+//             exit(2);
+//         }
+// #endif
 // MANY 0 key_events
 static void ktbox_key_event_handler(KEY_EVENT key_event) {
-    printf(";");
-    if (key_event.key_data == prev_key_event.key_data) {
-        _current_key = -1;
-        return;
-    } else {
+    if ((key_event.mods != 0) && (key_event.ascii == 0)) { printf(";");/* ignore mod* key down */ return; }
+    else {
+        printf("~");
         prev_key_event = key_event;
-        if (key_event.down != 0) {
-            _current_key = key_event.ascii;
-#ifdef DEBUG
-            //recordkey(_current_key);
-            if (_current_key == KTBOX_KEY_CRTL_Z) {
-                printf("forced exiting\n");
-                exit(2);
-#endif
+        if ((key_event.down != 0) && (key_event.ascii != 0)) {
+            char c = key_event.ascii;
+            printf("event...    \n");
+            if (c >= 32 && c <= 126) {
+                printf("ascii: 0x%02x \n", c);
+                appendchar(&bufc, c);
+            } else {
+                appendchar(&bufc, c);
             }
-        } else {
-            _current_key = -1;
+            // ignore 000
+            printf("0");
         }
-        return;
     }
+    //vdp_update_key_state();
 }
 
 // Initialize the input handling system
@@ -394,6 +450,7 @@ bool ktbox_init_input(KTBox *box) {
 
     // Initialize keyboard handling
     if (vdp_key_init() == -1) {
+        printf("failed vdp_key_init\n");
         return false;
     }
 
@@ -415,15 +472,16 @@ void ktbox_cleanup_input(KTBox *box) {
 
 // Read a key (blocking)
 int ktbox_read_key(void) {
-    int key = -1;
-    while (key == -1) {
-        key = _current_key;
-        waitvblank();
-    }
+    int key = headchar(&bufc);
+//    waitvblank();
+
+    // while (key == -1) {
+    //     key = headchar(&bufc); //_current_key;
+    //     waitvblank();
+    // }
 
     // Reset _current_key to prevent repeating
-    _current_key = -1;
-    vdp_update_key_state();
+    //_current_key = -1;
 
     // Map the key to our constants if needed
     return ktbox_map_key(key);
@@ -431,8 +489,8 @@ int ktbox_read_key(void) {
 
 // Check if a key is available (non-blocking)
 bool ktbox_key_available(void) {
-    vdp_update_key_state();
-    return _current_key != -1;
+    //vdp_update_key_state();
+    return true; //_current_key != -1;
 }
 
 // Map Agon key codes to our internal constants if needed

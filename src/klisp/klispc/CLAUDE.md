@@ -68,7 +68,7 @@ The project has the following key components:
    # Compile and run in interactive mode
    cc -o kl3a src/kl3.c
    ./kl3a
-   
+
    # Run a specific LISP file
    ./kl3a tests.lisp
    ```
@@ -77,7 +77,7 @@ The project has the following key components:
    ```bash
    # Run the built-in tests
    ./kl3a
-   
+
    # Run specific test files
    ./kl3a tests.lisp
    ./kl3a factorial.lisp
@@ -87,8 +87,8 @@ The project has the following key components:
    ```bash
    # Build for Agon
    make
-   
+
    # Copy to Agon emulator's SD card
-   cp tests.lisp /Users/kristofer/LocalProjects/z80Passion2025/fab-agon-emulator-v0.9.89-macos/sdcard/tests.lisp
-   cp bin/kl3.c.bin /Users/kristofer/LocalProjects/z80Passion2025/fab-agon-emulator-v0.9.89-macos/sdcard/bin/klc.bin
+   cp tests.lisp z80Passion2025/sdcard/tests.lisp
+   cp bin/kl3.c.bin z80Passion2025/sdcard/bin/klc.bin
    ```

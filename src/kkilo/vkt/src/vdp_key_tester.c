@@ -4,6 +4,9 @@
 #include <agon/vdp_vdu.h>
 #include <agon/vdp_key.h>
 
+int last_keycode;
+char ascii_value_pressed;
+
 // Callback function for key events
 void key_event_handler(KEY_EVENT key_event) {
     vdp_cursor_tab(0, 15);
@@ -12,17 +15,36 @@ void key_event_handler(KEY_EVENT key_event) {
     printf("MODS: 0x%02X                          \n", key_event.mods);
     printf("CODE: 0x%02X                          \n", key_event.code);
     printf("DOWN: %d                              \n", key_event.down);
-    printf("Raw Key Data: 0x%08X                  \n", key_event.key_data);
+    //printf("Raw Key Data: 0x%08X                  \n", key_event.key_data);
+    last_keycode = key_event.code;
+    for (int i = 0; i < 16; i++)
+    {
+        printf("%02x ", *(key_event.key_data + i));
+    }
+    printf("\n");
+    ascii_value_pressed = key_event.ascii;
 }
 
-void display_key_state() {
-    vdp_cursor_tab(0, 22);
-    printf("Key State Bits:                       \n");
-    for (int i = 0; i < 32; i++) {
-        if (i % 8 == 0) printf("\n");
-        printf("%02X ", vdp_key_bits[i]);
-    }
+// Callback function for key events
+void key_event_handler(KEY_EVENT key_event) {
+    vdp_cursor_tab(0, 15);
+    printf("KEY EVENT HANDLER:                    \n");
+    printf("ASCII: 0x%02X (%d)                    \n", key_event.ascii, key_event.ascii);
+    printf("MODS: 0x%02X                          \n", key_event.mods);
+    printf("CODE: 0x%02X                          \n", key_event.code);
+    printf("DOWN: %d                              \n", key_event.down);
+    //printf("Raw Key Data: 0x%08X                  \n", key_event.key_data);
+    if ()
 }
+
+// void display_key_state() {
+//     vdp_cursor_tab(0, 22);
+//     printf("Key State Bits:                       \n");
+//     for (int i = 0; i < 32; i++) {
+//         if (i % 8 == 0) printf("\n");
+//         printf("%02X ", vdp_key_bits[i]);
+//     }
+// }
 
 int main() {
     int c;
@@ -88,8 +110,8 @@ int main() {
 
         // Log the key info
         log = fopen("vdp_key_log.txt", "a");
-        fprintf(log, "0x%02X | 0x%02X | - | - | - | %s\n",
-                c, c, key_name);
+        fprintf(log, "0x%02X | 0x%02X | - | - | - |\n",
+                c, key_name);
         fclose(log);
 
         if (c == '\x03') break;

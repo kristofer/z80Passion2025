@@ -116,6 +116,20 @@ void ktdev_debug(int x, int y, char *str);
 extern char history[];
 extern int kevs;
 
-//
+// ring buffer
+#define RING_BUFFER_SIZE 8
+// Ring buffer structure
+typedef struct {
+    char data[RING_BUFFER_SIZE];
+    volatile int head;     // Index for reading (consumer)
+    volatile int tail;     // Index for writing (producer)
+    volatile int count;    // Number of items in the buffer
+} RingBuffer;
+
+extern RingBuffer bufc;
+void init_ring_buffer(RingBuffer *buffer);
+void appendchar(RingBuffer *buffer, char c);
+char headchar(RingBuffer *buffer);
+bool charReady(RingBuffer *buffer);
 
 #endif /* KTBOX_H */

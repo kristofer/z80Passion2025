@@ -53,6 +53,7 @@
 
 #include <agon/vdp_vdu.h>
 #include <agon/vdp_key.h>
+#include <mos_api.h>
 
 /* Syntax highlight types */
 #define HL_NORMAL 0
@@ -169,24 +170,30 @@ void set_colours(int fg, int bg) {
 int editorReadKey(FILE *fd) {
     int nread = 0;
     char c;
-    
+
     // Read a single character from input
-    while ((nread = fread(&c, 1, 1, fd)) == 0);
-    if (nread == -1) exit(1);
-    
+    //while ((nread = fread(&c, 1, 1, fd)) == 0);
+    //if (nread == -1) exit(1);
+    while (!getsysvar_vkeydown()) {
+        c = getsysvar_vkeycode();
+    }
+    //c = getsysvar_keyascii();
+
     // Map Agon key codes to editor key actions
     switch(c) {
         case '\x0b': return ARROW_UP;
         case '\x0a': return ARROW_DOWN;
         case '\x0c': return ARROW_RIGHT;
         case '\x08': return ARROW_LEFT;
-        case 'H': return HOME_KEY;
-        case 'F': return END_KEY;
-        case '3': return DEL_KEY;
-        case '5': return PAGE_UP;
-        case '6': return PAGE_DOWN;
+        // case 'H': return HOME_KEY;
+        // case 'F': return END_KEY;
+        // case '3': return DEL_KEY;
+        // case '5': return PAGE_UP;
+        // case '6': return PAGE_DOWN;
         case ESC:    /* escape sequence */
             return ESC;
+        case CTRL_Q:
+            exit(0);
         default:
             return c;
     }
@@ -1028,10 +1035,10 @@ void initEditor(void) {
     E.dirty = 0;
     E.filename = NULL;
     E.syntax = NULL;
-    
+
     // Initialize VDP key handling
     vdp_key_init();
-    
+
     updateWindowSize();
 }
 
