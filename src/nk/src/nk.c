@@ -45,7 +45,7 @@ void appendchar(RingBuffer *buffer, char c) {
     }
 
     // Add the new character
-    putchar('~'); putchar(c);
+    //putchar('~'); putchar(c);
     buffer->data[buffer->tail] = c;
     buffer->tail = (buffer->tail + 1) % RING_BUFFER_SIZE;
     buffer->count++;
@@ -91,6 +91,35 @@ static void key_handler(KEY_EVENT key_event) {
         }
     //vdp_update_key_state();
 }
+
+
+void cursor(char onoff) {
+    // Turning off flashing cursor (1 on, 0 off)
+    putch(23); putch(1); putch(onoff);
+}
+// Clear screen
+void clrscr() {
+    //vdp_mode(3); - Doesn't work, send the characters instead!
+    char mode[2] = {22,0};
+    mos_puts(mode,2,0);
+    vdp_clear_screen();
+    cursor(0);
+}
+// Get character from keyboard
+char cgetc() {
+    return inchar();
+}
+// Position cursor
+void gotoxy(char x, char y) {
+    vdp_cursor_tab(y,x);
+}
+// Put a character at screen coord
+void cputcxy(int x, int y, char c) {
+    vdp_cursor_tab(y,x);
+    putch(c); putch(8);
+}
+
+
 static volatile SYSVAR *sys_vars = NULL;
 
 int main() {
@@ -111,7 +140,7 @@ int main() {
 
     int c = -1; //= headchar(&rbuf);
     while (c != 'q') {
-        c = getch();
+        c = cgetc();
         if ((c != 0)&&(c != -1)) printf(" x%02x x%02x\n", c, headchar(&rbuf));
         //c = headchar(&rbuf);
         waitvblank();

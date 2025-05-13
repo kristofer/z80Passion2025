@@ -160,6 +160,48 @@ void cleanup(void);
 void editorAtExit(void) {
 }
 
+void cursor(char onoff) {
+    // Turning off flashing cursor (1 on, 0 off)
+    putch(23); putch(1); putch(onoff);
+}
+// Clear screen
+void clrscr() {
+    //vdp_mode(3); - Doesn't work, send the characters instead!
+    char mode[2] = {22,0};
+    mos_puts(mode,2,0);
+    // vdp_clear_screen();
+    // cursor(0);
+}
+// Get character from keyboard
+char cgetc() {
+    return inchar();
+}
+// Position cursor
+void gotoxy(char x, char y) {
+    vdp_cursor_tab(x,y);
+}
+// Position cursor
+void getxycursor(uint8_t *x, uint8_t *y) {
+    vdp_return_text_cursor_position(x,y);
+}
+
+
+// Put a character at screen coord
+void cputcxy(uint8_t x, uint8_t y, char c) {
+    vdp_cursor_tab(y,x);
+    putch(c); putch(8);
+}
+
+// clrtoeol()
+void clrtoeol(void) {
+    int cr, cc;
+    getxycursor(&cc, &cr);
+    gotoxy(5,59-4);
+    printf("eol at %d %d\n",cc, cr);
+    gotoxy(cc,cr);
+    for (int i = cc; i < 80; i++) cputcxy(i, cr, ' ');
+}
+
 void set_colours(int fg, int bg) {
     vdp_set_text_colour(fg);
     vdp_set_text_colour(bg+128);
@@ -168,22 +210,24 @@ void set_colours(int fg, int bg) {
 /* Read a key from the terminal put in raw mode, trying to handle
  * escape sequences. */
 int editorReadKey(FILE *fd) {
-    int nread = 0;
+    //int nread = 0;
     char c;
 
-    // Read a single character from input
+    // Read a single character from input (RAW)
     //while ((nread = fread(&c, 1, 1, fd)) == 0);
     //if (nread == -1) exit(1);
-    while (!getsysvar_vkeydown()) {
-        c = getsysvar_vkeycode();
-    }
+    // while (!getsysvar_vkeydown()) {
+    //     c = getsysvar_vkeycode();
+    // }
     //c = getsysvar_keyascii();
+    c = cgetc();
+    if (c == -1) cleanup();
 
     // Map Agon key codes to editor key actions
     switch(c) {
         case '\x0b': return ARROW_UP;
         case '\x0a': return ARROW_DOWN;
-        case '\x0c': return ARROW_RIGHT;
+        case '\x15': return ARROW_RIGHT;
         case '\x08': return ARROW_LEFT;
         // case 'H': return HOME_KEY;
         // case 'F': return END_KEY;
@@ -193,7 +237,7 @@ int editorReadKey(FILE *fd) {
         case ESC:    /* escape sequence */
             return ESC;
         case CTRL_Q:
-            exit(0);
+            cleanup();
         default:
             return c;
     }
@@ -600,11 +644,6 @@ void abFree(struct abuf *ab) {
     free(ab->b);
 }
 
-// clrtoeol()
-void clrtoeol(void) {
-
-}
-
 /* This function writes the whole screen using VT100 escape characters
  * starting from the logical state of the editor in the global state 'E'. */
 void editorRefreshScreen(void) {
@@ -612,13 +651,6 @@ void editorRefreshScreen(void) {
     erow *r;
     char buf[32];
     struct abuf ab = ABUF_INIT;
-
-    vdp_clear_screen();
-    /* Hide cursor. */
-    vdp_cursor_enable(false);
-    /* Go home. */
-    vdp_cursor_tab(0, 0);
-    set_colours(CLRIWHITE, CLRBLACK);
 
     for (y = 0; y < E.screenrows; y++) {
         int filerow = E.rowoff+y;
@@ -638,7 +670,7 @@ void editorRefreshScreen(void) {
                 while(padding--) abAppend(&ab," ",1);
                 abAppend(&ab,welcome,welcomelen);
             } else {
-                abAppend(&ab,"~",7);
+                abAppend(&ab,"~",1);
                 clrtoeol();
                 abAppend(&ab,"\r\n",2);
             }
@@ -740,11 +772,18 @@ void editorRefreshScreen(void) {
     //abAppend(&ab,buf,strlen(buf));
     //abAppend(&ab,"\x1b[?25h",6); /* Show cursor. */
 
+    /* Hide cursor. */
+    /* Go home. */
+    clrscr();
+    gotoxy(0, 0);
+    cursor(0);
+
 //    write(stdout,ab.b,ab.len);
     fwrite(ab.b, 1, ab.len, stdout);
     fflush(stdout);
-    vdp_cursor_tab(cx, E.cy+1);
-    vdp_cursor_enable( true );
+    //mos_puts(ab.b, ab.len, 0);
+    gotoxy(cx-1, E.cy); // was cx, E.cy+1 (off by one)
+    cursor(1);
     abFree(&ab);
 }
 
@@ -762,7 +801,7 @@ void editorSetStatusMessage(const char *fmt, ...) {
 
 #define KILO_QUERY_LEN 256
 
-void editorFind(int fd) {
+void editorFind(FILE *fd) {
     char query[KILO_QUERY_LEN+1] = {0};
     int qlen = 0;
     int last_match = -1; /* Last line where a match was found. -1 for none. */
@@ -964,7 +1003,7 @@ void editorProcessKeypress(FILE *fd) {
         editorSave();
         break;
     case CTRL_F:
-        //editorFind(fd);
+        editorFind(stdin);
         break;
     case BACKSPACE:     /* Backspace */
     case CTRL_H:        /* Ctrl-h */
@@ -1040,6 +1079,8 @@ void initEditor(void) {
     vdp_key_init();
 
     updateWindowSize();
+    set_colours(CLRIWHITE, CLRBLACK);
+
 }
 
 void fatal(char *foo) {
@@ -1049,6 +1090,7 @@ void fatal(char *foo) {
 void cleanup() {
     vdp_clear_screen();
     set_colours(CLRIWHITE, CLRBLACK);
+    cursor(0);
     exit(0);
 }
 int main(int argc, char **argv) {
@@ -1060,11 +1102,12 @@ int main(int argc, char **argv) {
     initEditor();
     editorOpen(argv[1]);
     editorSetStatusMessage("HELP: Ctrl-S = save | Ctrl-Q = quit | Ctrl-F = find");
-    vdp_cursor_tab( 0, 0);
+    gotoxy(0,0);
+    editorRefreshScreen();
 
     while(1) {
-        editorRefreshScreen();
         editorProcessKeypress(stdin);
+        if (editorFileWasModified()) editorRefreshScreen();
     }
     return 0;
 }
