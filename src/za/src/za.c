@@ -1,4 +1,5 @@
 /* za.c,  Agon Emacs, Public Domain, github.com/kristofer 2025, Hugh Barney, 2017, Derived from: Anthony's Editor January 93 */
+#include <stdint.h>
 #include <stdlib.h>
 #include <assert.h>
 #include <stdio.h>
@@ -66,6 +67,7 @@ buffer_t *curbp;
 point_t nscrap = 0;
 char_t *scrap = NULL;
 char searchtext[STRBUF_M];
+uint8_t sc, sr;
 
 #define COLS 80
 #define LINES 59
@@ -101,9 +103,6 @@ void refresh(void) {
     cursor(1);
 }
 
-// clear to end of line w spaces
-//void clrtoeol(void) {} - see below
-
 // output str
 void addstr(const char *str) {
     printf("%s",str);
@@ -115,6 +114,7 @@ void addch(const char c) {
 const char *unctrl(char_t p) {}
 // move cursor (scr) to c,r x,y
 void move(int c, int r) {
+    sc=c; sr=r;
     vdp_cursor_tab(c,r);
 }
 // make things standout
@@ -134,7 +134,7 @@ void pause(char *str) {
 
 void cursor(char onoff) {
     // Turning off flashing cursor (1 on, 0 off)
-    putch(23); putch(1); putch(onoff);
+    //putch(23); putch(1); putch(onoff);
 }
 // Clear screen
 void clrscr() {
@@ -142,7 +142,7 @@ void clrscr() {
     char mode[2] = {22,0};
     mos_puts(mode,2,0);
     vdp_clear_screen();
-    cursor(0);
+    //cursor(0);
 }
 // Get character from keyboard
 char cgetc() {
@@ -152,7 +152,7 @@ char cgetc() {
 void gotoxy(uint8_t *x, uint8_t *y) {
     vdp_cursor_tab(x,y);
 }
-// Position cursor
+// get Position cursor
 void getxycursor(uint8_t *x, uint8_t *y) {
     vdp_return_text_cursor_position(x,y);
 }
@@ -160,15 +160,14 @@ void getxycursor(uint8_t *x, uint8_t *y) {
 
 // Put a character at screen coord
 void cputcxy(uint8_t *x, uint8_t *y, char c) {
+    sc = *x; sr = *y;
     vdp_cursor_tab(x,y);
     putch(c); putch(8);
 }
 
-// clrtoeol()
 void clrtoeol(void) {
-    buffer_t *bp = curbp;
-    int cc = bp->b_col;
-    int cr = bp->b_row;
+    int cc = sc;
+    int cr = sr;
     for (int i = cc; i < 80; i++) cputcxy((uint8_t *)i, (uint8_t *)cr, ' ');
 }
 
@@ -585,6 +584,9 @@ void display()
 	bp->b_epage = bp->b_page;
 
 	/* paint screen from top of page until we hit maxline */
+	cursor(0);
+	vdp_clear_screen();
+
 	while (1) {
 		/* reached point - store the cursor position */
 		if (bp->b_point == bp->b_epage) {
@@ -613,14 +615,15 @@ void display()
 	}
 
 	/* replacement for clrtobot() to bottom of window */
-	for (k=i; k < bp->w_top + bp->w_rows; k++) {
-		move(j, k); /* clear from very last char not start of line */
-		clrtoeol();
-		j = 0; /* thereafter start of line */
-	}
+	// for (k=i; k < bp->w_top + bp->w_rows; k++) {
+	// 	move(j,k); /* clear from very last char not start of line */
+	// 	clrtoeol();
+	// 	j = 0; /* thereafter start of line */
+	// }
 
 	modeline(bp);
 	dispmsg();
+	cursor(1);
 	move(bp->b_col, bp->b_row); /* set cursor */
 	refresh();
 }
@@ -832,6 +835,10 @@ void search()
 
 /* the key bindings:  desc, keys, func */
 keymap_t keymap[] = {
+    {"left arrow               ", "\x08", left },
+    {"right arrow              ", "\x15", right },
+    {"up arrow                 ", "\x0B", up },
+    {"down arrow               ", "\x0A", down },
 	{"C-a beginning-of-line    ", "\x01", lnbegin },
 	{"C-b                      ", "\x02", left },
 	{"C-d forward-delete-char  ", "\x04", delete },
@@ -871,7 +878,7 @@ keymap_t keymap[] = {
 void cleanup() {
     vdp_clear_screen();
     set_colours(CLRIWHITE, CLRBLACK);
-    cursor(0);
+    cursor(1);
     exit(0);
 }
 
@@ -894,7 +901,7 @@ int main(int argc, char **argv)
 		if (key_return != NULL) {
 			(key_return->func)();
 		} else {
-			if (*input > 31 || *input == 10 || *input == 9) /* allow TAB, NEWLINE and other control char is Not Bound */
+			if (*input > 31 || *input == 10 || *input == 13 || *input == 9) /* allow TAB, NEWLINE and other control char is Not Bound */
 				insert();
             else
 				msg("Not bound");
