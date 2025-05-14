@@ -24,6 +24,9 @@ https://github.com/AgonPlatform/agon-flash/releases/latest/download/flash.bin
 https://github.com/AgonPlatform/agon-mos/releases/latest/download/MOS.bin
 https://github.com/AgonPlatform/agon-vdp/releases/latest/download/firmware.bin
 
+and this a good one: https://github.com/avalonbits/aed
+
+
 ## Useful Links
 
 - [agondev, new C compiler](https://github.com/AgonPlatform/agondev)
