@@ -1,0 +1,8 @@
+"Hello World example for SOM"
+
+Main = Object (
+    run = (
+        'Hello, World from SOM!' println.
+        ^nil
+    )
+)

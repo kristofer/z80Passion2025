@@ -1,0 +1,7 @@
+"Hello World example for SOM"
+
+Main = Object (
+    run = (
+        <primitive: 16>
+    )
+)
